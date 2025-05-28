@@ -1,0 +1,132 @@
+{
+  "functions": [
+    {
+      "name": "request_spending_authorization",
+      "description": "Request authorization from AgentPay Control Tower before making a purchase. This is required for all AI agent spending to ensure proper controls and user approval.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "The amount to spend in USD (e.g., 49.99)",
+            "minimum": 0.01,
+            "maximum": 10000
+          },
+          "merchant": {
+            "type": "string",
+            "description": "The merchant or website where the purchase will be made (e.g., 'amazon.com', 'uber.com', 'doordash.com')"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["shopping", "food", "transportation", "entertainment", "services", "travel", "education", "health", "utilities", "general"],
+            "description": "Category of the purchase for spending limit enforcement"
+          },
+          "intent": {
+            "type": "string",
+            "description": "Clear description of what you intend to purchase (e.g., 'Buy wireless bluetooth headphones', 'Order lunch delivery', 'Book rideshare to airport')"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional context about the purchase",
+            "properties": {
+              "urgency": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "emergency"],
+                "description": "How urgent this purchase is"
+              },
+              "requestedBy": {
+                "type": "string",
+                "description": "Who requested this purchase (user, system, scheduled task)"
+              },
+              "relatedTask": {
+                "type": "string", 
+                "description": "What task or goal this purchase supports"
+              }
+            }
+          }
+        },
+        "required": ["amount", "merchant", "category", "intent"]
+      }
+    },
+    {
+      "name": "check_spending_limits",
+      "description": "Check current spending limits and usage for the AI agent without requesting authorization",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": ["shopping", "food", "transportation", "entertainment", "services", "travel", "education", "health", "utilities", "general"],
+            "description": "Optional: Check limits for specific category"
+          }
+        }
+      }
+    },
+    {
+      "name": "confirm_authorized_purchase",
+      "description": "Complete a purchase that has been pre-authorized by AgentPay Control Tower",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "authorizationId": {
+            "type": "string",
+            "description": "The authorization ID returned from request_spending_authorization"
+          },
+          "finalAmount": {
+            "type": "number",
+            "description": "The final amount to charge (can be less than or equal to authorized amount)",
+            "minimum": 0.01
+          },
+          "transactionDetails": {
+            "type": "object",
+            "description": "Details about the completed transaction",
+            "properties": {
+              "orderId": {
+                "type": "string",
+                "description": "Merchant order ID or reference"
+              },
+              "items": {
+                "type": "array",
+                "description": "Items purchased"
+              },
+              "deliveryInfo": {
+                "type": "object",
+                "description": "Delivery or fulfillment information"
+              }
+            }
+          }
+        },
+        "required": ["authorizationId"]
+      }
+    }
+  ],
+  "agentpay_integration": {
+    "description": "AgentPay Control Tower - Financial Operating System for AI Agents",
+    "api_base": "https://api.agentpay.org",
+    "authentication": "Bearer token in Authorization header (agent JWT token)",
+    "workflow": {
+      "1": "AI agent calls request_spending_authorization() with purchase details",
+      "2": "AgentPay validates against user limits and policies", 
+      "3": "If approved, AI agent receives authorizationId",
+      "4": "AI agent proceeds with purchase at merchant",
+      "5": "AI agent calls confirm_authorized_purchase() to complete transaction",
+      "6": "AgentPay charges user's payment method and records transaction"
+    },
+    "benefits": [
+      "Real-time spending control and limits",
+      "User oversight of AI agent purchases", 
+      "Automatic categorization and budgeting",
+      "Fraud protection and anomaly detection",
+      "Complete audit trail for compliance",
+      "Works with any merchant or website"
+    ],
+    "example_usage": {
+      "scenario": "AI assistant ordering lunch",
+      "step1": "request_spending_authorization(amount=15.99, merchant='doordash.com', category='food', intent='Order lunch delivery - chicken burrito bowl')",
+      "step2": "AgentPay returns: {authorized: true, authorizationId: 'auth_123', remainingLimits: {...}}",
+      "step3": "AI completes order on DoorDash",
+      "step4": "confirm_authorized_purchase(authorizationId='auth_123', finalAmount=16.45, transactionDetails={orderId: 'DD789', items: ['Chicken Bowl']})",
+      "result": "Transaction complete, user charged $16.45 + platform fee, spending limits updated"
+    }
+  }
+} 

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple API Test - Autonomy</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Simple API Test</h1>
+    
+    <button onclick="testHealthCheck()">1. Test Health Check</button>
+    <div id="health-result" class="test"></div>
+    
+    <button onclick="testSimpleEndpoint()">1.5. Test Simple Endpoint</button>
+    <div id="simple-result" class="test"></div>
+    
+    <button onclick="testRegister()">2. Register Test User</button>
+    <div id="register-result" class="test"></div>
+    
+    <button onclick="testSession()">3. Test Current Session</button>
+    <div id="session-result" class="test"></div>
+    
+    <button onclick="testDirectSession()">3.5. Test Direct Session</button>
+    <div id="direct-session-result" class="test"></div>
+    
+    <button onclick="testDirectMe()">3.7. Test Direct /me</button>
+    <div id="direct-me-result" class="test"></div>
+    
+    <button onclick="testDirectApiKeys()">4.5. Test Direct API Keys</button>
+    <div id="direct-apikeys-result" class="test"></div>
+    
+    <button onclick="testDirectCreateKey()">5.5. Create Key Direct</button>
+    <div id="direct-create-result" class="test"></div>
+    
+    <button onclick="testApiKeys()">4. Test API Keys</button>
+    <div id="apikeys-result" class="test"></div>
+    
+    <button onclick="testCreateKey()">5. Create New API Key</button>
+    <div id="create-result" class="test"></div>
+
+    <script>
+        async function testHealthCheck() {
+            const result = document.getElementById('health-result');
+            try {
+                console.log('Testing health...');
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                result.className = 'test success';
+                result.innerHTML = `<strong>✅ Health Check</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<strong>❌ Health Check Failed</strong><pre>${error.message}</pre>`;
+            }
+        }
+
+        async function testSimpleEndpoint() {
+            const result = document.getElementById('simple-result');
+            try {
+                console.log('Testing simple endpoint...');
+                const response = await fetch('/api/test');
+                const data = await response.json();
+                result.className = 'test success';
+                result.innerHTML = `<strong>✅ Simple Endpoint Test</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<strong>❌ Simple Endpoint Test Failed</strong><pre>${error.message}</pre>`;
+            }
+        }
+
+        async function testRegister() {
+            const result = document.getElementById('register-result');
+            try {
+                console.log('Testing registration...');
+                const email = `test${Date.now()}@example.com`;
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        name: 'Test User',
+                        email: email,
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Register response:', response.status, data);
+                
+                if (response.ok) {
+                    result.className = 'test success';
+                    result.innerHTML = `<strong>✅ Registration Success</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    result.className = 'test error';
+                    result.innerHTML = `<strong>❌ Registration Failed (${response.status})</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<strong>❌ Registration Error</strong><pre>${error.message}</pre>`;
+            }
+        }
+
+        async function testSession() {
+            const result = document.getElementById('session-result');
+            try {
+                console.log('Testing session...');
+                
+                // Add timeout to the request
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                
+                const response = await fetch('/api/auth/me', {
+                    credentials: 'include',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                console.log('Session response status:', response.status);
+                console.log('Session response headers:', [...response.headers.entries()]);
+                
+                const data = await response.json();
+                console.log('Session response data:', data);
+                
+                if (response.ok) {
+                    result.className = 'test success';
+                    result.innerHTML = `<strong>✅ Session Valid</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    result.className = 'test error';
+                    result.innerHTML = `<strong>❌ Session Invalid (${response.status})</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.className = 'test error';
+                if (error.name === 'AbortError') {
+                    result.innerHTML = `<strong>❌ Session Timeout</strong><pre>Request timed out after 10 seconds</pre>`;
+                    console.error('Session request timed out');
+                } else {
+                    result.innerHTML = `<strong>❌ Session Error</strong><pre>${error.message}</pre>`;
+                    console.error('Session error:', error);
+                }
+            }
+        }
+
+        async function testDirectSession() {
+            const result = document.getElementById('direct-session-result');
+            try {
+                console.log('Testing direct session endpoint...');
+                const response = await fetch('/api/test-session', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('Direct session response:', response.status, data);
+                
+                if (response.ok) {
+                    result.className = 'test success';
+                    result.innerHTML = `<strong>✅ Direct Session Test</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    result.className = 'test error';
+                    result.innerHTML = `<strong>❌ Direct Session Test Failed (${response.status})</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<strong>❌ Direct Session Test Error</strong><pre>${error.message}</pre>`;
+            }
+        }
+
+        async function testDirectMe() {
+            const result = document.getElementById('direct-me-result');
+            try {
+                console.log('Testing direct /me endpoint...');
+                const response = await fetch('/api/auth/me-direct', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('Direct /me response:', response.status, data);
+                
+                if (response.ok) {
+                    result.className = 'test success';
+                    result.innerHTML = `<strong>✅ Direct /me Test</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    result.className = 'test error';
+                    result.innerHTML = `<strong>❌ Direct /me Test Failed (${response.status})</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<strong>❌ Direct /me Test Error</strong><pre>${error.message}</pre>`;
+            }
+        }
+
+        async function testDirectApiKeys() {
+            const result = document.getElementById('direct-apikeys-result');
+            result.innerHTML = '<strong>🔄 Loading API Keys...</strong>';
+            
+            try {
+                console.log('Testing direct API keys...');
+                const response = await fetch('/api/keys-direct', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('Direct API Keys response:', response.status, data);
+                
+                if (response.ok) {
+                    result.className = 'test success';
+                    result.innerHTML = `<strong>✅ Direct API Keys Loaded</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    result.className = 'test error';
+                    result.innerHTML = `<strong>❌ Direct API Keys Failed (${response.status})</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<strong>❌ Direct API Keys Error</strong><pre>${error.message}</pre>`;
+                console.error('Direct API Keys error:', error);
+            }
+        }
+
+        async function testDirectCreateKey() {
+            const result = document.getElementById('direct-create-result');
+            try {
+                console.log('Testing direct create API key...');
+                const response = await fetch('/api/keys-direct', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ name: 'Direct Test Key ' + Date.now() })
+                });
+                
+                const data = await response.json();
+                console.log('Direct create key response:', response.status, data);
+                
+                if (response.ok) {
+                    result.className = 'test success';
+                    result.innerHTML = `<strong>✅ Direct API Key Created</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    result.className = 'test error';
+                    result.innerHTML = `<strong>❌ Direct Create Key Failed (${response.status})</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<strong>❌ Direct Create Key Error</strong><pre>${error.message}</pre>`;
+            }
+        }
+
+        async function testApiKeys() {
+            const result = document.getElementById('apikeys-result');
+            result.innerHTML = '<strong>🔄 Loading API Keys...</strong>';
+            
+            try {
+                console.log('Testing API keys...');
+                const response = await fetch('/api/keys', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('API Keys response:', response.status, data);
+                
+                if (response.ok) {
+                    result.className = 'test success';
+                    result.innerHTML = `<strong>✅ API Keys Loaded</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    result.className = 'test error';
+                    result.innerHTML = `<strong>❌ API Keys Failed (${response.status})</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<strong>❌ API Keys Error</strong><pre>${error.message}</pre>`;
+                console.error('API Keys error:', error);
+            }
+        }
+
+        async function testCreateKey() {
+            const result = document.getElementById('create-result');
+            try {
+                console.log('Testing create API key...');
+                const response = await fetch('/api/keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ name: 'Test Key ' + Date.now() })
+                });
+                
+                const data = await response.json();
+                console.log('Create key response:', response.status, data);
+                
+                if (response.ok) {
+                    result.className = 'test success';
+                    result.innerHTML = `<strong>✅ API Key Created</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    result.className = 'test error';
+                    result.innerHTML = `<strong>❌ Create Key Failed (${response.status})</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<strong>❌ Create Key Error</strong><pre>${error.message}</pre>`;
+            }
+        }
+
+        // Auto-run health check on load
+        document.addEventListener('DOMContentLoaded', () => {
+            testHealthCheck();
+        });
+    </script>
+</body>
+</html> 

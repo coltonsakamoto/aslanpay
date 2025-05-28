@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Autonomy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'autonomy-blue': '#0066FF',
+                        'autonomy-dark': '#1a1a1a',
+                        'autonomy-gray': '#6B7280'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-200 bg-white">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-autonomy-blue rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">A</span>
+                    </div>
+                    <span class="text-xl font-semibold text-autonomy-dark">Autonomy</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="user-name" class="text-autonomy-gray">Loading...</span>
+                    <button id="logout-btn" class="text-autonomy-gray hover:text-autonomy-dark transition-colors">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Success Message -->
+        <div id="oauth-success" class="hidden bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-green-800">Welcome! Your account has been successfully connected.</p>
+            </div>
+        </div>
+
+        <!-- User Info -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold text-autonomy-dark mb-4">Account Overview</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div>
+                    <h3 class="text-sm font-medium text-autonomy-gray mb-1">Name</h3>
+                    <p id="user-display-name" class="text-autonomy-dark">Loading...</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-autonomy-gray mb-1">Email</h3>
+                    <p id="user-email" class="text-autonomy-dark">Loading...</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-autonomy-gray mb-1">Plan</h3>
+                    <p id="user-plan" class="text-autonomy-dark">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Keys Section -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-autonomy-dark">API Keys</h2>
+                <button id="create-key-btn" class="bg-autonomy-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Create New Key
+                </button>
+            </div>
+
+            <div id="api-keys-list" class="space-y-4">
+                <div class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-autonomy-blue mx-auto mb-4"></div>
+                    <p class="text-autonomy-gray">Loading API keys...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
+            <h2 class="text-2xl font-bold text-autonomy-dark mb-4">Quick Start</h2>
+            <p class="text-autonomy-gray mb-4">Use your API key to start making authorization requests:</p>
+            
+            <div class="bg-autonomy-dark rounded-lg p-4 mb-4">
+                <pre class="text-green-400 text-sm overflow-x-auto"><code id="example-code">curl -X POST http://localhost:3000/api/v1/authorize \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"amount":2500,"description":"Test purchase","merchant":"Test Store"}'</code></pre>
+            </div>
+            
+            <div class="flex space-x-4">
+                <a href="/demo.html" class="bg-autonomy-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Try Interactive Demo
+                </a>
+                <a href="/pricing.html" class="border border-gray-300 text-autonomy-dark px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                    Upgrade Plan
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create API Key Modal -->
+    <div id="create-key-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <h3 class="text-xl font-semibold text-autonomy-dark mb-4">Create API Key</h3>
+            
+            <form id="create-key-form">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-autonomy-dark mb-2">Key Name</label>
+                    <input type="text" id="key-name" required placeholder="e.g., My AI Agent" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" id="cancel-create" class="flex-1 border border-gray-300 text-autonomy-dark py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-autonomy-blue text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                        Create Key
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let apiKeys = [];
+
+        // Check for OAuth success
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const oauth = urlParams.get('oauth');
+            
+            if (oauth === 'success') {
+                document.getElementById('oauth-success').classList.remove('hidden');
+                // Clear the success from URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            loadUserData();
+            loadApiKeys();
+        });
+
+        // Load user data
+        async function loadUserData() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    
+                    document.getElementById('user-name').textContent = currentUser.name;
+                    document.getElementById('user-display-name').textContent = currentUser.name;
+                    document.getElementById('user-email').textContent = currentUser.email;
+                    document.getElementById('user-plan').textContent = currentUser.subscription.plan.charAt(0).toUpperCase() + currentUser.subscription.plan.slice(1);
+                } else {
+                    // Not authenticated, redirect to login
+                    window.location.href = '/auth.html';
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                window.location.href = '/auth.html';
+            }
+        }
+
+        // Load API keys
+        async function loadApiKeys() {
+            try {
+                const response = await fetch('/api/keys', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    apiKeys = data.apiKeys;
+                    renderApiKeys();
+                } else {
+                    document.getElementById('api-keys-list').innerHTML = '<p class="text-red-600">Failed to load API keys</p>';
+                }
+            } catch (error) {
+                document.getElementById('api-keys-list').innerHTML = '<p class="text-red-600">Error loading API keys</p>';
+            }
+        }
+
+        // Render API keys
+        function renderApiKeys() {
+            const container = document.getElementById('api-keys-list');
+            
+            if (apiKeys.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-autonomy-gray mb-4">No API keys yet. Create your first key to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = apiKeys.map(key => `
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-semibold text-autonomy-dark">${key.name}</h3>
+                            <p class="text-sm text-autonomy-gray mt-1">Created ${new Date(key.createdAt).toLocaleDateString()}</p>
+                            <p class="text-xs text-autonomy-gray mt-1">Last used: ${key.lastUsed ? new Date(key.lastUsed).toLocaleDateString() : 'Never'}</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="rotateKey('${key.id}')" class="text-autonomy-blue hover:underline text-sm">
+                                Rotate
+                            </button>
+                            <button onclick="revokeKey('${key.id}')" class="text-red-600 hover:underline text-sm">
+                                Revoke
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <p class="text-xs text-autonomy-gray mb-1">API Key:</p>
+                        <code class="bg-gray-100 px-2 py-1 rounded text-sm">${key.key}</code>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Create API key modal
+        document.getElementById('create-key-btn').addEventListener('click', () => {
+            document.getElementById('create-key-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('cancel-create').addEventListener('click', () => {
+            document.getElementById('create-key-modal').classList.add('hidden');
+        });
+
+        // Create API key form
+        document.getElementById('create-key-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('key-name').value;
+            
+            try {
+                const response = await fetch('/api/keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ name })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('create-key-modal').classList.add('hidden');
+                    document.getElementById('key-name').value = '';
+                    loadApiKeys(); // Reload the list
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        });
+
+        // Rotate API key
+        async function rotateKey(keyId) {
+            if (!confirm('Are you sure you want to rotate this API key? The old key will be invalidated.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/keys/${keyId}/rotate`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    loadApiKeys(); // Reload the list
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        }
+
+        // Revoke API key
+        async function revokeKey(keyId) {
+            if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/keys/${keyId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    loadApiKeys(); // Reload the list
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        }
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                window.location.href = '/auth.html';
+            } catch (error) {
+                window.location.href = '/auth.html';
+            }
+        });
+    </script>
+</body>
+</html> 

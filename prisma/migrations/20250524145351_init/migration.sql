@@ -1,0 +1,16 @@
+-- CreateTable
+CREATE TABLE "Wallet" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "balanceSat" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- CreateTable
+CREATE TABLE "Agent" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "walletId" TEXT NOT NULL,
+    "limitSat" INTEGER NOT NULL,
+    "spentTodaySat" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Agent_walletId_fkey" FOREIGN KEY ("walletId") REFERENCES "Wallet" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);

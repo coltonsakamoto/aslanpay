@@ -1,0 +1,33 @@
+# Database
+DATABASE_URL="file:./dev.db"
+
+# Stripe (for credit card processing)
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_PUBLISHABLE_KEY="pk_test_..."
+
+# Real Purchase API Keys
+NAMECHEAP_API_KEY="your_namecheap_api_key"
+NAMECHEAP_API_USER="your_namecheap_username"
+NAMECHEAP_CLIENT_IP="your_server_ip"
+
+# AWS (for credits)
+AWS_ACCESS_KEY_ID="your_aws_access_key"
+AWS_SECRET_ACCESS_KEY="your_aws_secret_key"
+
+# DigitalOcean (for VPS)
+DIGITALOCEAN_API_TOKEN="your_do_token"
+
+# Tango Card (for gift cards)
+TANGO_API_KEY="your_tango_api_key"
+TANGO_CUSTOMER_ID="your_tango_customer_id"
+
+# Twilio (for SMS - already working!)
+TWILIO_ACCOUNT_SID="your_twilio_sid"
+TWILIO_AUTH_TOKEN="your_twilio_token"
+TWILIO_PHONE_NUMBER="your_twilio_number"
+
+# Amadeus (for flights)
+AMADEUS_ACCESS_TOKEN="your_amadeus_token"
+
+# OpenAI (for AI integration)
+OPENAI_API_KEY="your_openai_key" 

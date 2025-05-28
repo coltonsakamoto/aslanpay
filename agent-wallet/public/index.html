@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentPay - Your AI Shopping Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        /* Animated Background */
+        .bg-animated {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c, #4facfe, #00f2fe);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-card-dark {
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Floating Animation */
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        /* Hover Effects */
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Pulse Animation */
+        .pulse-gentle {
+            animation: pulseGentle 2s infinite;
+        }
+        
+        @keyframes pulseGentle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Button Animations */
+        .btn-magic {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-magic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-magic:hover::before {
+            left: 100%;
+        }
+        
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 3px;
+        }
+        
+        /* Floating Particles */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: floatUp 8s infinite linear;
+        }
+        
+        @keyframes floatUp {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh) rotate(0deg);
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) rotate(360deg);
+            }
+        }
+        
+        /* Input Focus Effects */
+        .input-magic {
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .input-magic:focus {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* Chat Bubble Animation */
+        .chat-bubble {
+            animation: bubbleIn 0.5s ease-out;
+        }
+        
+        @keyframes bubbleIn {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* Loading Dots */
+        .loading-dots {
+            display: inline-block;
+        }
+        
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body class="bg-animated min-h-screen relative overflow-x-hidden">
+    <!-- Floating Particles -->
+    <div id="particles" class="fixed inset-0 pointer-events-none z-0"></div>
+    
+    <!-- Header -->
+    <header class="relative z-10 py-8">
+        <div class="container mx-auto px-4">
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-2xl float">
+                            🚀
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold text-white">AgentPay</h1>
+                            <p class="text-white/80 text-sm">Your AI Shopping Assistant</p>
+                        </div>
+                    </div>
+                    <div class="text-right hidden md:block">
+                        <p class="text-white/90 font-medium">AI-Powered Commerce</p>
+                        <p class="text-white/70 text-sm">Shop smarter, not harder</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="relative z-10 container mx-auto px-4 py-8">
+        <!-- Hero Section -->
+        <div class="text-center mb-16">
+            <div class="glass-card rounded-3xl p-8 md:p-12 mb-8">
+                <h2 class="text-4xl md:text-6xl font-bold text-white mb-6">
+                    Shop with 
+                    <span class="gradient-text bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-pink-400">
+                        AI Magic
+                    </span> ✨
+                </h2>
+                <p class="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed">
+                    Tell me what you want, and I'll find it, compare prices, and get the best deals across the internet. 
+                    <span class="text-yellow-300">It's like having a super-smart shopping buddy!</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid md:grid-cols-3 gap-6 mb-16">
+            <!-- Flight Booking -->
+            <div class="glass-card rounded-2xl p-6 card-hover">
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 mx-auto bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-3xl mb-4 float">
+                        ✈️
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Find Flights</h3>
+                    <p class="text-white/80">I'll search 5+ sites to find your perfect trip</p>
+                </div>
+                <form id="flightForm" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" id="flightFrom" placeholder="From where?" 
+                               class="input-magic w-full px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input type="text" id="flightTo" placeholder="Going to?" 
+                               class="input-magic w-full px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="date" id="flightDepart" 
+                               class="input-magic px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input type="date" id="flightReturn" 
+                               class="input-magic px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="number" id="flightPassengers" placeholder="How many?" min="1" max="8" value="1"
+                               class="input-magic px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input type="number" id="flightBudget" placeholder="Budget per person" min="50" max="2000"
+                               class="input-magic px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                    <button type="submit" class="btn-magic w-full text-white py-4 rounded-xl font-semibold text-lg">
+                        🔍 Find My Flight
+                    </button>
+                </form>
+            </div>
+
+            <!-- Food Delivery -->
+            <div class="glass-card rounded-2xl p-6 card-hover">
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 mx-auto bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center text-3xl mb-4 float" style="animation-delay: 1s">
+                        🍕
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Order Food</h3>
+                    <p class="text-white/80">Craving something? I'll find the best spots!</p>
+                </div>
+                <form id="foodForm" class="space-y-4">
+                    <input type="text" id="foodAddress" placeholder="Where should I deliver?" 
+                           class="input-magic w-full px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-green-400">
+                    <input type="text" id="foodCuisine" placeholder="What are you feeling? (Pizza, BBQ...)" 
+                           class="input-magic w-full px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-green-400">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="number" id="foodPartySize" placeholder="How many people?" min="1" max="20" value="2"
+                               class="input-magic px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-green-400">
+                        <input type="number" id="foodBudget" placeholder="Budget" min="20" max="500"
+                               class="input-magic px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-green-400">
+                    </div>
+                    <select id="foodRating" class="input-magic w-full px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-green-400">
+                        <option value="">Any rating is fine</option>
+                        <option value="3.5">Good places (3.5+ stars)</option>
+                        <option value="4.0">Great places (4.0+ stars)</option>
+                        <option value="4.5">Amazing places (4.5+ stars)</option>
+                    </select>
+                    <button type="submit" class="btn-magic w-full text-white py-4 rounded-xl font-semibold text-lg" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        🛒 Find Food Now
+                    </button>
+                </form>
+            </div>
+
+            <!-- Smart Shopping -->
+            <div class="glass-card rounded-2xl p-6 card-hover">
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 mx-auto bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-3xl mb-4 float" style="animation-delay: 2s">
+                        🛍️
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Shop Smart</h3>
+                    <p class="text-white/80">Need something? I'll find the best deals!</p>
+                </div>
+                <form id="shoppingForm" class="space-y-4">
+                    <input type="text" id="shoppingQuery" placeholder="What do you need?" 
+                           class="input-magic w-full px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="number" id="shoppingBudget" placeholder="Max price" min="5" max="1000"
+                               class="input-magic px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                        <select id="shoppingRating" class="input-magic px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                            <option value="">Any rating</option>
+                            <option value="3.0">Decent (3.0+ stars)</option>
+                            <option value="4.0">Good (4.0+ stars)</option>
+                            <option value="4.5">Excellent (4.5+ stars)</option>
+                        </select>
+                    </div>
+                    <input type="text" id="shoppingCategory" placeholder="Category (optional)" 
+                           class="input-magic w-full px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                    <button type="submit" class="btn-magic w-full text-white py-4 rounded-xl font-semibold text-lg" style="background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);">
+                        🔍 Find Best Deal
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- AI Chat Interface -->
+        <div class="glass-card rounded-3xl p-8 mb-16">
+            <div class="text-center mb-8">
+                <h3 class="text-3xl font-bold text-white mb-4">
+                    💬 Just Talk to Me!
+                </h3>
+                <p class="text-xl text-white/90 max-w-2xl mx-auto">
+                    Don't like forms? No problem! Just tell me what you want in plain English and I'll handle everything.
+                </p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto">
+                <div id="chatHistory" class="glass-card-dark rounded-2xl p-6 min-h-[300px] mb-6 overflow-y-auto custom-scroll">
+                    <div class="text-center text-white/70 py-8">
+                        <div class="pulse-gentle text-4xl mb-4">🤖</div>
+                        <p class="text-lg mb-6">Hi! I'm your AI shopping assistant. Try saying something like:</p>
+                        <div class="space-y-3 text-left max-w-2xl mx-auto">
+                            <div class="glass-card rounded-xl p-4 text-white/90">
+                                💭 "Book me a flight to Nashville for my bachelor party"
+                            </div>
+                            <div class="glass-card rounded-xl p-4 text-white/90">
+                                💭 "Order some good BBQ for 4 people in downtown Nashville"
+                            </div>
+                            <div class="glass-card rounded-xl p-4 text-white/90">
+                                💭 "Find me a good USB cable under $25"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <form id="chatForm" class="flex gap-4">
+                    <input type="text" id="chatInput" placeholder="What can I help you find today? ✨" 
+                           class="input-magic flex-1 px-6 py-4 rounded-2xl border-0 focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg">
+                    <button type="submit" class="btn-magic px-8 py-4 rounded-2xl font-semibold text-lg flex items-center space-x-2">
+                        <span>Send</span>
+                        <span class="text-xl">🚀</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Purchase Approval Modal -->
+    <div id="purchaseApprovalModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="glass-card rounded-3xl p-8 max-w-md w-full mx-4">
+            <div class="text-center mb-6">
+                <div class="text-4xl mb-4">🛡️</div>
+                <h3 class="text-2xl font-bold text-white mb-2">Purchase Approval Required</h3>
+                <p class="text-white/80">Your AI agent wants to make a purchase</p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="glass-card rounded-xl p-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-white/90">
+                            <span class="font-medium">Service:</span>
+                            <span id="approvalService" class="text-blue-300">-</span>
+                        </div>
+                        <div class="flex justify-between text-white/90">
+                            <span class="font-medium">Estimated Cost:</span>
+                            <span id="approvalCost" class="text-green-300 font-bold">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-white/70 text-sm">
+                            <span>Platform Fee (1%):</span>
+                            <span id="approvalFee">$0.00</span>
+                        </div>
+                        <div class="border-t border-white/20 pt-2 mt-2">
+                            <div class="flex justify-between text-white font-bold">
+                                <span>Total:</span>
+                                <span id="approvalTotal">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl p-4">
+                    <h5 class="text-white font-medium mb-2">📋 Request Details:</h5>
+                    <div id="approvalDetails" class="text-white/80 text-sm">
+                        <!-- Details will be populated here -->
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl p-4">
+                    <h5 class="text-white font-medium mb-2">📊 Your Limits:</h5>
+                    <div class="space-y-1 text-sm">
+                        <div class="flex justify-between text-white/70">
+                            <span>Daily Spent:</span>
+                            <span id="approvalDailySpent">$0 / $50</span>
+                        </div>
+                        <div class="flex justify-between text-white/70">
+                            <span>Per-Transaction Limit:</span>
+                            <span id="approvalTransactionLimit">$50</span>
+                        </div>
+                        <div id="approvalWarning" class="text-red-400 text-xs mt-2 hidden">
+                            ⚠️ This purchase exceeds your set limits
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-4">
+                    <button type="button" id="rejectPurchase" class="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors">
+                        ❌ Reject
+                    </button>
+                    <button type="button" id="approvePurchase" class="flex-1 btn-magic py-3 rounded-xl text-white font-semibold">
+                        ✅ Approve Purchase
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Footer -->
+    <footer class="relative z-10 py-12">
+        <div class="container mx-auto px-4">
+            <div class="glass-card rounded-2xl p-8">
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-white mb-4">🤖 AI-Powered Shopping</h3>
+                    <p class="text-white/80 mb-6 max-w-2xl mx-auto">
+                        Connect me with ChatGPT, Claude, or any AI assistant to make shopping completely hands-free. 
+                        I search multiple sites, compare prices, and handle everything automatically.
+                    </p>
+                    <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                        <div class="glass-card-dark rounded-xl p-4">
+                            <div class="text-2xl mb-2">🔍</div>
+                            <h4 class="font-semibold text-white">Smart Search</h4>
+                            <p class="text-white/70 text-sm">I search 5+ sites simultaneously</p>
+                        </div>
+                        <div class="glass-card-dark rounded-xl p-4">
+                            <div class="text-2xl mb-2">💰</div>
+                            <h4 class="font-semibold text-white">Best Prices</h4>
+                            <p class="text-white/70 text-sm">Always find the best deals</p>
+                        </div>
+                        <div class="glass-card-dark rounded-xl p-4">
+                            <div class="text-2xl mb-2">⚡</div>
+                            <h4 class="font-semibold text-white">Super Fast</h4>
+                            <p class="text-white/70 text-sm">Get results in seconds</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global state
+        let currentWallet = null;
+        let currentAgent = null;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for existing wallet and agent in localStorage
+            const savedWalletId = localStorage.getItem('agentpay_wallet_id');
+            const savedAgentToken = localStorage.getItem('agentpay_agent_token');
+            
+            if (savedWalletId) {
+                loadWallet(savedWalletId);
+            }
+            
+            if (savedAgentToken) {
+                currentAgent = { token: savedAgentToken };
+            }
+            
+            // Set default dates
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 7); // Default to next week
+            
+            document.getElementById('flightDepart').value = tomorrow.toISOString().split('T')[0];
+            
+            const returnDate = new Date(tomorrow);
+            returnDate.setDate(returnDate.getDate() + 3);
+            document.getElementById('flightReturn').value = returnDate.toISOString().split('T')[0];
+            
+            // Initialize floating particles
+            createFloatingParticles();
+            
+            // Purchase approval event listeners
+            document.getElementById('approvePurchase').addEventListener('click', function() {
+                document.getElementById('purchaseApprovalModal').classList.add('hidden');
+                executeApprovedPurchase();
+            });
+            
+            document.getElementById('rejectPurchase').addEventListener('click', function() {
+                document.getElementById('purchaseApprovalModal').classList.add('hidden');
+                addChatMessage('assistant', '❌ Purchase rejected. What else can I help you with?');
+                window.pendingPurchase = null;
+            });
+            
+            // Add welcome message to chat
+            setTimeout(() => {
+                addChatMessage('assistant', '👋 Hey there! I\'m your AI shopping assistant. I\'ll ask for approval before making any purchases. What would you like to find today?');
+            }, 1000);
+        });
+
+        // Create floating particles effect
+        function createFloatingParticles() {
+            const particlesContainer = document.getElementById('particles');
+            
+            function createParticle() {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 5) + 's';
+                particlesContainer.appendChild(particle);
+                
+                // Remove particle after animation
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 8000);
+            }
+            
+            // Create initial particles
+            for (let i = 0; i < 10; i++) {
+                setTimeout(createParticle, i * 500);
+            }
+            
+            // Continuously create new particles
+            setInterval(createParticle, 800);
+        }
+
+        // Service form handlers
+        document.getElementById('flightForm').addEventListener('submit', handleFlightSearch);
+        document.getElementById('foodForm').addEventListener('submit', handleFoodOrder);
+        document.getElementById('shoppingForm').addEventListener('submit', handleShopping);
+        document.getElementById('chatForm').addEventListener('submit', handleChatMessage);
+
+        // Flight booking handler
+        async function handleFlightSearch(event) {
+            event.preventDefault();
+            
+            const params = {
+                from: document.getElementById('flightFrom').value,
+                to: document.getElementById('flightTo').value,
+                departDate: document.getElementById('flightDepart').value,
+                returnDate: document.getElementById('flightReturn').value || null,
+                passengers: parseInt(document.getElementById('flightPassengers').value),
+                maxPrice: parseFloat(document.getElementById('flightBudget').value)
+            };
+            
+            if (!params.from || !params.to || !params.departDate || !params.maxPrice) {
+                showToast('Please fill in all required fields ✨', 'error');
+                return;
+            }
+            
+            addChatMessage('assistant', `🔍 Searching for flights from ${params.from} to ${params.to}... This might take a moment while I check multiple sites!`);
+            await searchFlights(params);
+        }
+
+        // Food delivery handler
+        async function handleFoodOrder(event) {
+            event.preventDefault();
+            
+            const params = {
+                deliveryAddress: document.getElementById('foodAddress').value,
+                cuisine: document.getElementById('foodCuisine').value || 'Mixed',
+                partySize: parseInt(document.getElementById('foodPartySize').value),
+                maxPrice: parseFloat(document.getElementById('foodBudget').value),
+                restaurantRating: parseFloat(document.getElementById('foodRating').value) || 0
+            };
+            
+            if (!params.deliveryAddress || !params.maxPrice) {
+                showToast('Please tell me where to deliver and your budget! 🚚', 'error');
+                return;
+            }
+            
+            addChatMessage('assistant', `🍽️ Looking for ${params.cuisine || 'delicious'} food for ${params.partySize} people... Let me find the best spots!`);
+            await makePurchase('food-delivery', params, 'Finding amazing restaurants...');
+        }
+
+        // Shopping handler
+        async function handleShopping(event) {
+            event.preventDefault();
+            
+            const params = {
+                query: document.getElementById('shoppingQuery').value,
+                maxPrice: parseFloat(document.getElementById('shoppingBudget').value),
+                minRating: parseFloat(document.getElementById('shoppingRating').value) || 0,
+                category: document.getElementById('shoppingCategory').value || null
+            };
+            
+            if (!params.query || !params.maxPrice) {
+                showToast('Tell me what you need and your budget! 💝', 'error');
+                return;
+            }
+            
+            addChatMessage('assistant', `🛍️ Searching for "${params.query}" under $${params.maxPrice}... I'll find you the best deals!`);
+            await makePurchase('shopping', params, 'Hunting for the best deals...');
+        }
+
+        // AI Chat handler
+        async function handleChatMessage(event) {
+            event.preventDefault();
+            
+            const message = document.getElementById('chatInput').value.trim();
+            if (!message) return;
+            
+            // Add user message to chat
+            addChatMessage('user', message);
+            document.getElementById('chatInput').value = '';
+            
+            // Show typing indicator
+            const typingId = showTypingIndicator();
+            
+            // Parse message and convert to API call
+            const intent = parseUserIntent(message);
+            
+            setTimeout(() => {
+                removeTypingIndicator(typingId);
+                
+                if (intent) {
+                    if (intent.service === 'flight-search') {
+                        addChatMessage('assistant', `✈️ Searching for flights from ${intent.params.from} to ${intent.params.to}... Let me find you some great options!`);
+                        searchFlights(intent.params);
+                    } else if (intent.service === 'flight-booking') {
+                        addChatMessage('assistant', `Perfect! Let me book that flight for you... ✈️`);
+                        bookSelectedFlight(intent.params);
+                    } else if (intent.service === 'product-purchase') {
+                        addChatMessage('assistant', `Great choice! Let me order that for you... 🛍️`);
+                        bookSelectedProduct(intent.params);
+                    } else {
+                        addChatMessage('assistant', `I understand! Let me ${intent.action} for you... ✨`);
+                        makePurchase(intent.service, intent.params, `Processing ${intent.action}...`);
+                    }
+                } else {
+                    addChatMessage('assistant', '🤔 I can help you with flights ✈️, food delivery 🍕, and shopping 🛍️! Try saying something like "Find me a flight to Nashville" or "Order pizza for 4 people".');
+                }
+            }, 1000);
+        }
+
+        // Show typing indicator
+        function showTypingIndicator() {
+            const chatHistory = document.getElementById('chatHistory');
+            const typingDiv = document.createElement('div');
+            const typingId = 'typing_' + Date.now();
+            typingDiv.id = typingId;
+            typingDiv.className = 'mb-4 text-left';
+            
+            typingDiv.innerHTML = `
+                <div class="inline-block glass-card rounded-2xl px-6 py-4 chat-bubble">
+                    <div class="flex items-center space-x-2">
+                        <div class="text-2xl">🤖</div>
+                        <div class="text-white">
+                            <div class="text-xs opacity-75 mb-1">AgentPay AI</div>
+                            <div class="loading-dots text-white/90">Thinking</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatHistory.appendChild(typingDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            return typingId;
+        }
+
+        // Remove typing indicator
+        function removeTypingIndicator(typingId) {
+            const typingElement = document.getElementById(typingId);
+            if (typingElement && typingElement.parentNode) {
+                typingElement.parentNode.removeChild(typingElement);
+            }
+        }
+
+        // Parse natural language to structured request
+        function parseUserIntent(message) {
+            const lower = message.toLowerCase();
+            
+            console.log('🤖 Parsing user intent:', lower); // Debug log
+            
+            // Check if user is selecting a flight from current options
+            if (window.currentFlightOptions && (
+                lower.includes('book') || 
+                lower.includes('want') || 
+                lower.includes('choose') || 
+                lower.includes('select') ||
+                lower.includes('cheapest') ||
+                lower.includes('first') ||
+                lower.includes('united') ||
+                lower.includes('delta') ||
+                lower.includes('american') ||
+                lower.includes('southwest') ||
+                lower.includes('alaska')
+            )) {
+                return {
+                    service: 'flight-booking',
+                    action: 'book selected flight',
+                    params: { message: message, options: window.currentFlightOptions }
+                };
+            }
+            
+            // Check if user is selecting a product from current options
+            if (window.currentShoppingOptions && (
+                lower.includes('buy') || 
+                lower.includes('order') ||
+                lower.includes('purchase') ||
+                lower.includes('want') || 
+                lower.includes('choose') || 
+                lower.includes('select') ||
+                lower.includes('cheapest') ||
+                lower.includes('first') ||
+                lower.includes('anker') ||
+                lower.includes('apple') ||
+                lower.includes('samsung') ||
+                lower.includes('premium') ||
+                lower.includes('budget')
+            )) {
+                return {
+                    service: 'product-purchase',
+                    action: 'buy selected product',
+                    params: { message: message, options: window.currentShoppingOptions }
+                };
+            }
+            
+            // **PRIORITY 1: Food delivery patterns (FIRST to avoid conflicts)**
+            const foodKeywords = ['food', 'pizza', 'bbq', 'delivery', 'burrito', 'bowl', 'sandwich', 'burger', 'taco', 'salad', 'pasta', 'noodles', 'sushi', 'ramen', 'curry', 'chicken', 'beef', 'pork', 'rice', 'soup', 'breakfast', 'lunch', 'dinner', 'eat', 'hungry', 'meal'];
+            const restaurantNames = ['chipotle', 'mcdonalds', 'subway', 'dominos', 'kfc', 'taco bell', 'starbucks', 'pizza hut', 'wendys', 'burger king', 'panera', 'chick-fil-a', 'olive garden', 'applebees', 'chilis', 'outback', 'red lobster', 'ihop', 'dennys', 'panda express'];
+            
+            const hasFoodKeyword = foodKeywords.some(keyword => lower.includes(keyword));
+            const hasRestaurantName = restaurantNames.some(name => lower.includes(name));
+            const hasOrderAction = lower.includes('order') || lower.includes('get') || lower.includes('buy');
+            const hasDeliveryContext = lower.includes('delivery') || lower.includes('deliver');
+            
+            // Enhanced food detection with debugging
+            const isFoodRequest = (hasOrderAction && hasFoodKeyword) || hasRestaurantName || (hasDeliveryContext && hasFoodKeyword) || (hasOrderAction && hasRestaurantName);
+            
+            console.log('🍔 Food detection:', {
+                hasFoodKeyword,
+                hasRestaurantName, 
+                hasOrderAction,
+                hasDeliveryContext,
+                isFoodRequest
+            });
+            
+            if (isFoodRequest) {
+                console.log('✅ Detected as FOOD DELIVERY request');
+                return {
+                    service: 'food-delivery',
+                    action: 'find restaurants',
+                    params: extractFoodParams(message)
+                };
+            }
+            
+            // **PRIORITY 2: Flight booking patterns (MORE SPECIFIC)**
+            const hasFlightKeywords = lower.includes('flight') || lower.includes('flights') || lower.includes('airline');
+            const hasFlightActions = lower.includes('fly to') || lower.includes('flying to') || lower.includes('plane to');
+            const hasFlightBooking = lower.includes('book') && (lower.includes('ticket') || lower.includes('trip'));
+            const hasAirportPattern = /\b(airport|lax|jfk|ord|atl|dfw|den|las|phx|sea|bos|nyc|sfo|mia)\b/i.test(message);
+            
+            // More specific flight detection (avoid false positives)
+            const isFlightRequest = hasFlightKeywords || hasFlightActions || hasFlightBooking || hasAirportPattern ||
+                                  (lower.includes('travel to') && !hasFoodKeyword && !hasRestaurantName);
+            
+            console.log('✈️ Flight detection:', {
+                hasFlightKeywords,
+                hasFlightActions,
+                hasFlightBooking,
+                hasAirportPattern,
+                isFlightRequest
+            });
+            
+            if (isFlightRequest) {
+                console.log('✅ Detected as FLIGHT request');
+                return {
+                    service: 'flight-search',
+                    action: 'search for flights',
+                    params: extractFlightParams(message)
+                };
+            }
+            
+            // **PRIORITY 3: Shopping patterns**
+            const shoppingActions = ['buy', 'find', 'get me', 'purchase', 'shop', 'need'];
+            const hasShoppingAction = shoppingActions.some(action => lower.includes(action));
+            const hasProductContext = !hasFoodKeyword && !hasRestaurantName && !hasFlightKeywords;
+            
+            console.log('🛍️ Shopping detection:', {
+                hasShoppingAction,
+                hasProductContext,
+                isShoppingRequest: hasShoppingAction && hasProductContext
+            });
+            
+            if (hasShoppingAction && hasProductContext) {
+                console.log('✅ Detected as SHOPPING request');
+                return {
+                    service: 'shopping',
+                    action: 'find products',
+                    params: extractShoppingParams(message)
+                };
+            }
+            
+            console.log('❌ No clear intent detected');
+            return null;
+        }
+
+        // Extract flight parameters from natural language
+        function extractFlightParams(message) {
+            const params = {
+                from: 'San Francisco', // Default
+                to: 'Nashville',       // Default
+                departDate: document.getElementById('flightDepart').value,
+                returnDate: document.getElementById('flightReturn').value,
+                passengers: 1,
+                maxPrice: 600  // More reasonable default for demos
+            };
+            
+            // Extract destination (various patterns)
+            const toPatterns = [
+                /(?:to|fly to|going to|flying to)\s+([a-zA-Z\s]+?)(?:\s+from|\s|$|,|\.|for)/i,
+                /flights?\s+to\s+([a-zA-Z\s]+?)(?:\s+from|\s|$|,|\.|for)/i
+            ];
+            
+            for (const pattern of toPatterns) {
+                const match = message.match(pattern);
+                if (match) {
+                    params.to = match[1].trim();
+                    break;
+                }
+            }
+            
+            // Extract source (various patterns)
+            const fromPatterns = [
+                /(?:from|leaving from|departing from)\s+([a-zA-Z\s]+?)(?:\s+to|\s+on|\s|$|,|\.)/i,
+                /flights?\s+to\s+[a-zA-Z\s]+?\s+from\s+([a-zA-Z\s]+?)(?:\s+on|\s|$|,|\.)/i
+            ];
+            
+            for (const pattern of fromPatterns) {
+                const match = message.match(pattern);
+                if (match) {
+                    params.from = match[1].trim();
+                    break;
+                }
+            }
+            
+            // Extract date patterns
+            const datePatterns = [
+                /on\s+([a-zA-Z]+ \d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})/i,
+                /on\s+(\d{1,2}\/\d{1,2}\/\d{4})/i,
+                /(\d{4}-\d{2}-\d{2})/i,
+                /(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}/i
+            ];
+            
+            for (const pattern of datePatterns) {
+                const match = message.match(pattern);
+                if (match) {
+                    try {
+                        const dateStr = match[1] || match[0];
+                        const parsedDate = new Date(dateStr);
+                        if (!isNaN(parsedDate.getTime())) {
+                            params.departDate = parsedDate.toISOString().split('T')[0];
+                        }
+                    } catch (e) {
+                        console.log('Date parsing failed:', e);
+                    }
+                    break;
+                }
+            }
+            
+            // Extract passenger count
+            const passengerPattern = /(\d+)\s*(?:people|person|passenger)/i;
+            const passengerMatch = message.match(passengerPattern);
+            if (passengerMatch) params.passengers = parseInt(passengerMatch[1]);
+            
+            console.log('Extracted flight params:', params); // Debug log
+            
+            return params;
+        }
+
+        // Extract food parameters from natural language - AI-INTELLIGENT PARSING
+        function extractFoodParams(message) {
+            const lower = message.toLowerCase();
+            const original = message; // Keep original for case-sensitive patterns
+            
+            console.log('🧠 AI-parsing food request:', message);
+            
+            const params = {
+                deliveryAddress: '1234 Main St, Downtown', // Default
+                cuisine: 'Mixed',
+                partySize: 1, // Default to 1 person (most common)
+                maxPrice: 50,
+                restaurantRating: 4.0,
+                specificRestaurant: null,
+                foodItems: []
+            };
+            
+            // **INTELLIGENT RESTAURANT DETECTION**
+            const restaurantMap = {
+                'chipotle': { name: 'Chipotle', cuisine: 'Mexican' },
+                'mcdonalds': { name: 'McDonald\'s', cuisine: 'Fast Food' },
+                'subway': { name: 'Subway', cuisine: 'Sandwiches' },
+                'dominos': { name: 'Domino\'s', cuisine: 'Pizza' },
+                'kfc': { name: 'KFC', cuisine: 'Chicken' },
+                'taco bell': { name: 'Taco Bell', cuisine: 'Mexican' },
+                'starbucks': { name: 'Starbucks', cuisine: 'Coffee' },
+                'pizza hut': { name: 'Pizza Hut', cuisine: 'Pizza' },
+                'wendys': { name: 'Wendy\'s', cuisine: 'Fast Food' },
+                'burger king': { name: 'Burger King', cuisine: 'Fast Food' },
+                'panera': { name: 'Panera', cuisine: 'Bakery' },
+                'chick-fil-a': { name: 'Chick-fil-A', cuisine: 'Chicken' }
+            };
+            
+            for (const [key, restaurant] of Object.entries(restaurantMap)) {
+                if (lower.includes(key)) {
+                    params.specificRestaurant = restaurant.name;
+                    params.cuisine = restaurant.cuisine;
+                    console.log(`🏪 Detected restaurant: ${restaurant.name}`);
+                    break;
+                }
+            }
+            
+            // **SUPER INTELLIGENT ADDRESS EXTRACTION**
+            let extractedAddress = null;
+            
+            // Pattern 1: Address in brackets [1264 E Lone Creek Dr, Eagle, ID 83616]
+            const bracketMatch = original.match(/\[([^\]]+)\]/);
+            if (bracketMatch) {
+                extractedAddress = bracketMatch[1].trim();
+                console.log('📍 Found bracketed address:', extractedAddress);
+            }
+            
+            // Pattern 2: Full street address with city, state, zip
+            if (!extractedAddress) {
+                const fullAddressPattern = /(\d{1,6}\s+[a-zA-Z0-9\s,.-]+(?:St|Street|Ave|Avenue|Rd|Road|Dr|Drive|Blvd|Boulevard|Ln|Lane|Ct|Court|Pl|Place|Way|Circle|Cir|Pkwy|Parkway)[\s,]*[a-zA-Z\s,]+(?:,\s*[A-Z]{2})?\s*\d{5})/i;
+                const fullMatch = original.match(fullAddressPattern);
+                if (fullMatch) {
+                    extractedAddress = fullMatch[1].trim();
+                    console.log('📍 Found full address:', extractedAddress);
+                }
+            }
+            
+            // Pattern 3: "delivery to X" or "deliver to X" (simple)
+            if (!extractedAddress) {
+                const deliveryPatterns = [
+                    /(?:delivery to|deliver to|to)\s+([^,]+(?:,\s*[^,]+){0,2})(?:\s*,\s*budget|\s*budget|\s*\$|$)/i
+                ];
+                
+                for (const pattern of deliveryPatterns) {
+                    const match = original.match(pattern);
+                    if (match) {
+                        let addr = match[1].trim();
+                        // Clean up - remove budget info if it got caught
+                        addr = addr.replace(/,?\s*budget.*$/i, '');
+                        addr = addr.replace(/,?\s*\$\d+.*$/i, '');
+                        
+                        if (addr && addr.length > 5 && !addr.includes('Chipotle')) { // Sanity check
+                            extractedAddress = addr;
+                            console.log('📍 Found delivery address:', extractedAddress);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (extractedAddress) {
+                params.deliveryAddress = extractedAddress;
+            }
+            
+            // **INTELLIGENT PARTY SIZE DETECTION**
+            // Look for explicit numbers: "for 4 people", "4 burritos", etc.
+            const explicitPartyPatterns = [
+                /(\d+)\s*(?:people|persons|guests|friends|coworkers)/i,
+                /(?:for|feeding)\s*(\d+)/i,
+                /(\d+)\s*(?:burritos|bowls|meals|orders)/i
+            ];
+            
+            let explicitPartySize = null;
+            for (const pattern of explicitPartyPatterns) {
+                const match = message.match(pattern);
+                if (match) {
+                    explicitPartySize = parseInt(match[1]);
+                    console.log(`👥 Explicit party size found: ${explicitPartySize}`);
+                    break;
+                }
+            }
+            
+            if (explicitPartySize) {
+                params.partySize = explicitPartySize;
+            } else {
+                // **SMART INFERENCE FROM LANGUAGE**
+                if (lower.includes('we want') || lower.includes('we need') || lower.includes('us ') || lower.includes('our ')) {
+                    params.partySize = 2; // "We" implies at least 2 people
+                    console.log('👥 Inferred party size: 2 (detected "we/us/our")');
+                } else if (lower.includes('a chicken') || lower.includes('one ') || lower.includes('get me')) {
+                    params.partySize = 1; // Singular language
+                    console.log('👥 Inferred party size: 1 (singular language)');
+                } else {
+                    params.partySize = 1; // Default to 1
+                    console.log('👥 Default party size: 1');
+                }
+            }
+            
+            // **INTELLIGENT FOOD ITEMS EXTRACTION**
+            const foodItemsMap = {
+                'burrito': ['burrito'],
+                'bowl': ['bowl'],
+                'chicken': ['chicken'],
+                'beef': ['beef', 'steak'],
+                'pork': ['pork', 'carnitas'],
+                'rice': ['rice'],
+                'beans': ['beans'],
+                'guac': ['guac', 'guacamole'],
+                'salsa': ['salsa'],
+                'cheese': ['cheese'],
+                'lettuce': ['lettuce'],
+                'tomato': ['tomato', 'tomatoes'],
+                'onion': ['onion', 'onions'],
+                'pepper': ['pepper', 'peppers'],
+                'chips': ['chips'],
+                'drink': ['drink', 'soda', 'water', 'beverage']
+            };
+            
+            for (const [category, items] of Object.entries(foodItemsMap)) {
+                for (const item of items) {
+                    if (lower.includes(item)) {
+                        if (!params.foodItems.includes(category)) {
+                            params.foodItems.push(category);
+                        }
+                    }
+                }
+            }
+            
+            console.log(`🍽️ Detected food items: ${params.foodItems.join(', ')}`);
+            
+            // **INTELLIGENT BUDGET EXTRACTION**
+            const budgetPatterns = [
+                /budget\s*\$?(\d+(?:\.\d{2})?)/i,
+                /under\s*\$?(\d+(?:\.\d{2})?)/i,
+                /\$(\d+(?:\.\d{2})?)\s*(?:budget|max|limit|or less)/i,
+                /spend\s*\$?(\d+(?:\.\d{2})?)/i,
+                /\$(\d+(?:\.\d{2})?)/
+            ];
+            
+            for (const pattern of budgetPatterns) {
+                const match = message.match(pattern);
+                if (match) {
+                    const budget = parseFloat(match[1]);
+                    if (budget >= 5 && budget <= 500) { // Sanity check
+                        params.maxPrice = budget;
+                        console.log(`💰 Detected budget: $${budget}`);
+                        break;
+                    }
+                }
+            }
+            
+            // **FINAL INTELLIGENCE CHECK**
+            console.log('🧠 Final extracted params:', {
+                restaurant: params.specificRestaurant,
+                address: params.deliveryAddress,
+                partySize: params.partySize,
+                budget: params.maxPrice,
+                foodItems: params.foodItems
+            });
+            
+            return params;
+        }
+
+        // Extract shopping parameters from natural language
+        function extractShoppingParams(message) {
+            const params = {
+                query: 'USB cable',
+                maxPrice: 25,
+                minRating: 4.0
+            };
+            
+            // Extract product query (everything after "buy", "find", "get me")
+            const queryPattern = /(?:buy|find|get me|purchase|need|shop for)\s+(?:a\s+|an\s+|some\s+)?([^$]+?)(?:\s+under|\s+for|\s*$)/i;
+            const queryMatch = message.match(queryPattern);
+            if (queryMatch) params.query = queryMatch[1].trim();
+            
+            // Extract price
+            const pricePattern = /\$?(\d+(?:\.\d{2})?)/;
+            const priceMatch = message.match(pricePattern);
+            if (priceMatch) params.maxPrice = parseFloat(priceMatch[1]);
+            
+            return params;
+        }
+
+        // Add message to chat history
+        function addChatMessage(sender, message) {
+            const chatHistory = document.getElementById('chatHistory');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 ${sender === 'user' ? 'text-right' : 'text-left'} chat-bubble`;
+            
+            if (sender === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="inline-block glass-card rounded-2xl px-6 py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 1px solid rgba(255,255,255,0.3);">
+                        <div class="flex items-center justify-end space-x-2">
+                            <div class="text-white text-right">
+                                <div class="text-xs opacity-75 mb-1">You</div>
+                                <div class="text-white">${message}</div>
+                            </div>
+                            <div class="text-2xl">😊</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="inline-block glass-card rounded-2xl px-6 py-4 max-w-3xl">
+                        <div class="flex items-start space-x-3">
+                            <div class="text-2xl flex-shrink-0">🤖</div>
+                            <div class="text-white">
+                                <div class="text-xs opacity-75 mb-1">AgentPay AI</div>
+                                <div class="text-white/95">${message}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            chatHistory.appendChild(messageDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            // Remove initial placeholder if it exists
+            const placeholder = chatHistory.querySelector('.text-center.text-white\\/70');
+            if (placeholder) {
+                placeholder.remove();
+            }
+        }
+
+        // Show purchase approval instead of auto-executing
+        async function makePurchase(service, params, loadingMessage) {
+            // Ensure we have a wallet and agent
+            if (!currentWallet || !currentAgent) {
+                // Create wallet and agent with safe defaults
+                await createDemoWalletAndAgent();
+                
+                // Redirect to wallet setup
+                addChatMessage('assistant', '🔧 First, you need to set up payment methods and spending limits. Click here to go to your wallet: <a href="/wallet" class="text-blue-300 underline">Configure Wallet →</a>');
+                return;
+            }
+            
+            // Estimate cost based on service
+            const estimatedCost = estimatePurchaseCost(service, params);
+            
+            // Show approval modal instead of auto-purchasing
+            await showPurchaseApproval(service, params, estimatedCost, loadingMessage);
+        }
+        
+        // Estimate purchase cost
+        function estimatePurchaseCost(service, params) {
+            switch (service) {
+                case 'flight-search':
+                case 'flight':
+                    return params.maxPrice || 400;
+                case 'food-delivery':
+                case 'food':
+                    return params.maxPrice || params.budget || 50;
+                case 'shopping':
+                    return params.maxPrice || params.budget || 25;
+                case 'sms':
+                    return 0.01; // $0.01 per SMS
+                case 'call':
+                    return 0.05; // $0.05 per minute
+                case 'domain':
+                    return 12.99 * (params.years || 1);
+                case 'gift-card':
+                    return params.amount || 25;
+                case 'aws-credits':
+                    return params.amount || 25;
+                case 'vps':
+                    return 5.99; // Basic plan
+                case 'saas':
+                    return 10; // Typical monthly fee
+                default:
+                    return 25; // Default estimate
+            }
+        }
+        
+        // Show purchase approval modal
+        async function showPurchaseApproval(service, params, estimatedCost, loadingMessage) {
+            // Get current agent config and spending
+            let agentConfig = null;
+            try {
+                const response = await fetch(`/v1/agents/${currentAgent.token}/config`);
+                if (response.ok) {
+                    agentConfig = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading agent config:', error);
+            }
+            
+            // Calculate costs
+            const platformFee = Math.round(estimatedCost * 0.01 * 100) / 100;
+            const totalCost = estimatedCost + platformFee;
+            
+            // Populate modal
+            document.getElementById('approvalService').textContent = service.replace('-', ' ').toUpperCase();
+            document.getElementById('approvalCost').textContent = `$${estimatedCost.toFixed(2)}`;
+            document.getElementById('approvalFee').textContent = `$${platformFee.toFixed(2)}`;
+            document.getElementById('approvalTotal').textContent = `$${totalCost.toFixed(2)}`;
+            
+            // Show request details
+            const detailsElement = document.getElementById('approvalDetails');
+            let detailsHTML = '';
+            for (const [key, value] of Object.entries(params)) {
+                if (value && key !== 'maxPrice' && key !== 'budget') {
+                    detailsHTML += `<div><strong>${key}:</strong> ${value}</div>`;
+                }
+            }
+            detailsElement.innerHTML = detailsHTML || 'No additional details';
+            
+            // Show spending limits
+            if (agentConfig) {
+                const dailySpent = (agentConfig.spendingSummary?.dailySpent || 0) / 100;
+                const dailyLimit = (agentConfig.config?.dailyLimitUSD || 50);
+                const transactionLimit = (agentConfig.config?.transactionLimitUSD || 50);
+                
+                document.getElementById('approvalDailySpent').textContent = `$${dailySpent.toFixed(2)} / $${dailyLimit.toFixed(2)}`;
+                document.getElementById('approvalTransactionLimit').textContent = `$${transactionLimit.toFixed(2)}`;
+                
+                // Show warning if exceeds limits
+                const warningElement = document.getElementById('approvalWarning');
+                if (totalCost > transactionLimit || dailySpent + totalCost > dailyLimit) {
+                    warningElement.classList.remove('hidden');
+                } else {
+                    warningElement.classList.add('hidden');
+                }
+            }
+            
+            // Store purchase data for approval
+            window.pendingPurchase = { service, params, estimatedCost, totalCost, loadingMessage };
+            
+            // Show modal
+            document.getElementById('purchaseApprovalModal').classList.remove('hidden');
+        }
+        
+        // Execute approved purchase
+        async function executeApprovedPurchase() {
+            const purchase = window.pendingPurchase;
+            if (!purchase || !currentAgent) return;
+            
+            try {
+                showToast(purchase.loadingMessage + ' ✨', 'info');
+                
+                const response = await fetch('/v1/purchase-direct', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        agentToken: currentAgent.token,
+                        service: purchase.service,
+                        params: purchase.params
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showPurchaseResult(result);
+                    addChatMessage('assistant', `🎉 Purchase approved and completed! ${result.message}`);
+                } else {
+                    if (result.code === 'NO_PAYMENT_METHOD') {
+                        addChatMessage('assistant', '💳 You need to add a payment method first. <a href="/wallet" class="text-blue-300 underline">Go to wallet →</a>');
+                    } else {
+                        showToast(`Purchase failed: ${result.error} 😅`, 'error');
+                        addChatMessage('assistant', `😅 Purchase failed: ${result.error}. Please check your payment method and limits.`);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Purchase execution error:', error);
+                showToast('Purchase failed due to network error 🔄', 'error');
+                addChatMessage('assistant', '🔄 Purchase failed due to network error. Please try again.');
+            } finally {
+                window.pendingPurchase = null;
+            }
+        }
+
+        // Create wallet and agent with safe defaults
+        async function createDemoWalletAndAgent() {
+            try {
+                // Create wallet (no stored funds - direct pay model)
+                const walletResponse = await fetch('/v1/wallets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const wallet = await walletResponse.json();
+                
+                // Create agent with conservative limits
+                const agentResponse = await fetch('/v1/agents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        walletId: wallet.walletId,
+                        dailyUsdLimit: 50 // Conservative $50 daily limit
+                    })
+                });
+                const agent = await agentResponse.json();
+                
+                currentWallet = wallet;
+                currentAgent = { token: agent.agentToken };
+                
+                localStorage.setItem('agentpay_wallet_id', wallet.walletId);
+                localStorage.setItem('agentpay_agent_token', agent.agentToken);
+                
+                showToast('⚠️ Setup complete! Go to /wallet to add payment methods and set spending limits.', 'info');
+                
+            } catch (error) {
+                console.error('Setup error:', error);
+                showToast('Could not create wallet and agent 😔', 'error');
+            }
+        }
+
+        // Show purchase result
+        function showPurchaseResult(result) {
+            const details = result.details || {};
+            
+            let message = `
+                <div class="glass-card rounded-2xl p-6 border-2 border-green-400/50 mb-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="text-3xl">✅</div>
+                        <div>
+                            <h4 class="font-bold text-green-300 text-lg mb-3">Purchase Successful!</h4>
+                            <div class="text-white/90 space-y-2">
+                                <p><span class="text-green-300">Service:</span> ${result.service}</p>
+                                <p><span class="text-green-300">Amount:</span> $${result.serviceCost} + $${result.platformFee} fee = $${result.amount}</p>
+                                <p><span class="text-green-300">Transaction ID:</span> ${result.transactionId}</p>
+                                <p><span class="text-green-300">Remaining Balance:</span> $${result.remainingBalance}</p>
+            `;
+            
+            // Add service-specific details
+            if (details.airline) {
+                message += `<p><span class="text-blue-300">Flight:</span> ${details.airline} ${details.flightNumber || ''}</p>`;
+                message += `<p><span class="text-blue-300">Route:</span> ${details.from} → ${details.to}</p>`;
+            }
+            
+            if (details.restaurant) {
+                message += `<p><span class="text-green-300">Restaurant:</span> ${details.restaurant}</p>`;
+                message += `<p><span class="text-green-300">Items:</span> ${details.itemCount} items</p>`;
+            }
+            
+            if (details.product) {
+                message += `<p><span class="text-purple-300">Product:</span> ${details.product}</p>`;
+                message += `<p><span class="text-purple-300">Rating:</span> ${details.rating}/5 stars</p>`;
+            }
+            
+            message += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            addChatMessage('assistant', message);
+        }
+
+        // Load existing wallet
+        async function loadWallet(walletId) {
+            try {
+                const response = await fetch(`/v1/wallets/${walletId}`);
+                if (response.ok) {
+                    currentWallet = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading wallet:', error);
+            }
+        }
+
+        // Toast notification system
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = {
+                'success': 'bg-gradient-to-r from-green-500 to-emerald-500',
+                'error': 'bg-gradient-to-r from-red-500 to-pink-500',
+                'info': 'bg-gradient-to-r from-blue-500 to-purple-500'
+            }[type] || 'bg-gradient-to-r from-gray-500 to-gray-600';
+            
+            toast.className = `${bgColor} text-white px-6 py-4 rounded-2xl shadow-2xl transform transition-all duration-500 translate-x-full opacity-0 glass-card border border-white/20`;
+            toast.textContent = message;
+            
+            toastContainer.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            }, 100);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 500);
+            }, 5000);
+        }
+
+        // Search for flights and show options (no immediate purchase)
+        async function searchFlights(params) {
+            try {
+                // Clear any previous flight options
+                window.currentFlightOptions = null;
+                
+                showToast('Searching flights across 5+ sites... ✈️', 'info');
+                
+                // Simulate flight search (in production, this would call a search-only API)
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate search time
+                
+                // Mock flight results based on params
+                const flights = generateMockFlights(params);
+                
+                displayFlightOptions(flights, params);
+                
+            } catch (error) {
+                console.error('Flight search error:', error);
+                addChatMessage('assistant', '😅 Sorry, I had trouble searching for flights. Want to try again?');
+            }
+        }
+        
+        // Generate mock flight results
+        function generateMockFlights(params) {
+            const airlines = ['United', 'Delta', 'Southwest', 'American', 'Alaska'];
+            const flights = [];
+            
+            for (let i = 0; i < 3; i++) {
+                const basePrice = Math.floor(Math.random() * 200) + 250; // $250-450 base
+                const airline = airlines[Math.floor(Math.random() * airlines.length)];
+                const flightNumber = airline.substring(0, 2).toUpperCase() + (Math.floor(Math.random() * 9000) + 1000);
+                
+                flights.push({
+                    id: `flight_${i}`,
+                    airline: airline,
+                    flightNumber: flightNumber,
+                    price: basePrice,
+                    departureTime: `${7 + i * 2}:${['00', '30'][Math.floor(Math.random() * 2)]}am`,
+                    arrivalTime: `${11 + i * 2}:${['15', '45'][Math.floor(Math.random() * 2)]}pm`,
+                    duration: `${4 + Math.floor(Math.random() * 2)}h ${Math.floor(Math.random() * 60)}m`,
+                    stops: i === 0 ? 'Nonstop' : i === 1 ? '1 stop' : '2 stops'
+                });
+            }
+            
+            return flights.sort((a, b) => a.price - b.price);
+        }
+        
+        // Display flight options for user to choose
+        function displayFlightOptions(flights, params) {
+            let message = `🎉 Great! I found ${flights.length} flights from ${params.from} to ${params.to}:`;
+            
+            addChatMessage('assistant', message);
+            
+            // Create a formatted flight options display
+            const chatHistory = document.getElementById('chatHistory');
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'mb-4 text-left chat-bubble';
+            
+            let optionsHtml = '<div class="space-y-3">';
+            
+            flights.forEach((flight, index) => {
+                const emoji = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+                const totalPrice = flight.price * params.passengers;
+                
+                optionsHtml += `
+                    <div class="glass-card rounded-xl p-4 border border-white/20 hover:border-white/40 transition-all cursor-pointer flight-option" 
+                         data-flight-index="${index}"
+                         style="background: rgba(255, 255, 255, 0.05);">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="text-2xl">${emoji}</div>
+                                <div>
+                                    <div class="text-white font-semibold">${flight.airline} ${flight.flightNumber}</div>
+                                    <div class="text-white/80 text-sm">${flight.departureTime} → ${flight.arrivalTime}</div>
+                                    <div class="text-white/60 text-xs">${flight.duration} • ${flight.stops}</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-white font-bold text-lg">$${flight.price}</div>
+                                <div class="text-white/60 text-sm">per person</div>
+                                ${params.passengers > 1 ? `<div class="text-white/80 text-sm">$${totalPrice} total</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            optionsHtml += '</div>';
+            
+            optionsDiv.innerHTML = `
+                <div class="inline-block glass-card rounded-2xl px-6 py-4 max-w-4xl">
+                    <div class="flex items-start space-x-3">
+                        <div class="text-2xl flex-shrink-0">🤖</div>
+                        <div class="text-white w-full">
+                            <div class="text-xs opacity-75 mb-3">AgentPay AI</div>
+                            ${optionsHtml}
+                            <div class="mt-4 text-white/90 text-sm">
+                                💬 Which flight would you like me to book? Just say something like:<br>
+                                • "Book the United flight"<br>
+                                • "I want the cheapest one"<br>
+                                • "Book the first option"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatHistory.appendChild(optionsDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            // Store flight options for later booking
+            window.currentFlightOptions = { flights, params };
+        }
+
+        // Book the flight that user selected
+        async function bookSelectedFlight(params) {
+            const { message, options } = params;
+            const { flights, params: originalParams } = options;
+            const lower = message.toLowerCase();
+            
+            let selectedFlight = null;
+            
+            // Determine which flight they want
+            if (lower.includes('cheapest') || lower.includes('first') || lower.includes('1')) {
+                selectedFlight = flights[0]; // Cheapest (already sorted by price)
+            } else if (lower.includes('second') || lower.includes('2')) {
+                selectedFlight = flights[1];
+            } else if (lower.includes('third') || lower.includes('3')) {
+                selectedFlight = flights[2];
+            } else {
+                // Try to match by airline name
+                for (const flight of flights) {
+                    if (lower.includes(flight.airline.toLowerCase())) {
+                        selectedFlight = flight;
+                        break;
+                    }
+                }
+            }
+            
+            // Default to cheapest if no clear selection
+            if (!selectedFlight) {
+                selectedFlight = flights[0];
+                addChatMessage('assistant', `I'll book the cheapest option for you - the ${selectedFlight.airline} flight!`);
+            }
+            
+            // Calculate total cost
+            const totalCost = selectedFlight.price * originalParams.passengers;
+            const platformFee = Math.round(totalCost * 0.01 * 100) / 100;
+            const total = totalCost + platformFee;
+            
+            // Clear the flight options since we're booking now
+            window.currentFlightOptions = null;
+            
+            // Simulate booking the specific flight
+            const chatHistory = document.getElementById('chatHistory');
+            const confirmationDiv = document.createElement('div');
+            confirmationDiv.className = 'mb-4 text-left chat-bubble';
+            
+            confirmationDiv.innerHTML = `
+                <div class="inline-block glass-card rounded-2xl px-6 py-4 max-w-3xl border-2 border-green-400/50">
+                    <div class="flex items-start space-x-3">
+                        <div class="text-3xl flex-shrink-0">✅</div>
+                        <div class="text-white w-full">
+                            <div class="text-xs opacity-75 mb-3">AgentPay AI</div>
+                            <div class="text-green-300 font-bold text-lg mb-4">🎉 Booking Confirmed!</div>
+                            
+                            <div class="glass-card rounded-xl p-4 mb-4" style="background: rgba(255, 255, 255, 0.05);">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="text-white font-semibold text-lg">${selectedFlight.airline} ${selectedFlight.flightNumber}</div>
+                                    <div class="text-blue-300 text-sm">✈️ ${selectedFlight.stops}</div>
+                                </div>
+                                <div class="text-white/90 mb-2">📍 ${originalParams.from} → ${originalParams.to}</div>
+                                <div class="text-white/80">🕐 ${selectedFlight.departureTime} → ${selectedFlight.arrivalTime} (${selectedFlight.duration})</div>
+                                <div class="text-white/80">👥 ${originalParams.passengers} passenger${originalParams.passengers > 1 ? 's' : ''}</div>
+                            </div>
+                            
+                            <div class="glass-card rounded-xl p-4" style="background: rgba(255, 255, 255, 0.05);">
+                                <div class="text-green-300 font-semibold mb-2">💰 Cost Breakdown:</div>
+                                <div class="space-y-1 text-white/90">
+                                    <div class="flex justify-between">
+                                        <span>Flight cost:</span>
+                                        <span>$${selectedFlight.price} × ${originalParams.passengers} = $${totalCost}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Platform fee (1%):</span>
+                                        <span>$${platformFee}</span>
+                                    </div>
+                                    <div class="border-t border-white/20 pt-2 mt-2">
+                                        <div class="flex justify-between font-bold text-green-300">
+                                            <span>Total:</span>
+                                            <span>$${total}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 text-white/90 text-sm">
+                                🎊 Your flight is booked! You'll receive confirmation details shortly.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatHistory.appendChild(confirmationDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            showToast(`Flight booked! ${selectedFlight.airline} ${selectedFlight.flightNumber} 🎉`, 'success');
+        }
+
+        // Book the product that user selected
+        async function bookSelectedProduct(params) {
+            const { message, options } = params;
+            const { products, params: originalParams } = options;
+            const lower = message.toLowerCase();
+            
+            let selectedProduct = null;
+            
+            // Determine which product they want
+            if (lower.includes('cheapest') || lower.includes('first') || lower.includes('1')) {
+                selectedProduct = products[0]; // Best value (already sorted)
+            } else if (lower.includes('second') || lower.includes('2')) {
+                selectedProduct = products[1];
+            } else if (lower.includes('third') || lower.includes('3')) {
+                selectedProduct = products[2];
+            } else {
+                // Try to match by brand name
+                for (const product of products) {
+                    if (lower.includes(product.brand.toLowerCase()) || 
+                        lower.includes(product.name.toLowerCase().split(' ')[0])) {
+                        selectedProduct = product;
+                        break;
+                    }
+                }
+            }
+            
+            // Default to best value if no clear selection
+            if (!selectedProduct) {
+                selectedProduct = products[0];
+                addChatMessage('assistant', `I'll order the best value option for you - the ${selectedProduct.name}!`);
+            }
+            
+            // Calculate total cost
+            const platformFee = Math.round(selectedProduct.price * 0.01 * 100) / 100;
+            const total = selectedProduct.price + platformFee;
+            
+            // Clear the shopping options since we're ordering now
+            window.currentShoppingOptions = null;
+            
+            // Simulate ordering the specific product
+            const chatHistory = document.getElementById('chatHistory');
+            const confirmationDiv = document.createElement('div');
+            confirmationDiv.className = 'mb-4 text-left chat-bubble';
+            
+            const stars = '⭐'.repeat(Math.floor(selectedProduct.rating));
+            
+            confirmationDiv.innerHTML = `
+                <div class="inline-block glass-card rounded-2xl px-6 py-4 max-w-3xl border-2 border-green-400/50">
+                    <div class="flex items-start space-x-3">
+                        <div class="text-3xl flex-shrink-0">✅</div>
+                        <div class="text-white w-full">
+                            <div class="text-xs opacity-75 mb-3">AgentPay AI</div>
+                            <div class="text-green-300 font-bold text-lg mb-4">🎉 Order Confirmed!</div>
+                            
+                            <div class="glass-card rounded-xl p-4 mb-4" style="background: rgba(255, 255, 255, 0.05);">
+                                <div class="flex items-center space-x-3 mb-3">
+                                    <div class="text-3xl">${selectedProduct.image}</div>
+                                    <div class="flex-1">
+                                        <div class="text-white font-semibold text-lg">${selectedProduct.name}</div>
+                                        <div class="text-white/80">${selectedProduct.brand} • ${stars} ${selectedProduct.rating.toFixed(1)} (${selectedProduct.reviews.toLocaleString()} reviews)</div>
+                                        <div class="text-white/60 text-sm mt-1">
+                                            ${selectedProduct.features.join(' • ')}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-green-300 text-sm">✅ In Stock • 📦 Ships within 24 hours</div>
+                            </div>
+                            
+                            <div class="glass-card rounded-xl p-4" style="background: rgba(255, 255, 255, 0.05);">
+                                <div class="text-green-300 font-semibold mb-2">💰 Cost Breakdown:</div>
+                                <div class="space-y-1 text-white/90">
+                                    <div class="flex justify-between">
+                                        <span>Product cost:</span>
+                                        <span>$${selectedProduct.price}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Platform fee (1%):</span>
+                                        <span>$${platformFee}</span>
+                                    </div>
+                                    <div class="border-t border-white/20 pt-2 mt-2">
+                                        <div class="flex justify-between font-bold text-green-300">
+                                            <span>Total:</span>
+                                            <span>$${total.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 text-white/90 text-sm">
+                                🎊 Your order is confirmed! You'll receive tracking information shortly.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatHistory.appendChild(confirmationDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            showToast(`Order confirmed! ${selectedProduct.name} 🎉`, 'success');
+        }
+
+        // Show mock shopping results when API fails
+        async function showMockShoppingResults(params) {
+            try {
+                // Simulate search time
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Generate mock products based on the query
+                const products = generateMockProducts(params);
+                
+                displayShoppingOptions(products, params);
+                
+            } catch (error) {
+                console.error('Mock shopping error:', error);
+                addChatMessage('assistant', '😅 Sorry, I had trouble finding products. Want to try searching for something else?');
+            }
+        }
+        
+        // Generate mock product results
+        function generateMockProducts(params) {
+            const query = params.query.toLowerCase();
+            let products = [];
+            
+            // Phone charger specific results
+            if (query.includes('phone') && query.includes('charger')) {
+                products = [
+                    {
+                        id: 'prod_1',
+                        name: 'Anker PowerPort III 20W USB-C Fast Charger',
+                        price: 19.99,
+                        rating: 4.7,
+                        reviews: 15847,
+                        brand: 'Anker',
+                        image: '📱',
+                        features: ['Fast charging', 'Compact design', 'iPhone compatible']
+                    },
+                    {
+                        id: 'prod_2', 
+                        name: 'Apple 20W USB-C Power Adapter',
+                        price: 29.99,
+                        rating: 4.5,
+                        reviews: 8234,
+                        brand: 'Apple',
+                        image: '🍎',
+                        features: ['Official Apple', 'Fast charging', 'Premium quality']
+                    },
+                    {
+                        id: 'prod_3',
+                        name: 'Samsung 25W Super Fast Charger',
+                        price: 24.99,
+                        rating: 4.6,
+                        reviews: 5692,
+                        brand: 'Samsung',
+                        image: '⚡',
+                        features: ['Super fast charging', 'Universal compatibility', 'Durable']
+                    }
+                ];
+            } else {
+                // Generic products based on query
+                const basePrice = Math.floor(Math.random() * (params.maxPrice * 0.8)) + 10;
+                products = [
+                    {
+                        id: 'prod_1',
+                        name: `Premium ${params.query}`,
+                        price: basePrice + 20,
+                        rating: 4.5 + Math.random() * 0.4,
+                        reviews: Math.floor(Math.random() * 10000) + 1000,
+                        brand: 'Premium Brand',
+                        image: '⭐',
+                        features: ['High quality', 'Fast shipping', 'Great reviews']
+                    },
+                    {
+                        id: 'prod_2',
+                        name: `Budget ${params.query}`,
+                        price: basePrice - 10,
+                        rating: 4.0 + Math.random() * 0.4,
+                        reviews: Math.floor(Math.random() * 5000) + 500,
+                        brand: 'Value Brand',
+                        image: '💰',
+                        features: ['Great value', 'Basic features', 'Reliable']
+                    },
+                    {
+                        id: 'prod_3',
+                        name: `Deluxe ${params.query}`,
+                        price: basePrice + 50,
+                        rating: 4.7 + Math.random() * 0.3,
+                        reviews: Math.floor(Math.random() * 15000) + 2000,
+                        brand: 'Deluxe Brand',
+                        image: '👑',
+                        features: ['Premium features', 'Extended warranty', 'Top rated']
+                    }
+                ];
+            }
+            
+            // Filter by budget and rating
+            return products
+                .filter(p => p.price <= params.maxPrice && p.rating >= (params.minRating || 0))
+                .sort((a, b) => (b.rating / b.price) - (a.rating / a.price)); // Sort by value
+        }
+        
+        // Display shopping options for user to choose
+        function displayShoppingOptions(products, params) {
+            let message = `🎉 Found ${products.length} great options for "${params.query}":`;
+            
+            addChatMessage('assistant', message);
+            
+            // Create a formatted shopping options display
+            const chatHistory = document.getElementById('chatHistory');
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'mb-4 text-left chat-bubble';
+            
+            let optionsHtml = '<div class="space-y-3">';
+            
+            products.forEach((product, index) => {
+                const emoji = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+                const stars = '⭐'.repeat(Math.floor(product.rating));
+                
+                optionsHtml += `
+                    <div class="glass-card rounded-xl p-4 border border-white/20 hover:border-white/40 transition-all cursor-pointer product-option" 
+                         data-product-index="${index}"
+                         style="background: rgba(255, 255, 255, 0.05);">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="text-2xl">${emoji}</div>
+                                <div class="text-3xl">${product.image}</div>
+                                <div class="flex-1">
+                                    <div class="text-white font-semibold">${product.name}</div>
+                                    <div class="text-white/80 text-sm">${product.brand} • ${stars} ${product.rating.toFixed(1)} (${product.reviews.toLocaleString()} reviews)</div>
+                                    <div class="text-white/60 text-xs mt-1">
+                                        ${product.features.join(' • ')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-white font-bold text-lg">$${product.price}</div>
+                                <div class="text-green-300 text-sm">✅ In Stock</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            optionsHtml += '</div>';
+            
+            optionsDiv.innerHTML = `
+                <div class="inline-block glass-card rounded-2xl px-6 py-4 max-w-4xl">
+                    <div class="flex items-start space-x-3">
+                        <div class="text-2xl flex-shrink-0">🤖</div>
+                        <div class="text-white w-full">
+                            <div class="text-xs opacity-75 mb-3">AgentPay AI</div>
+                            ${optionsHtml}
+                            <div class="mt-4 text-white/90 text-sm">
+                                💬 Which product would you like me to order? Just say something like:<br>
+                                • "Buy the Anker charger"<br>
+                                • "I want the cheapest one"<br>
+                                • "Order the first option"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatHistory.appendChild(optionsDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            // Store product options for later ordering
+            window.currentShoppingOptions = { products, params };
+        }
+    </script>
+</body>
+</html> 

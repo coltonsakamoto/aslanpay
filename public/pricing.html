@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - Autonomy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'autonomy-blue': '#0066FF',
+                        'autonomy-dark': '#1a1a1a',
+                        'autonomy-gray': '#6B7280'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-autonomy-blue rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">A</span>
+                    </div>
+                    <span class="text-xl font-semibold text-autonomy-dark">Autonomy</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-autonomy-gray hover:text-autonomy-dark transition-colors">Home</a>
+                    <a href="index.html#features" class="text-autonomy-gray hover:text-autonomy-dark transition-colors">Features</a>
+                    <a href="#pricing" class="text-autonomy-blue font-medium">Pricing</a>
+                    <a href="auth.html" class="text-autonomy-gray hover:text-autonomy-dark transition-colors">Sign In</a>
+                    <a href="demo.html" class="bg-autonomy-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Try Demo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-16 pb-12">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-autonomy-dark mb-4">
+                Simple, transparent pricing
+            </h1>
+            <p class="text-xl text-autonomy-gray mb-8">
+                Pay only for successful AI agent authorizations. Start free, scale as you grow.
+            </p>
+        </div>
+    </section>
+
+    <!-- Pricing Cards -->
+    <section class="pb-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-4 gap-8">
+                <!-- Sandbox Plan -->
+                <div class="bg-white rounded-xl border border-gray-200 p-8 relative">
+                    <div class="mb-8">
+                        <h3 class="text-2xl font-bold text-autonomy-dark mb-2">Sandbox</h3>
+                        <p class="text-autonomy-gray mb-4">Perfect for testing and prototyping</p>
+                        <div class="mb-4">
+                            <span class="text-4xl font-bold text-autonomy-dark">$0</span>
+                            <span class="text-autonomy-gray">/month</span>
+                        </div>
+                        <div class="text-sm text-autonomy-gray">
+                            50 authorizations included
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">50 successful authorizations/month</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">$0.25 per auth after quota</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Test environment</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Community support</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Basic spending controls</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="checkout.html?plan=sandbox" class="w-full bg-gray-100 text-autonomy-dark py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors text-center block">
+                        Start Free
+                    </a>
+                </div>
+
+                <!-- Builder Plan -->
+                <div class="bg-white rounded-xl border-2 border-autonomy-blue p-8 relative">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <span class="bg-autonomy-blue text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <h3 class="text-2xl font-bold text-autonomy-dark mb-2">Builder</h3>
+                        <p class="text-autonomy-gray mb-4">For individual developers and small projects</p>
+                        <div class="mb-4">
+                            <span class="text-4xl font-bold text-autonomy-dark">$99</span>
+                            <span class="text-autonomy-gray">/month</span>
+                        </div>
+                        <div class="text-sm text-autonomy-gray">
+                            5,000 authorizations included
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">5,000 successful authorizations/month</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">$0.20 per auth after quota</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Production environment</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Email support</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Advanced spending controls</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Real-time analytics</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="checkout.html?plan=builder" class="w-full bg-autonomy-blue text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors text-center block">
+                        Start Trial
+                    </a>
+                </div>
+
+                <!-- Team Plan -->
+                <div class="bg-white rounded-xl border border-gray-200 p-8 relative">
+                    <div class="mb-8">
+                        <h3 class="text-2xl font-bold text-autonomy-dark mb-2">Team</h3>
+                        <p class="text-autonomy-gray mb-4">For growing teams and multiple agents</p>
+                        <div class="mb-4">
+                            <span class="text-4xl font-bold text-autonomy-dark">$499</span>
+                            <span class="text-autonomy-gray">/month</span>
+                        </div>
+                        <div class="text-sm text-autonomy-gray">
+                            50,000 authorizations included
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">50,000 successful authorizations/month</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">$0.15 per auth after quota</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Multiple environments</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Priority support</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Team management</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Advanced analytics</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="checkout.html?plan=team" class="w-full bg-autonomy-dark text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors text-center block">
+                        Start Trial
+                    </a>
+                </div>
+
+                <!-- Enterprise Plan -->
+                <div class="bg-gray-50 rounded-xl border border-gray-200 p-8 relative">
+                    <div class="mb-8">
+                        <h3 class="text-2xl font-bold text-autonomy-dark mb-2">Enterprise</h3>
+                        <p class="text-autonomy-gray mb-4">For large organizations with custom needs</p>
+                        <div class="mb-4">
+                            <span class="text-4xl font-bold text-autonomy-dark">Custom</span>
+                        </div>
+                        <div class="text-sm text-autonomy-gray">
+                            Volume-based pricing
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Custom authorization quotas</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">$0.10-0.12 per auth (volume-based)</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Dedicated infrastructure</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">24/7 dedicated support</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">Custom integrations</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-autonomy-dark">SLA guarantees</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="mailto:hello@useautonomy.co?subject=Enterprise Plan Inquiry&body=Hi! I'm interested in learning more about the Enterprise plan for Autonomy." class="w-full bg-autonomy-dark text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors text-center block">
+                        Contact Sales
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-6">
+            <h2 class="text-3xl font-bold text-autonomy-dark text-center mb-12">Frequently asked questions</h2>
+            
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-lg font-semibold text-autonomy-dark mb-2">What counts as a successful authorization?</h3>
+                    <p class="text-autonomy-gray">A successful authorization is when your AI agent requests permission to spend and our system approves it based on your spending controls. Failed authorizations (due to limits, restrictions, etc.) don't count against your quota.</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-autonomy-dark mb-2">How does overage pricing work?</h3>
+                    <p class="text-autonomy-gray">If you exceed your monthly authorization quota, you'll be charged the per-authorization rate for each additional successful authorization. No surprises - you can set spending alerts and limits.</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-autonomy-dark mb-2">Can I change plans anytime?</h3>
+                    <p class="text-autonomy-gray">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any billing adjustments.</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-autonomy-dark mb-2">Is there a free trial?</h3>
+                    <p class="text-autonomy-gray">The Sandbox plan is free forever with 50 authorizations per month. For paid plans, we offer a 14-day free trial with full access to all features.</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-autonomy-dark mb-2">What payment methods do you accept?</h3>
+                    <p class="text-autonomy-gray">We accept all major credit cards and can arrange invoicing for Enterprise customers. All plans include secure payment processing for your AI agents.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold text-autonomy-dark mb-4">
+                Ready to get started?
+            </h2>
+            <p class="text-xl text-autonomy-gray mb-8">
+                Start with our free Sandbox plan or try any paid plan with a 14-day trial
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="checkout.html?plan=builder" class="bg-autonomy-blue text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-blue-700 transition-colors">
+                    Start Free Trial
+                </a>
+                <a href="mailto:hello@useautonomy.co?subject=Enterprise Plan Inquiry&body=Hi! I'm interested in learning more about the Enterprise plan for Autonomy." class="border border-gray-300 text-autonomy-dark px-8 py-4 rounded-lg text-lg font-medium hover:bg-gray-50 transition-colors">
+                    Contact Sales
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 py-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-8 h-8 bg-autonomy-blue rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">A</span>
+                        </div>
+                        <span class="text-xl font-semibold text-autonomy-dark">Autonomy</span>
+                    </div>
+                    <p class="text-autonomy-gray text-sm">
+                        Payment infrastructure for AI agents
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-autonomy-dark mb-3">Product</h4>
+                    <ul class="space-y-2 text-sm text-autonomy-gray">
+                        <li><a href="index.html#features" class="hover:text-autonomy-dark transition-colors">Features</a></li>
+                        <li><a href="demo.html" class="hover:text-autonomy-dark transition-colors">Demo</a></li>
+                        <li><a href="#pricing" class="hover:text-autonomy-dark transition-colors">Pricing</a></li>
+                        <li><a href="#security" class="hover:text-autonomy-dark transition-colors">Security</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-autonomy-dark mb-3">Developers</h4>
+                    <ul class="space-y-2 text-sm text-autonomy-gray">
+                        <li><a href="#docs" class="hover:text-autonomy-dark transition-colors">Documentation</a></li>
+                        <li><a href="#api" class="hover:text-autonomy-dark transition-colors">API Reference</a></li>
+                        <li><a href="#github" class="hover:text-autonomy-dark transition-colors">GitHub</a></li>
+                        <li><a href="#status" class="hover:text-autonomy-dark transition-colors">Status</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-autonomy-dark mb-3">Company</h4>
+                    <ul class="space-y-2 text-sm text-autonomy-gray">
+                        <li><a href="#about" class="hover:text-autonomy-dark transition-colors">About</a></li>
+                        <li><a href="#blog" class="hover:text-autonomy-dark transition-colors">Blog</a></li>
+                        <li><a href="#careers" class="hover:text-autonomy-dark transition-colors">Careers</a></li>
+                        <li><a href="mailto:hello@useautonomy.co" class="hover:text-autonomy-dark transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-autonomy-gray text-sm">
+                    © 2024 Autonomy Inc. All rights reserved.
+                </p>
+                <div class="flex space-x-6 mt-4 md:mt-0">
+                    <a href="#privacy" class="text-autonomy-gray text-sm hover:text-autonomy-dark transition-colors">Privacy</a>
+                    <a href="#terms" class="text-autonomy-gray text-sm hover:text-autonomy-dark transition-colors">Terms</a>
+                    <a href="#security" class="text-autonomy-gray text-sm hover:text-autonomy-dark transition-colors">Security</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 

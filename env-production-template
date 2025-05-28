@@ -1,0 +1,78 @@
+# Production Environment Variables Template
+# =========================================
+# Copy this to .env for production deployment
+
+# Application Settings
+NODE_ENV=production
+PORT=3000
+
+# Security (CRITICAL: Change these in production!)
+JWT_SECRET=your_super_secure_jwt_secret_here_minimum_256_bits_change_this
+SESSION_SECRET=your_session_secret_change_in_production
+
+# Database (PostgreSQL for production)
+DATABASE_URL="postgresql://username:password@localhost:5432/agentpay_prod"
+
+# Stripe (Production keys - replace with your actual production keys)
+STRIPE_SECRET_KEY="sk_live_..."
+STRIPE_PUBLISHABLE_KEY="pk_live_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+
+# Real Purchase API Keys
+NAMECHEAP_API_KEY="your_namecheap_api_key"
+NAMECHEAP_API_USER="your_namecheap_username"
+NAMECHEAP_CLIENT_IP="your_server_ip"
+
+# AWS (for credits)
+AWS_ACCESS_KEY_ID="your_aws_access_key"
+AWS_SECRET_ACCESS_KEY="your_aws_secret_key"
+
+# DigitalOcean (for VPS)
+DIGITALOCEAN_API_TOKEN="your_do_token"
+
+# Tango Card (for gift cards)
+TANGO_API_KEY="your_tango_api_key"
+TANGO_CUSTOMER_ID="your_tango_customer_id"
+
+# Twilio (for SMS)
+TWILIO_ACCOUNT_SID="your_twilio_sid"
+TWILIO_AUTH_TOKEN="your_twilio_token"
+TWILIO_PHONE_NUMBER="your_twilio_number"
+
+# Amadeus (for flights)
+AMADEUS_ACCESS_TOKEN="your_amadeus_token"
+
+# OpenAI (for AI integration)
+OPENAI_API_KEY="your_openai_key"
+
+# Redis (for session storage and caching)
+REDIS_URL="redis://localhost:6379"
+
+# Email Service (for notifications)
+SENDGRID_API_KEY="your_sendgrid_key"
+FROM_EMAIL="noreply@yourdomain.com"
+
+# Security Configuration
+# CORS Origins (comma-separated - REQUIRED for production)
+CORS_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
+
+# Cookie Domain (for multi-subdomain apps)
+COOKIE_DOMAIN=".yourdomain.com"
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000     # 15 minutes
+RATE_LIMIT_MAX_REQUESTS=100     # requests per window
+
+# OAuth Configuration (optional)
+GOOGLE_CLIENT_ID="your_google_client_id"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
+GITHUB_CLIENT_ID="your_github_client_id"
+GITHUB_CLIENT_SECRET="your_github_client_secret"
+
+# Logging
+LOG_LEVEL=info
+
+# Additional Security Headers
+TRUST_PROXY=true               # Set to true if behind reverse proxy
+SECURE_COOKIES=true            # Force secure cookies
+ENFORCE_HTTPS=true             # Redirect HTTP to HTTPS 
