@@ -1,7 +1,21 @@
 require('dotenv').config();
 
 const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// Make Stripe optional to prevent startup crashes
+let stripe;
+try {
+    if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('placeholder')) {
+        stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        console.log('✅ Stripe initialized successfully');
+    } else {
+        console.log('⚠️  Stripe not initialized - using placeholder key');
+        stripe = null;
+    }
+} catch (error) {
+    console.log('⚠️  Stripe initialization failed:', error.message);
+    stripe = null;
+}
+
 const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -147,6 +161,13 @@ app.get('/', (req, res) => {
 
 // Create subscription endpoint
 app.post('/api/create-subscription', async (req, res) => {
+    if (!stripe) {
+        return res.status(503).json({
+            error: 'Stripe not configured. Please set STRIPE_SECRET_KEY environment variable.',
+            code: 'STRIPE_NOT_CONFIGURED'
+        });
+    }
+    
     try {
         const { paymentMethodId, priceId, email, name, company } = req.body;
 
@@ -187,6 +208,13 @@ app.post('/api/create-subscription', async (req, res) => {
 
 // Create Stripe products and prices (run this once to set up your products)
 app.post('/api/setup-products', async (req, res) => {
+    if (!stripe) {
+        return res.status(503).json({
+            error: 'Stripe not configured. Please set STRIPE_SECRET_KEY environment variable.',
+            code: 'STRIPE_NOT_CONFIGURED'
+        });
+    }
+    
     try {
         // Create Builder plan
         const builderProduct = await stripe.products.create({
@@ -235,6 +263,13 @@ app.post('/api/setup-products', async (req, res) => {
 
 // Webhook endpoint for Stripe events
 app.post('/api/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+    if (!stripe) {
+        return res.status(503).json({
+            error: 'Stripe not configured',
+            code: 'STRIPE_NOT_CONFIGURED'
+        });
+    }
+    
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
