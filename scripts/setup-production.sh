@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# AgentPay Production Setup Script
+# Aslan Production Setup Script
 # This script automates the basic setup for production deployment
 
 set -e  # Exit on any error
 
-echo "🚀 AgentPay Production Setup"
-echo "=============================="
+echo "🦁 Aslan Production Setup"
+echo "========================="
 
 # Color codes for output
 RED='\033[0;31m'
@@ -94,7 +94,7 @@ print_status "Creating PM2 ecosystem file..."
 cat > ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [{
-    name: 'agentpay',
+    name: 'aslan',
     script: 'server.js',
     instances: 'max',
     exec_mode: 'cluster',
@@ -120,15 +120,15 @@ mkdir -p logs
 
 # Create systemd service file
 print_status "Creating systemd service file..."
-cat > agentpay.service << 'EOF'
+cat > aslan.service << 'EOF'
 [Unit]
-Description=AgentPay Application
+Description=Aslan Application
 After=network.target postgresql.service
 
 [Service]
 Type=forking
 User=nodejs
-WorkingDirectory=/path/to/agentpay
+WorkingDirectory=/path/to/aslan
 ExecStart=/usr/bin/pm2 start ecosystem.config.js --env production
 ExecReload=/usr/bin/pm2 reload ecosystem.config.js --env production
 ExecStop=/usr/bin/pm2 stop ecosystem.config.js
@@ -139,8 +139,8 @@ RestartSec=10
 WantedBy=multi-user.target
 EOF
 
-print_status "Service file created: agentpay.service"
-print_warning "Update WorkingDirectory in agentpay.service before installing"
+print_status "Service file created: aslan.service"
+print_warning "Update WorkingDirectory in aslan.service before installing"
 
 # Create backup script
 print_status "Creating backup script..."
@@ -149,26 +149,26 @@ mkdir -p scripts
 cat > scripts/backup-database.sh << 'EOF'
 #!/bin/bash
 
-# AgentPay Database Backup Script
+# Aslan Database Backup Script
 # Run this daily to backup your PostgreSQL database
 
-BACKUP_DIR="/backups/agentpay"
+BACKUP_DIR="/backups/aslan"
 DATE=$(date +%Y%m%d_%H%M%S)
-DB_NAME="agentpay_prod"
+DB_NAME="aslan_prod"
 
 # Create backup directory
 mkdir -p $BACKUP_DIR
 
 # Backup database
-pg_dump $DB_NAME > $BACKUP_DIR/agentpay_backup_$DATE.sql
+pg_dump $DB_NAME > $BACKUP_DIR/aslan_backup_$DATE.sql
 
 # Compress backup
-gzip $BACKUP_DIR/agentpay_backup_$DATE.sql
+gzip $BACKUP_DIR/aslan_backup_$DATE.sql
 
 # Remove backups older than 7 days
 find $BACKUP_DIR -name "*.sql.gz" -mtime +7 -delete
 
-echo "Backup completed: agentpay_backup_$DATE.sql.gz"
+echo "Backup completed: aslan_backup_$DATE.sql.gz"
 EOF
 
 chmod +x scripts/backup-database.sh
@@ -177,7 +177,7 @@ chmod +x scripts/backup-database.sh
 cat > scripts/health-check.sh << 'EOF'
 #!/bin/bash
 
-# AgentPay Health Check Script
+# Aslan Health Check Script
 # Use this to monitor your application
 
 HEALTH_URL="http://localhost:3000/api/health"
@@ -185,10 +185,10 @@ HEALTH_URL="http://localhost:3000/api/health"
 response=$(curl -s -o /dev/null -w "%{http_code}" $HEALTH_URL)
 
 if [ $response -eq 200 ]; then
-    echo "✅ AgentPay is healthy"
+    echo "✅ Aslan is healthy"
     exit 0
 else
-    echo "❌ AgentPay health check failed (HTTP $response)"
+    echo "❌ Aslan health check failed (HTTP $response)"
     exit 1
 fi
 EOF
@@ -243,8 +243,8 @@ echo "5. Update CORS_ORIGINS with your domain"
 echo "6. Run database migrations: npm run db:migrate"
 echo "7. Install and configure Nginx reverse proxy"
 echo "8. Setup SSL certificates with scripts/setup-ssl.sh"
-echo "9. Install systemd service: sudo cp agentpay.service /etc/systemd/system/"
-echo "10. Enable and start service: sudo systemctl enable agentpay && sudo systemctl start agentpay"
+echo "9. Install systemd service: sudo cp aslan.service /etc/systemd/system/"
+echo "10. Enable and start service: sudo systemctl enable aslan && sudo systemctl start aslan"
 echo ""
 print_status "For detailed instructions, see: PRODUCTION-SETUP-GUIDE.md"
 echo ""
@@ -254,5 +254,5 @@ echo ""
 print_status "Useful commands:"
 echo "- Health check: scripts/health-check.sh"
 echo "- Database backup: scripts/backup-database.sh"
-echo "- View logs: pm2 logs agentpay"
+echo "- View logs: pm2 logs aslan"
 echo "- Monitor: pm2 monit" 

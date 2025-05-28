@@ -1,7 +1,7 @@
 {
-  "name": "autonomy-payment-platform",
+  "name": "aslan",
   "version": "1.0.0",
-  "description": "Payment infrastructure for AI agents",
+  "description": "Payment infrastructure for AI agents - Like the great lion, Aslan guides AI agents to accomplish their missions in the real world",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -52,8 +52,19 @@
     "payments",
     "stripe",
     "agents",
-    "autonomy"
+    "aslan",
+    "automation",
+    "fintech"
   ],
-  "author": "Autonomy Inc.",
-  "license": "MIT"
+  "author": "Aslan Technologies",
+  "license": "MIT",
+  "homepage": "https://aslanpay.xyz",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/coltonsakamoto/aslanpay.git"
+  },
+  "bugs": {
+    "url": "https://github.com/coltonsakamoto/aslanpay/issues",
+    "email": "support@aslanpay.xyz"
+  }
 }

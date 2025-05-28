@@ -455,7 +455,7 @@ app.use((req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`🚀 Autonomy server running at http://localhost:${port}`);
+    console.log(`🦁 Aslan server running at http://localhost:${port}`);
     console.log('📋 Available endpoints:');
     console.log('   • Authentication: /api/auth/*');
     console.log('   • API Keys: /api/keys/*');
@@ -485,6 +485,7 @@ app.listen(port, () => {
     }
     
     console.log('');
+    console.log('🦁 Like the great lion of Narnia, Aslan guides AI agents to accomplish their missions');
     console.log('⚠️  Make sure to set your environment variables:');
     console.log('   • JWT_SECRET (strong random value)');
     console.log('   • SESSION_SECRET (strong random value)');

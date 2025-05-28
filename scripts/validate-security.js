@@ -57,7 +57,7 @@ async function validateSecurity() {
     let hasErrors = false;
     let hasWarnings = false;
 
-    printHeader('AgentPay Security Validation');
+    printHeader('Aslan Security Validation');
     
     // Environment validation
     printSection('Environment Variables');
@@ -258,7 +258,7 @@ const args = process.argv.slice(2);
 if (args.includes('--generate-secrets')) {
     generateSecrets();
 } else if (args.includes('--help')) {
-    console.log('AgentPay Security Validation Tool');
+    console.log('Aslan Security Validation Tool');
     console.log('');
     console.log('Usage:');
     console.log('  node scripts/validate-security.js              # Run security validation');

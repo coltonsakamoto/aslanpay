@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - Autonomy</title>
+    <title>Sign In - Aslan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'autonomy-blue': '#0066FF',
-                        'autonomy-dark': '#1a1a1a',
-                        'autonomy-gray': '#6B7280'
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                        'aslan-dark': '#1a1a1a',
+                        'aslan-gray': '#6B7280'
                     }
                 }
             }
@@ -25,13 +26,13 @@
         <div class="max-w-7xl mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-autonomy-blue rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold text-sm">A</span>
+                    <div class="w-8 h-8 bg-aslan-orange rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">🦁</span>
                     </div>
-                    <span class="text-xl font-semibold text-autonomy-dark">Autonomy</span>
+                    <span class="text-xl font-semibold text-aslan-dark">Aslan</span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <a href="index.html" class="text-autonomy-gray hover:text-autonomy-dark transition-colors">← Back to Home</a>
+                    <a href="index.html" class="text-aslan-gray hover:text-aslan-dark transition-colors">← Back to Home</a>
                 </div>
             </div>
         </div>
@@ -41,16 +42,16 @@
         <div class="max-w-md w-full space-y-8">
             <!-- Header -->
             <div class="text-center">
-                <h2 class="text-3xl font-bold text-autonomy-dark">Welcome to Autonomy</h2>
-                <p class="mt-2 text-autonomy-gray">Sign in to your account or create a new one</p>
+                <h2 class="text-3xl font-bold text-aslan-dark">Welcome to Aslan</h2>
+                <p class="mt-2 text-aslan-gray">Sign in to your account or create a new one</p>
             </div>
 
             <!-- Tab Navigation -->
             <div class="flex border-b border-gray-200">
-                <button id="signin-tab" class="flex-1 py-2 px-4 text-center font-medium text-autonomy-blue border-b-2 border-autonomy-blue">
+                <button id="signin-tab" class="flex-1 py-2 px-4 text-center font-medium text-aslan-orange border-b-2 border-aslan-orange">
                     Sign In
                 </button>
-                <button id="signup-tab" class="flex-1 py-2 px-4 text-center font-medium text-autonomy-gray border-b-2 border-transparent hover:text-autonomy-dark">
+                <button id="signup-tab" class="flex-1 py-2 px-4 text-center font-medium text-aslan-gray border-b-2 border-transparent hover:text-aslan-dark">
                     Sign Up
                 </button>
             </div>
@@ -60,26 +61,26 @@
                 <form id="login-form">
                     <div class="space-y-6">
                         <div>
-                            <label class="block text-sm font-medium text-autonomy-dark mb-2">Email Address</label>
-                            <input type="email" id="login-email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                            <label class="block text-sm font-medium text-aslan-dark mb-2">Email Address</label>
+                            <input type="email" id="login-email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-autonomy-dark mb-2">Password</label>
-                            <input type="password" id="login-password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                            <label class="block text-sm font-medium text-aslan-dark mb-2">Password</label>
+                            <input type="password" id="login-password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                         </div>
 
                         <div class="flex items-center justify-between">
                             <div class="flex items-center">
-                                <input type="checkbox" id="remember-me" class="rounded border-gray-300 text-autonomy-blue focus:ring-autonomy-blue">
-                                <label for="remember-me" class="ml-2 text-sm text-autonomy-gray">Remember me</label>
+                                <input type="checkbox" id="remember-me" class="rounded border-gray-300 text-aslan-orange focus:ring-aslan-orange">
+                                <label for="remember-me" class="ml-2 text-sm text-aslan-gray">Remember me</label>
                             </div>
-                            <button type="button" id="forgot-password-btn" class="text-sm text-autonomy-blue hover:underline">
+                            <button type="button" id="forgot-password-btn" class="text-sm text-aslan-orange hover:underline">
                                 Forgot password?
                             </button>
                         </div>
 
-                        <button type="submit" class="w-full bg-autonomy-blue text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                        <button type="submit" class="w-full bg-aslan-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-600 transition-colors">
                             <span id="login-btn-text">Sign In</span>
                             <div id="login-spinner" class="hidden inline-block ml-2">
                                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -95,7 +96,7 @@
                             <div class="w-full border-t border-gray-300"></div>
                         </div>
                         <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-white text-autonomy-gray">Or continue with</span>
+                            <span class="px-2 bg-white text-aslan-gray">Or continue with</span>
                         </div>
                     </div>
 
@@ -125,34 +126,34 @@
                 <form id="register-form">
                     <div class="space-y-6">
                         <div>
-                            <label class="block text-sm font-medium text-autonomy-dark mb-2">Full Name</label>
-                            <input type="text" id="register-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                            <label class="block text-sm font-medium text-aslan-dark mb-2">Full Name</label>
+                            <input type="text" id="register-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-autonomy-dark mb-2">Email Address</label>
-                            <input type="email" id="register-email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                            <label class="block text-sm font-medium text-aslan-dark mb-2">Email Address</label>
+                            <input type="email" id="register-email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-autonomy-dark mb-2">Password</label>
-                            <input type="password" id="register-password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
-                            <p class="mt-1 text-sm text-autonomy-gray">Must be at least 8 characters long</p>
+                            <label class="block text-sm font-medium text-aslan-dark mb-2">Password</label>
+                            <input type="password" id="register-password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                            <p class="mt-1 text-sm text-aslan-gray">Must be at least 8 characters long</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-autonomy-dark mb-2">Confirm Password</label>
-                            <input type="password" id="register-confirm-password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                            <label class="block text-sm font-medium text-aslan-dark mb-2">Confirm Password</label>
+                            <input type="password" id="register-confirm-password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                         </div>
 
                         <div class="flex items-center">
-                            <input type="checkbox" id="terms-checkbox" required class="rounded border-gray-300 text-autonomy-blue focus:ring-autonomy-blue">
-                            <label for="terms-checkbox" class="ml-2 text-sm text-autonomy-gray">
-                                I agree to the <a href="#" class="text-autonomy-blue hover:underline">Terms of Service</a> and <a href="#" class="text-autonomy-blue hover:underline">Privacy Policy</a>
+                            <input type="checkbox" id="terms-checkbox" required class="rounded border-gray-300 text-aslan-orange focus:ring-aslan-orange">
+                            <label for="terms-checkbox" class="ml-2 text-sm text-aslan-gray">
+                                I agree to the <a href="#" class="text-aslan-orange hover:underline">Terms of Service</a> and <a href="#" class="text-aslan-orange hover:underline">Privacy Policy</a>
                             </label>
                         </div>
 
-                        <button type="submit" class="w-full bg-autonomy-blue text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                        <button type="submit" class="w-full bg-aslan-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-600 transition-colors">
                             <span id="register-btn-text">Create Account</span>
                             <div id="register-spinner" class="hidden inline-block ml-2">
                                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -186,20 +187,20 @@
             <!-- Forgot Password Modal -->
             <div id="forgot-password-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
-                    <h3 class="text-xl font-semibold text-autonomy-dark mb-4">Reset Password</h3>
-                    <p class="text-autonomy-gray mb-4">Enter your email address and we'll send you a link to reset your password.</p>
+                    <h3 class="text-xl font-semibold text-aslan-dark mb-4">Reset Password</h3>
+                    <p class="text-aslan-gray mb-4">Enter your email address and we'll send you a link to reset your password.</p>
                     
                     <form id="forgot-password-form">
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-autonomy-dark mb-2">Email Address</label>
-                            <input type="email" id="forgot-email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                            <label class="block text-sm font-medium text-aslan-dark mb-2">Email Address</label>
+                            <input type="email" id="forgot-email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                         </div>
                         
                         <div class="flex space-x-3">
-                            <button type="button" id="cancel-forgot" class="flex-1 border border-gray-300 text-autonomy-dark py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">
+                            <button type="button" id="cancel-forgot" class="flex-1 border border-gray-300 text-aslan-dark py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">
                                 Cancel
                             </button>
-                            <button type="submit" class="flex-1 bg-autonomy-blue text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                            <button type="submit" class="flex-1 bg-aslan-orange text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors">
                                 Send Reset Link
                             </button>
                         </div>
@@ -234,19 +235,19 @@
         const signupForm = document.getElementById('signup-form');
 
         signinTab.addEventListener('click', () => {
-            signinTab.classList.add('text-autonomy-blue', 'border-autonomy-blue');
-            signinTab.classList.remove('text-autonomy-gray', 'border-transparent');
-            signupTab.classList.add('text-autonomy-gray', 'border-transparent');
-            signupTab.classList.remove('text-autonomy-blue', 'border-autonomy-blue');
+            signinTab.classList.add('text-aslan-orange', 'border-aslan-orange');
+            signinTab.classList.remove('text-aslan-gray', 'border-transparent');
+            signupTab.classList.add('text-aslan-gray', 'border-transparent');
+            signupTab.classList.remove('text-aslan-orange', 'border-aslan-orange');
             signinForm.classList.remove('hidden');
             signupForm.classList.add('hidden');
         });
 
         signupTab.addEventListener('click', () => {
-            signupTab.classList.add('text-autonomy-blue', 'border-autonomy-blue');
-            signupTab.classList.remove('text-autonomy-gray', 'border-transparent');
-            signinTab.classList.add('text-autonomy-gray', 'border-transparent');
-            signinTab.classList.remove('text-autonomy-blue', 'border-autonomy-blue');
+            signupTab.classList.add('text-aslan-orange', 'border-aslan-orange');
+            signupTab.classList.remove('text-aslan-gray', 'border-transparent');
+            signinTab.classList.add('text-aslan-gray', 'border-transparent');
+            signinTab.classList.remove('text-aslan-orange', 'border-aslan-orange');
             signupForm.classList.remove('hidden');
             signinForm.classList.add('hidden');
         });

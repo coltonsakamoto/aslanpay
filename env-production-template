@@ -1,6 +1,6 @@
 # Production Environment Variables Template
 # =========================================
-# Copy this to .env for production deployment
+# Copy this to .env for production deployment of Aslan
 
 # Application Settings
 NODE_ENV=production
@@ -11,7 +11,7 @@ JWT_SECRET=your_super_secure_jwt_secret_here_minimum_256_bits_change_this
 SESSION_SECRET=your_session_secret_change_in_production
 
 # Database (PostgreSQL for production)
-DATABASE_URL="postgresql://username:password@localhost:5432/agentpay_prod"
+DATABASE_URL="postgresql://username:password@localhost:5432/aslan_prod"
 
 # Stripe (Production keys - replace with your actual production keys)
 STRIPE_SECRET_KEY="sk_live_..."
@@ -50,14 +50,14 @@ REDIS_URL="redis://localhost:6379"
 
 # Email Service (for notifications)
 SENDGRID_API_KEY="your_sendgrid_key"
-FROM_EMAIL="noreply@yourdomain.com"
+FROM_EMAIL="noreply@aslanpay.xyz"
 
 # Security Configuration
 # CORS Origins (comma-separated - REQUIRED for production)
-CORS_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
+CORS_ORIGINS="https://aslanpay.xyz,https://www.aslanpay.xyz"
 
 # Cookie Domain (for multi-subdomain apps)
-COOKIE_DOMAIN=".yourdomain.com"
+COOKIE_DOMAIN=".aslanpay.xyz"
 
 # Rate Limiting
 RATE_LIMIT_WINDOW_MS=900000     # 15 minutes

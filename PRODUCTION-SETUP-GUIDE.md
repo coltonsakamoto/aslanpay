@@ -1,12 +1,12 @@
 # Production Setup Guide
 
-This guide will help you deploy AgentPay to production with PostgreSQL database and proper security configurations.
+This guide will help you deploy Aslan to production with PostgreSQL database and proper security configurations.
 
 ## 🔧 Prerequisites
 
 - Node.js 18+ installed
 - PostgreSQL 14+ installed and running
-- A domain name with SSL certificate
+- A domain name with SSL certificate (aslanpay.xyz)
 - Stripe production account
 - Email service (SendGrid recommended)
 
@@ -29,7 +29,7 @@ This guide will help you deploy AgentPay to production with PostgreSQL database 
 
    ### Database (PostgreSQL)
    ```env
-   DATABASE_URL="postgresql://username:password@localhost:5432/agentpay_prod"
+   DATABASE_URL="postgresql://username:password@localhost:5432/aslan_prod"
    ```
 
    ### Stripe Production Keys
@@ -41,16 +41,16 @@ This guide will help you deploy AgentPay to production with PostgreSQL database 
 
    ### CORS Origins
    ```env
-   CORS_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
+   CORS_ORIGINS="https://aslanpay.xyz,https://www.aslanpay.xyz"
    ```
 
 ## 🗄️ Step 2: Database Setup
 
 1. **Create PostgreSQL database:**
    ```sql
-   CREATE DATABASE agentpay_prod;
-   CREATE USER agentpay_user WITH PASSWORD 'secure_password';
-   GRANT ALL PRIVILEGES ON DATABASE agentpay_prod TO agentpay_user;
+   CREATE DATABASE aslan_prod;
+   CREATE USER aslan_user WITH PASSWORD 'secure_password';
+   GRANT ALL PRIVILEGES ON DATABASE aslan_prod TO aslan_user;
    ```
 
 2. **Install dependencies:**
@@ -83,7 +83,7 @@ This guide will help you deploy AgentPay to production with PostgreSQL database 
    Or with PM2 for process management:
    ```bash
    npm install -g pm2
-   pm2 start server.js --name "agentpay"
+   pm2 start server.js --name "aslan"
    pm2 startup
    pm2 save
    ```
@@ -92,18 +92,18 @@ This guide will help you deploy AgentPay to production with PostgreSQL database 
 
 ### Nginx Reverse Proxy (Recommended)
 
-Create `/etc/nginx/sites-available/agentpay`:
+Create `/etc/nginx/sites-available/aslan`:
 
 ```nginx
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name aslanpay.xyz www.aslanpay.xyz;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name aslanpay.xyz www.aslanpay.xyz;
 
     ssl_certificate /path/to/ssl/certificate.crt;
     ssl_certificate_key /path/to/ssl/private.key;
@@ -129,7 +129,7 @@ server {
 
 Enable the site:
 ```bash
-sudo ln -s /etc/nginx/sites-available/agentpay /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/aslan /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -150,7 +150,7 @@ sudo ufw allow 5432  # PostgreSQL (only if external access needed)
 1. **Configure Stripe webhooks:**
    - Go to your Stripe dashboard
    - Navigate to Developers > Webhooks
-   - Add endpoint: `https://yourdomain.com/api/webhook`
+   - Add endpoint: `https://aslanpay.xyz/api/webhook`
    - Select events: `subscription.*`, `invoice.*`, `customer.*`
    - Copy the webhook secret to your `.env` file
 
@@ -162,7 +162,7 @@ sudo ufw allow 5432  # PostgreSQL (only if external access needed)
 pm2 monit
 
 # View logs
-pm2 logs agentpay
+pm2 logs aslan
 ```
 
 ### Database Monitoring
@@ -175,7 +175,7 @@ sudo -u postgres psql -c "SELECT * FROM pg_stat_activity;"
 ```
 
 ### Health Check Endpoint
-Monitor application health at: `https://yourdomain.com/api/health`
+Monitor application health at: `https://aslanpay.xyz/api/health`
 
 ## 🔄 Step 7: Backup Strategy
 
@@ -184,12 +184,12 @@ Monitor application health at: `https://yourdomain.com/api/health`
 # Create backup script
 cat > backup-db.sh << 'EOF'
 #!/bin/bash
-BACKUP_DIR="/backups/agentpay"
+BACKUP_DIR="/backups/aslan"
 DATE=$(date +%Y%m%d_%H%M%S)
-DB_NAME="agentpay_prod"
+DB_NAME="aslan_prod"
 
 mkdir -p $BACKUP_DIR
-pg_dump $DB_NAME > $BACKUP_DIR/agentpay_backup_$DATE.sql
+pg_dump $DB_NAME > $BACKUP_DIR/aslan_backup_$DATE.sql
 find $BACKUP_DIR -name "*.sql" -mtime +7 -delete
 EOF
 
@@ -205,7 +205,7 @@ echo "0 2 * * * /path/to/backup-db.sh" | crontab -
 
 1. **Health check:**
    ```bash
-   curl https://yourdomain.com/api/health
+   curl https://aslanpay.xyz/api/health
    ```
 
 2. **Database connectivity:**
@@ -215,7 +215,7 @@ echo "0 2 * * * /path/to/backup-db.sh" | crontab -
 
 3. **Stripe integration:**
    ```bash
-   curl -X POST https://yourdomain.com/api/setup-products
+   curl -X POST https://aslanpay.xyz/api/setup-products
    ```
 
 ### Load Testing
@@ -226,7 +226,7 @@ npm install -g artillery
 # Create load test
 cat > load-test.yml << 'EOF'
 config:
-  target: 'https://yourdomain.com'
+  target: 'https://aslanpay.xyz'
   phases:
     - duration: 60
       arrivalRate: 10
@@ -261,7 +261,7 @@ artillery run load-test.yml
    - Verify CORS origins are correct
 
 ### Logs Location
-- Application logs: `pm2 logs agentpay`
+- Application logs: `pm2 logs aslan`
 - Nginx logs: `/var/log/nginx/`
 - PostgreSQL logs: `/var/log/postgresql/`
 
@@ -309,9 +309,9 @@ Set up monitoring for:
 ## 📞 Support
 
 For production support:
-- Check logs first: `pm2 logs agentpay`
+- Check logs first: `pm2 logs aslan`
 - Database issues: Check PostgreSQL logs
 - Stripe issues: Review Stripe dashboard
 - SSL issues: Verify certificate validity
 
-Your AgentPay production deployment is now ready! 🎉 
+Your Aslan production deployment is now ready! 🎉 
