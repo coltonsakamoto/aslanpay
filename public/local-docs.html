@@ -3,13 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgentPay Documentation - Local</title>
+    <title>Aslan Documentation - Local</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen max-w-4xl mx-auto px-6 py-8">
         <header class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">🚀 AgentPay Documentation</h1>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">🦁 Aslan Documentation</h1>
             <p class="text-xl text-gray-600">Universal Payment Infrastructure for AI Agents</p>
         </header>
 
@@ -18,20 +30,20 @@
             <div class="space-y-4">
                 <div>
                     <h3 class="text-lg font-semibold mb-2">1. Installation</h3>
-                    <pre class="bg-gray-100 p-3 rounded"><code>npm install agentpay</code></pre>
+                    <pre class="bg-gray-100 p-3 rounded"><code>npm install aslan</code></pre>
                 </div>
                 
                 <div>
                     <h3 class="text-lg font-semibold mb-2">2. Basic Usage</h3>
-                    <pre class="bg-gray-100 p-3 rounded text-sm"><code>import AgentPay from 'agentpay';
+                    <pre class="bg-gray-100 p-3 rounded text-sm"><code>import Aslan from 'aslan';
 
-const agentpay = new AgentPay({
-  apiKey: 'your_agentpay_api_key',
+const aslan = new Aslan({
+  apiKey: 'your_aslan_api_key',
   environment: 'sandbox'
 });
 
 // AI agent makes a purchase
-const result = await agentpay.purchase('gift-card', {
+const result = await aslan.purchase('gift-card', {
   brand: 'amazon',
   amount: 25
 });
@@ -47,7 +59,7 @@ console.log(result);
             <pre class="bg-gray-100 p-3 rounded text-sm"><code>import OpenAI from 'openai';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const functions = agentpay.getFunctionSchema();
+const functions = aslan.getFunctionSchema();
 
 const response = await openai.chat.completions.create({
   model: "gpt-4",
@@ -56,13 +68,13 @@ const response = await openai.chat.completions.create({
   function_call: "auto"
 });
 
-// ChatGPT will automatically call agentpay_purchase!</code></pre>
+// ChatGPT will automatically call aslan_purchase!</code></pre>
         </div>
 
         <div class="bg-white rounded-lg shadow-md p-8 mb-8">
             <h2 class="text-2xl font-bold mb-4">🎯 Control Tower (Enterprise)</h2>
             <pre class="bg-gray-100 p-3 rounded text-sm"><code>// 1. Request authorization
-const auth = await agentpay.authorize({
+const auth = await aslan.authorize({
   merchant: 'doordash.com',
   amount: 45.99,
   category: 'food',
@@ -73,7 +85,7 @@ const auth = await agentpay.authorize({
 // ... AI goes to DoorDash, places order ...
 
 // 3. Confirm transaction
-const result = await agentpay.confirmPurchase(
+const result = await aslan.confirmPurchase(
   auth.authorizationId, 
   46.25, // final amount
   { orderId: 'DD789', items: ['Pizza', 'Salad'] }
@@ -124,19 +136,19 @@ const result = await agentpay.confirmPurchase(
             </div>
         </div>
 
-        <div class="bg-blue-50 rounded-lg p-6 mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-3">🚀 Next Steps</h2>
-            <ul class="space-y-2 text-blue-800">
+        <div class="bg-orange-50 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-bold text-orange-900 mb-3">🚀 Next Steps</h2>
+            <ul class="space-y-2 text-orange-800">
                 <li>• <a href="demo.html" class="hover:underline">Try the Interactive Demo</a></li>
-                <li>• <a href="#" onclick="alert('Contact: support@agentpay.com')" class="hover:underline">Get API Key</a></li>
+                <li>• <a href="#" onclick="alert('Contact: support@aslanpay.xyz')" class="hover:underline">Get API Key</a></li>
                 <li>• <a href="#" onclick="alert('Example: examples/openai-demo.js')" class="hover:underline">View Examples</a></li>
-                <li>• <a href="#" onclick="alert('GitHub: agentpay/agentpay-sdk')" class="hover:underline">Contribute on GitHub</a></li>
+                <li>• <a href="#" onclick="alert('GitHub: aslanpay/aslan-sdk')" class="hover:underline">Contribute on GitHub</a></li>
             </ul>
         </div>
 
         <footer class="text-center text-gray-500 border-t pt-6">
-            <p>AgentPay - Universal Payment Infrastructure for AI Agents</p>
-            <p class="text-sm">© 2024 AgentPay Inc. All rights reserved.</p>
+            <p>Aslan - Universal Payment Infrastructure for AI Agents</p>
+            <p class="text-sm">© 2024 Aslan Technologies. All rights reserved.</p>
         </footer>
     </div>
 </body>

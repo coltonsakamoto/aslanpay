@@ -1,12 +1,12 @@
-# 🚀 **AgentPay Documentation**
+# 🦁 **Aslan Documentation**
 
 **Universal Payment Infrastructure for AI Agents**
 
 ---
 
-## 🎯 **What is AgentPay?**
+## 🎯 **What is Aslan?**
 
-AgentPay is the **"Stripe for AI Agents"** - the universal payment infrastructure that enables any AI agent to make purchases with enterprise-grade security and spending controls.
+Aslan is the **"Stripe for AI Agents"** - the universal payment infrastructure that enables any AI agent to make purchases with enterprise-grade security and spending controls.
 
 ### **Key Features**
 - **🤖 Universal AI Support**: Works with OpenAI, Anthropic, LangChain, CrewAI, and any AI framework
@@ -19,25 +19,25 @@ AgentPay is the **"Stripe for AI Agents"** - the universal payment infrastructur
 
 ## 🚀 **Quick Start**
 
-### **1. Install AgentPay**
+### **1. Install Aslan**
 ```bash
-npm install agentpay
+npm install aslan
 ```
 
 ### **2. Get Your API Key**
-Visit [agentpay.com/dashboard](https://agentpay.com/dashboard) to create an account and get your API key.
+Visit [aslanpay.xyz/dashboard](https://aslanpay.xyz/dashboard) to create an account and get your API key.
 
 ### **3. First Purchase**
 ```javascript
-import AgentPay from 'agentpay';
+import Aslan from 'aslan';
 
-const agentpay = new AgentPay({
-  apiKey: 'your_agentpay_api_key',
+const aslan = new Aslan({
+  apiKey: 'your_aslan_api_key',
   environment: 'sandbox' // or 'production'
 });
 
 // AI agent makes a purchase
-const result = await agentpay.purchase('gift-card', {
+const result = await aslan.purchase('gift-card', {
   brand: 'amazon',
   amount: 25
 });
@@ -53,13 +53,13 @@ console.log(result);
 ### **OpenAI Function Calling**
 ```javascript
 import OpenAI from 'openai';
-import AgentPay from 'agentpay';
+import Aslan from 'aslan';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const agentpay = new AgentPay({ apiKey: process.env.AGENTPAY_API_KEY });
+const aslan = new Aslan({ apiKey: process.env.ASLAN_API_KEY });
 
 // Get function schema for ChatGPT
-const functions = agentpay.getFunctionSchema();
+const functions = aslan.getFunctionSchema();
 
 const response = await openai.chat.completions.create({
   model: "gpt-4",
@@ -70,18 +70,18 @@ const response = await openai.chat.completions.create({
   function_call: "auto"
 });
 
-// ChatGPT will automatically call agentpay_purchase function!
+// ChatGPT will automatically call aslan_purchase function!
 ```
 
 ### **LangChain Integration**
 ```python
 from langchain.agents import initialize_agent, Tool
-from agentpay import AgentPayTool
+from aslan import AslanTool
 
-# Create AgentPay tool
-agentpay_tool = AgentPayTool(api_key="your_agentpay_api_key")
+# Create Aslan tool
+aslan_tool = AslanTool(api_key="your_aslan_api_key")
 
-tools = [agentpay_tool]
+tools = [aslan_tool]
 agent = initialize_agent(tools, llm, verbose=True)
 
 # AI agent can now make purchases
@@ -91,16 +91,16 @@ agent.run("Buy office supplies under $50")
 ### **Anthropic Claude Integration**
 ```javascript
 import Anthropic from '@anthropic-ai/sdk';
-import AgentPay from 'agentpay';
+import Aslan from 'aslan';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const agentpay = new AgentPay({ apiKey: process.env.AGENTPAY_API_KEY });
+const aslan = new Aslan({ apiKey: process.env.ASLAN_API_KEY });
 
 // Claude with purchase capabilities
 const message = await anthropic.messages.create({
   model: "claude-3-5-sonnet-20241022",
   messages: [{ role: "user", content: "Order lunch for the team under $100" }],
-  tools: agentpay.getFunctionSchema()
+  tools: aslan.getFunctionSchema()
 });
 ```
 
@@ -112,7 +112,7 @@ For enterprise use cases, use the Control Tower API for pre-authorization and sp
 
 ### **1. Request Authorization**
 ```javascript
-const auth = await agentpay.authorize({
+const auth = await aslan.authorize({
   agentToken: 'your_agent_token',
   merchant: 'doordash.com',
   amount: 45.99,
@@ -128,7 +128,7 @@ Your AI agent goes to DoorDash, places the order...
 
 ### **3. Confirm Transaction**
 ```javascript
-const result = await agentpay.confirmPurchase(
+const result = await aslan.confirmPurchase(
   auth.authorizationId, 
   46.25, // final amount (with tip)
   { orderId: 'DD789', items: ['Pizza', 'Salad'] }
@@ -194,13 +194,13 @@ const result = await agentpay.confirmPurchase(
 
 ## 📚 **API Reference**
 
-### **AgentPay Class**
+### **Aslan Class**
 
-#### `constructor(config: AgentPayConfig)`
-Initialize AgentPay client.
+#### `constructor(config: AslanConfig)`
+Initialize Aslan client.
 
 ```typescript
-interface AgentPayConfig {
+interface AslanConfig {
   apiKey: string;
   environment?: 'production' | 'sandbox';
   apiUrl?: string;
@@ -244,13 +244,13 @@ Get OpenAI Function Calling schema.
 ## 🤝 **Support**
 
 ### **Community**
-- [GitHub Issues](https://github.com/agentpay/agentpay-sdk/issues)
-- [Discord Community](https://discord.gg/agentpay)
-- [Stack Overflow](https://stackoverflow.com/questions/tagged/agentpay)
+- [GitHub Issues](https://github.com/aslanpay/aslan-sdk/issues)
+- [Discord Community](https://discord.gg/aslan)
+- [Stack Overflow](https://stackoverflow.com/questions/tagged/aslan)
 
 ### **Enterprise Support**
-- Email: [enterprise@agentpay.com](mailto:enterprise@agentpay.com)
-- Phone: 1-800-AGENTPAY
+- Email: [support@aslanpay.xyz](mailto:support@aslanpay.xyz)
+- Phone: 1-800-ASLANPAY
 - Slack Connect: Available for Enterprise customers
 
 ---
@@ -259,13 +259,13 @@ Get OpenAI Function Calling schema.
 
 Ready to give your AI agents purchase powers?
 
-1. **[Try the Demo](https://agentpay.com/demo)** - See it working in 30 seconds
-2. **[Get API Key](https://agentpay.com/dashboard)** - Free developer account
+1. **[Try the Demo](https://aslanpay.xyz/demo)** - See it working in 30 seconds
+2. **[Get API Key](https://aslanpay.xyz/dashboard)** - Free developer account
 3. **[2-Minute Integration](./quickstart.md)** - First purchase in minutes
 
 **Join hundreds of developers building the future of autonomous commerce!**
 
 ---
 
-*AgentPay - Universal Payment Infrastructure for AI Agents*  
-*© 2024 AgentPay Inc. All rights reserved.* 
+*Aslan - Universal Payment Infrastructure for AI Agents*  
+*© 2024 Aslan Technologies. All rights reserved.* 

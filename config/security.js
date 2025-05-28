@@ -106,14 +106,19 @@ class SecurityConfig {
                     scriptSrc: [
                         "'self'",
                         "'unsafe-inline'", // Required for some dashboard functionality
+                        "'unsafe-eval'", // Required for development
                         "https://js.stripe.com",
-                        "https://cdn.jsdelivr.net"
+                        "https://cdn.jsdelivr.net",
+                        "https://cdn.tailwindcss.com",  // Allow Tailwind CSS
+                        "https://unpkg.com" // Allow unpkg CDN for demo libraries
                     ],
+                    scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers
                     styleSrc: [
                         "'self'",
                         "'unsafe-inline'",
                         "https://fonts.googleapis.com",
-                        "https://cdn.jsdelivr.net"
+                        "https://cdn.jsdelivr.net",
+                        "https://cdn.tailwindcss.com"  // Allow Tailwind CSS styles
                     ],
                     fontSrc: [
                         "'self'",
