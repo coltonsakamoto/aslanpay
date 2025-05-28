@@ -11,7 +11,7 @@
     "db:migrate": "npx prisma migrate deploy",
     "db:migrate:dev": "npx prisma migrate dev",
     "db:studio": "npx prisma studio",
-    "build": "npm run db:generate",
+    "build": "npm run db:generate && echo 'Build completed successfully'",
     "postinstall": "npm run db:generate",
     "security:validate": "node scripts/validate-security.js",
     "security:generate-secrets": "node scripts/validate-security.js --generate-secrets",
@@ -67,5 +67,9 @@
   "bugs": {
     "url": "https://github.com/coltonsakamoto/aslanpay/issues",
     "email": "support@aslanpay.xyz"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   }
 }
