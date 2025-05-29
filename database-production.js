@@ -446,10 +446,22 @@ class ProductionDatabase {
     // Health check
     async healthCheck() {
         try {
+            const startTime = Date.now();
             await this.prisma.$queryRaw`SELECT 1`;
-            return { status: 'healthy', database: 'connected' };
+            const responseTime = Date.now() - startTime;
+            
+            return { 
+                status: 'connected', 
+                responseTime: `${responseTime}ms`,
+                timestamp: new Date().toISOString()
+            };
         } catch (error) {
-            return { status: 'unhealthy', database: 'disconnected', error: error.message };
+            console.error('Database health check failed:', error);
+            return { 
+                status: 'disconnected', 
+                error: error.message,
+                timestamp: new Date().toISOString()
+            };
         }
     }
 }
