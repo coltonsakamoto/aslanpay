@@ -11,6 +11,7 @@
     "db:migrate": "npx prisma migrate deploy",
     "db:migrate:dev": "npx prisma migrate dev",
     "db:studio": "npx prisma studio",
+    "db:test": "node scripts/test-db-connection.js",
     "build": "npx prisma generate",
     "postinstall": "npx prisma generate",
     "railway:deploy": "node scripts/railway-deploy.js",
