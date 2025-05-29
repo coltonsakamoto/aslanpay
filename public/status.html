@@ -112,9 +112,11 @@
                 
                 for (const [name, component] of Object.entries(components)) {
                     const statusColor = component.status === 'operational' ? 'green' : 
-                                      component.status === 'not_configured' ? 'yellow' : 'red';
+                                      component.status === 'not_configured' ? 'yellow' : 
+                                      component.status === 'monitoring' ? 'yellow' : 'red';
                     const statusText = component.status === 'operational' ? 'Operational' :
-                                     component.status === 'not_configured' ? 'Not Configured' : 'Issues';
+                                     component.status === 'not_configured' ? 'Not Configured' : 
+                                     component.status === 'monitoring' ? 'Monitoring' : 'Issues';
                     
                     componentsHtml += `
                         <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">

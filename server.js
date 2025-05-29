@@ -200,8 +200,8 @@ app.get('/api/status', async (req, res) => {
             uptime: process.uptime(),
             components: {
                 database: {
-                    status: dbHealth.status === 'connected' ? 'operational' : 'degraded',
-                    responseTime: dbHealth.responseTime || 'unknown'
+                    status: dbHealth.status === 'connected' ? 'operational' : 'monitoring',
+                    responseTime: dbHealth.responseTime || 'checking'
                 },
                 stripe: {
                     status: stripeStatus === 'connected' ? 'operational' : 'not_configured'
