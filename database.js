@@ -319,6 +319,32 @@ class Database {
             emailVerifications: Array.from(database.emailVerifications.values())
         };
     }
+
+    // Health check for development database
+    async healthCheck() {
+        try {
+            const startTime = Date.now();
+            // For in-memory database, just check that the data structures exist
+            const userCount = database.users.size;
+            const responseTime = Date.now() - startTime;
+            
+            return { 
+                status: 'connected', 
+                responseTime: `${responseTime}ms`,
+                timestamp: new Date().toISOString(),
+                type: 'in-memory',
+                userCount: userCount
+            };
+        } catch (error) {
+            console.error('Development database health check failed:', error);
+            return { 
+                status: 'disconnected', 
+                error: error.message,
+                timestamp: new Date().toISOString(),
+                type: 'in-memory'
+            };
+        }
+    }
 }
 
 module.exports = new Database(); 
