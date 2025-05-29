@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security - Aslan Payment Infrastructure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                        'aslan-dark': '#1a1a1a',
+                        'aslan-gray': '#6B7280'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-aslan-orange rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">🦁</span>
+                    </div>
+                    <span class="text-xl font-semibold text-aslan-dark">Aslan</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-aslan-orange hover:text-aslan-gold font-medium">← Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-16 pb-12 bg-gradient-to-r from-aslan-orange to-purple-600 text-white">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Security at Aslan</h1>
+            <p class="text-xl opacity-90 max-w-3xl mx-auto">
+                Enterprise-grade security for AI agent payments. Built with security-first principles and designed for the highest compliance standards.
+            </p>
+        </div>
+    </section>
+
+    <!-- Security Overview -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-3 gap-8 mb-16">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-aslan-dark mb-2">PCI Compliant</h3>
+                    <p class="text-aslan-gray">Built with PCI DSS Level 1 compliance in mind</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-aslan-dark mb-2">SOC 2 Ready</h3>
+                    <p class="text-aslan-gray">Roadmap to SOC 2 Type II certification</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-aslan-dark mb-2">Zero Trust</h3>
+                    <p class="text-aslan-gray">Every request authenticated and authorized</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PCI Compliance -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <h2 class="text-3xl font-bold text-aslan-dark mb-8 text-center">PCI DSS Compliance</h2>
+            
+            <div class="grid lg:grid-cols-2 gap-12 items-start">
+                <div>
+                    <h3 class="text-xl font-semibold text-aslan-dark mb-4">Our PCI Scope</h3>
+                    <div class="bg-white rounded-lg p-6 mb-6">
+                        <div class="space-y-4">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Payment Authorization</h4>
+                                    <p class="text-gray-600 text-sm">Authorization requests processed through secure tokenization</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Data Handling</h4>
+                                    <p class="text-gray-600 text-sm">No sensitive card data stored - all handled via Stripe</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Network Security</h4>
+                                    <p class="text-gray-600 text-sm">TLS 1.3 encryption for all data in transit</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Access Control</h4>
+                                    <p class="text-gray-600 text-sm">Role-based access with principle of least privilege</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="font-medium text-blue-900 mb-2">PCI Compliance Strategy</h4>
+                        <p class="text-blue-800 text-sm">Aslan leverages Stripe's PCI Level 1 infrastructure to minimize our compliance scope while maintaining security controls for authorization and transaction logging.</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-semibold text-aslan-dark mb-4">Security Controls</h3>
+                    <div class="space-y-4">
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">Network Segmentation</span>
+                                <span class="text-green-600 text-sm">✓ Implemented</span>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">Vulnerability Scanning</span>
+                                <span class="text-green-600 text-sm">✓ Automated</span>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">Security Monitoring</span>
+                                <span class="text-green-600 text-sm">✓ 24/7</span>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">Incident Response</span>
+                                <span class="text-green-600 text-sm">✓ Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- JWT Security -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-6">
+            <h2 class="text-3xl font-bold text-aslan-dark mb-8 text-center">JWT Security Architecture</h2>
+            
+            <div class="grid lg:grid-cols-2 gap-12 items-start">
+                <div>
+                    <h3 class="text-xl font-semibold text-aslan-dark mb-4">Token Structure</h3>
+                    <div class="bg-gray-900 rounded-lg p-6 text-white font-mono text-sm overflow-x-auto">
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-red-400">// Header</span>
+                                <br>
+                                <span class="text-yellow-300">{</span>
+                                <br>
+                                <span class="ml-4">"alg": "HS256",</span>
+                                <br>
+                                <span class="ml-4">"typ": "JWT"</span>
+                                <br>
+                                <span class="text-yellow-300">}</span>
+                            </div>
+                            
+                            <div>
+                                <span class="text-red-400">// Payload</span>
+                                <br>
+                                <span class="text-yellow-300">{</span>
+                                <br>
+                                <span class="ml-4">"sub": "user_id",</span>
+                                <br>
+                                <span class="ml-4">"sessionId": "uuid",</span>
+                                <br>
+                                <span class="ml-4">"permissions": ["authorize"],</span>
+                                <br>
+                                <span class="ml-4">"exp": timestamp,</span>
+                                <br>
+                                <span class="ml-4">"iat": timestamp</span>
+                                <br>
+                                <span class="text-yellow-300">}</span>
+                            </div>
+                            
+                            <div>
+                                <span class="text-red-400">// Signature</span>
+                                <br>
+                                <span class="text-green-400">HMACSHA256(base64(header) + "." + base64(payload), secret)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-semibold text-aslan-dark mb-4">Security Features</h3>
+                    <div class="space-y-4">
+                        <div class="bg-white border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-2">Short Expiration</h4>
+                            <p class="text-gray-600 text-sm">Tokens expire within 1 hour, requiring refresh</p>
+                        </div>
+                        
+                        <div class="bg-white border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-2">Secure Secret Management</h4>
+                            <p class="text-gray-600 text-sm">256-bit secrets stored in environment variables</p>
+                        </div>
+                        
+                        <div class="bg-white border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-2">Session Validation</h4>
+                            <p class="text-gray-600 text-sm">Every request validates session existence in database</p>
+                        </div>
+                        
+                        <div class="bg-white border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-2">Permission Scoping</h4>
+                            <p class="text-gray-600 text-sm">Granular permissions embedded in token payload</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SOC 2 Roadmap -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <h2 class="text-3xl font-bold text-aslan-dark mb-8 text-center">SOC 2 Roadmap</h2>
+            
+            <div class="max-w-4xl mx-auto">
+                <div class="space-y-8">
+                    <!-- Q2 2024 -->
+                    <div class="relative">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900">Phase 1: Foundation (Completed)</h3>
+                                <p class="text-gray-600">Security policies, access controls, and audit logging implemented</p>
+                            </div>
+                            <span class="text-sm text-green-600 font-medium">Q2 2024</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Q3 2024 -->
+                    <div class="relative">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900">Phase 2: Monitoring & Compliance (In Progress)</h3>
+                                <p class="text-gray-600">Continuous monitoring, vulnerability management, and compliance documentation</p>
+                            </div>
+                            <span class="text-sm text-yellow-600 font-medium">Q3 2024</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Q4 2024 -->
+                    <div class="relative">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                <span class="text-gray-600 text-sm font-medium">3</span>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900">Phase 3: SOC 2 Type I</h3>
+                                <p class="text-gray-600">External audit and SOC 2 Type I certification</p>
+                            </div>
+                            <span class="text-sm text-gray-500 font-medium">Q4 2024</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Q1 2025 -->
+                    <div class="relative">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                <span class="text-gray-600 text-sm font-medium">4</span>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900">Phase 4: SOC 2 Type II</h3>
+                                <p class="text-gray-600">Operational effectiveness audit and Type II certification</p>
+                            </div>
+                            <span class="text-sm text-gray-500 font-medium">Q1 2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Additional Security Features -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-6">
+            <h2 class="text-3xl font-bold text-aslan-dark mb-12 text-center">Additional Security Features</h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Rate Limiting</h3>
+                    <p class="text-gray-600 text-sm">Intelligent rate limiting prevents abuse and ensures fair usage across all API endpoints.</p>
+                </div>
+                
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Audit Logging</h3>
+                    <p class="text-gray-600 text-sm">Complete audit trail of all actions with immutable logs for compliance and forensics.</p>
+                </div>
+                
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Data Encryption</h3>
+                    <p class="text-gray-600 text-sm">AES-256 encryption at rest and TLS 1.3 in transit for all sensitive data.</p>
+                </div>
+                
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Performance</h3>
+                    <p class="text-gray-600 text-sm">Sub-400ms response times with security checks that don't compromise performance.</p>
+                </div>
+                
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Compliance Ready</h3>
+                    <p class="text-gray-600 text-sm">Built-in features for GDPR, CCPA, and other privacy regulations.</p>
+                </div>
+                
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Incident Response</h3>
+                    <p class="text-gray-600 text-sm">24/7 security monitoring with automated incident detection and response.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Security Team -->
+    <section class="py-16 bg-gradient-to-r from-aslan-orange to-purple-600 text-white">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold mb-4">Security Questions?</h2>
+            <p class="text-xl opacity-90 mb-8">
+                Our security team is here to help with compliance, audits, and implementation questions.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="mailto:security@aslanpay.xyz" class="bg-white text-aslan-orange px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    Contact Security Team
+                </a>
+                <a href="/status" class="border border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-aslan-orange transition-colors">
+                    View System Status
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 py-8">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <div class="flex items-center justify-center space-x-3 mb-4">
+                <div class="w-8 h-8 bg-aslan-orange rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">🦁</span>
+                </div>
+                <span class="text-xl font-semibold text-aslan-dark">Aslan</span>
+            </div>
+            <p class="text-aslan-gray text-sm mb-4">
+                Built with security at its core. Protecting AI agents and their transactions.
+            </p>
+            <div class="flex justify-center space-x-6 text-sm text-aslan-gray">
+                <a href="/" class="hover:text-aslan-dark transition-colors">Home</a>
+                <a href="/status" class="hover:text-aslan-dark transition-colors">Status</a>
+                <a href="mailto:support@aslanpay.xyz" class="hover:text-aslan-dark transition-colors">Contact</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 

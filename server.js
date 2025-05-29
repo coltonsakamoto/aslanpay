@@ -249,6 +249,15 @@ app.get('/pricing.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
 });
 
+// Security page routes
+app.get('/security', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'security.html'));
+});
+
+app.get('/security.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'security.html'));
+});
+
 // Create subscription endpoint
 app.post('/api/create-subscription', async (req, res) => {
     if (!stripe) {
