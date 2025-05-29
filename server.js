@@ -247,6 +247,28 @@ app.get('/status.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'status.html'));
 });
 
+// Documentation page routes
+app.get('/docs', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'docs.html'));
+});
+
+app.get('/docs.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'docs.html'));
+});
+
+// API reference page routes
+app.get('/api-reference', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'api.html'));
+});
+
+app.get('/api', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'api.html'));
+});
+
+app.get('/api.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'api.html'));
+});
+
 // Demo page routes
 app.get('/demo', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'demo.html'));
