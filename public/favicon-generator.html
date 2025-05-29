@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aslan Favicon Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .favicon-preview {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .size-demo {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .favicon-icon {
+            background: #FF6B35;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+        button {
+            background: #FF6B35;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #e55a2b;
+        }
+        .download-section {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .code-block {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦁 Aslan Favicon Generator</h1>
+        <p>Generate PNG favicons from the SVG lion icon for complete browser compatibility.</p>
+        
+        <div class="favicon-preview">
+            <div class="size-demo">
+                <div class="favicon-icon" style="width: 16px; height: 16px; font-size: 10px;">🦁</div>
+                <div>16x16</div>
+            </div>
+            <div class="size-demo">
+                <div class="favicon-icon" style="width: 32px; height: 32px; font-size: 20px;">🦁</div>
+                <div>32x32</div>
+            </div>
+            <div class="size-demo">
+                <div class="favicon-icon" style="width: 48px; height: 48px; font-size: 30px;">🦁</div>
+                <div>48x48</div>
+            </div>
+            <div class="size-demo">
+                <div class="favicon-icon" style="width: 180px; height: 180px; font-size: 120px;">🦁</div>
+                <div>180x180 (Apple Touch)</div>
+            </div>
+        </div>
+
+        <div class="download-section">
+            <h3>Generate PNG Files</h3>
+            <p>Click the buttons below to generate and download PNG versions of the favicon:</p>
+            
+            <button onclick="generateFavicon(16)">Generate 16x16 PNG</button>
+            <button onclick="generateFavicon(32)">Generate 32x32 PNG</button>
+            <button onclick="generateFavicon(48)">Generate 48x48 PNG</button>
+            <button onclick="generateFavicon(180)">Generate 180x180 PNG (Apple Touch)</button>
+            <button onclick="generateFavicon(192)">Generate 192x192 PNG (Android)</button>
+            <button onclick="generateFavicon(512)">Generate 512x512 PNG (Android)</button>
+            
+            <div id="canvases"></div>
+        </div>
+
+        <div class="download-section">
+            <h3>📋 HTML Head Code</h3>
+            <p>Add this code to the &lt;head&gt; section of your HTML files:</p>
+            <div class="code-block"><!-- Favicon and App Icons -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#FF6B35"></div>
+        </div>
+
+        <div class="download-section">
+            <h3>📁 Required Files</h3>
+            <p>Make sure you have these files in your public directory:</p>
+            <ul>
+                <li>✅ <code>favicon.svg</code> - Modern SVG favicon</li>
+                <li>⚠️ <code>favicon.ico</code> - Legacy ICO format (generate online)</li>
+                <li>⚠️ <code>favicon-16x16.png</code> - 16x16 PNG</li>
+                <li>⚠️ <code>favicon-32x32.png</code> - 32x32 PNG</li>
+                <li>⚠️ <code>apple-touch-icon.png</code> - 180x180 PNG for iOS</li>
+                <li>⚠️ <code>android-chrome-192x192.png</code> - 192x192 PNG for Android</li>
+                <li>⚠️ <code>android-chrome-512x512.png</code> - 512x512 PNG for Android</li>
+                <li>✅ <code>site.webmanifest</code> - Web app manifest</li>
+            </ul>
+        </div>
+
+        <div class="download-section">
+            <h3>🌐 Online Tools</h3>
+            <p>For complete favicon generation, you can also use these online tools:</p>
+            <ul>
+                <li><a href="https://favicon.io/emoji-favicons/lion/" target="_blank">Favicon.io - Lion Emoji Favicon</a></li>
+                <li><a href="https://realfavicongenerator.net/" target="_blank">RealFaviconGenerator</a></li>
+                <li><a href="https://www.favicongenerator.com/" target="_blank">FaviconGenerator.com</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function generateFavicon(size) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Draw orange background circle
+            ctx.fillStyle = '#FF6B35';
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw lion emoji
+            ctx.fillStyle = 'white';
+            ctx.font = `${size * 0.6}px system-ui, -apple-system, "Segoe UI Emoji", "Apple Color Emoji"`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🦁', size/2, size/2);
+            
+            // Add canvas to page for preview
+            const canvasContainer = document.getElementById('canvases');
+            const existingCanvas = document.querySelector(`canvas[data-size="${size}"]`);
+            if (existingCanvas) {
+                existingCanvas.remove();
+            }
+            
+            canvas.setAttribute('data-size', size);
+            canvas.style.border = '1px solid #ccc';
+            canvas.title = `${size}x${size} favicon preview`;
+            canvasContainer.appendChild(canvas);
+            
+            // Convert to blob and download
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                if (size === 180) {
+                    a.download = 'apple-touch-icon.png';
+                } else if (size === 192) {
+                    a.download = 'android-chrome-192x192.png';
+                } else if (size === 512) {
+                    a.download = 'android-chrome-512x512.png';
+                } else {
+                    a.download = `favicon-${size}x${size}.png`;
+                }
+                
+                a.href = url;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+        
+        // Show current favicon in browser
+        console.log('🦁 Aslan Favicon Generator loaded');
+        console.log('Use the buttons above to generate PNG versions of the favicon');
+    </script>
+</body>
+</html> 
