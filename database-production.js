@@ -9,10 +9,36 @@ class ProductionDatabase {
             log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
         });
         
+        // Auto-migrate on startup for Railway
+        this.initializeDatabase();
+        
         // Graceful shutdown
         process.on('beforeExit', async () => {
             await this.prisma.$disconnect();
         });
+    }
+
+    // Initialize database with migrations
+    async initializeDatabase() {
+        try {
+            console.log('🔄 Checking database connection...');
+            await this.prisma.$connect();
+            console.log('✅ Database connected successfully');
+            
+            // Run migrations if needed
+            if (process.env.NODE_ENV === 'production') {
+                console.log('🔄 Running database migrations...');
+                const { execSync } = require('child_process');
+                try {
+                    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+                    console.log('✅ Database migrations completed');
+                } catch (error) {
+                    console.warn('⚠️  Migration failed, but continuing:', error.message);
+                }
+            }
+        } catch (error) {
+            console.error('❌ Database initialization failed:', error.message);
+        }
     }
 
     // User Management
