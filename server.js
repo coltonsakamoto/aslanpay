@@ -154,6 +154,60 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', service: 'aslan' });
 });
 
+// Status page endpoint
+app.get('/status', async (req, res) => {
+    try {
+        // Check database connectivity
+        const dbHealth = await database.healthCheck();
+        
+        // Check Stripe connectivity
+        const stripeStatus = stripe ? 'connected' : 'not configured';
+        
+        // Get security status
+        const securityReport = security.getSecurityReport();
+        
+        const status = {
+            service: 'Aslan Payment Infrastructure',
+            status: 'operational',
+            timestamp: new Date().toISOString(),
+            version: '1.0.0',
+            environment: process.env.NODE_ENV || 'development',
+            uptime: process.uptime(),
+            components: {
+                database: {
+                    status: dbHealth.status === 'connected' ? 'operational' : 'degraded',
+                    responseTime: dbHealth.responseTime || 'unknown'
+                },
+                stripe: {
+                    status: stripeStatus === 'connected' ? 'operational' : 'not_configured'
+                },
+                authentication: {
+                    status: 'operational'
+                },
+                api: {
+                    status: 'operational'
+                }
+            },
+            security: {
+                environment: securityReport.environment,
+                httpsEnforced: securityReport.features.httpsEnforcement,
+                corsProtection: securityReport.features.corsProtection,
+                hasErrors: securityReport.validation.errors.length > 0
+            }
+        };
+        
+        res.json(status);
+    } catch (error) {
+        console.error('Status check failed:', error);
+        res.status(503).json({
+            service: 'Aslan Payment Infrastructure',
+            status: 'degraded',
+            timestamp: new Date().toISOString(),
+            error: 'Unable to perform full status check'
+        });
+    }
+});
+
 // Serve static files
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
