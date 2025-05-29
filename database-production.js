@@ -473,20 +473,38 @@ class ProductionDatabase {
     async healthCheck() {
         try {
             const startTime = Date.now();
-            await this.prisma.$queryRaw`SELECT 1`;
+            
+            // Test basic connection first
+            console.log('🔍 Testing database connection...');
+            await this.prisma.$connect();
+            
+            // Test actual query
+            console.log('🔍 Testing database query...');
+            await this.prisma.$queryRaw`SELECT 1 as test`;
+            
             const responseTime = Date.now() - startTime;
             
+            console.log(`✅ Database health check passed in ${responseTime}ms`);
             return { 
                 status: 'connected', 
                 responseTime: `${responseTime}ms`,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                type: 'postgresql',
+                environment: process.env.NODE_ENV || 'unknown'
             };
         } catch (error) {
-            console.error('Database health check failed:', error);
+            console.error('❌ Database health check failed:', error.message);
+            console.error('Error code:', error.code);
+            console.error('DATABASE_URL set:', process.env.DATABASE_URL ? 'Yes' : 'No');
+            
             return { 
                 status: 'disconnected', 
                 error: error.message,
-                timestamp: new Date().toISOString()
+                code: error.code,
+                timestamp: new Date().toISOString(),
+                type: 'postgresql',
+                environment: process.env.NODE_ENV || 'unknown',
+                databaseUrlSet: !!process.env.DATABASE_URL
             };
         }
     }

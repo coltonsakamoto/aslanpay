@@ -601,6 +601,62 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
+// Railway database diagnostic endpoint
+app.get('/api/railway/db-test', async (req, res) => {
+    try {
+        console.log('🔧 Railway database diagnostic started');
+        
+        const diagnostics = {
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV,
+            databaseUrlSet: !!process.env.DATABASE_URL,
+            databaseUrlFormat: process.env.DATABASE_URL ? 
+                process.env.DATABASE_URL.replace(/:[^:@]+@/, ':***@') : 'NOT_SET',
+            tests: {}
+        };
+        
+        // Test 1: Basic environment check
+        diagnostics.tests.environment = {
+            nodeEnv: process.env.NODE_ENV,
+            isProduction: process.env.NODE_ENV === 'production',
+            hasDbUrl: !!process.env.DATABASE_URL
+        };
+        
+        // Test 2: Database health check
+        try {
+            const dbHealth = await database.healthCheck();
+            diagnostics.tests.healthCheck = {
+                success: true,
+                result: dbHealth
+            };
+        } catch (error) {
+            diagnostics.tests.healthCheck = {
+                success: false,
+                error: error.message,
+                code: error.code
+            };
+        }
+        
+        // Test 3: Database type detection
+        diagnostics.tests.databaseType = {
+            isDevelopment: process.env.NODE_ENV !== 'production',
+            isProduction: process.env.NODE_ENV === 'production',
+            expectedType: process.env.NODE_ENV === 'production' ? 'postgresql' : 'in-memory'
+        };
+        
+        console.log('🔧 Railway database diagnostic completed');
+        res.json(diagnostics);
+        
+    } catch (error) {
+        console.error('🔧 Railway database diagnostic failed:', error);
+        res.status(500).json({
+            error: 'Diagnostic failed',
+            message: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Error handling middleware
 app.use((error, req, res, next) => {
     console.error('Unhandled error:', error);
