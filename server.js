@@ -154,8 +154,8 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', service: 'aslan' });
 });
 
-// Status page endpoint
-app.get('/status', async (req, res) => {
+// JSON Status API endpoint
+app.get('/api/status', async (req, res) => {
     try {
         // Check database connectivity
         const dbHealth = await database.healthCheck();
@@ -211,6 +211,42 @@ app.get('/status', async (req, res) => {
 // Serve static files
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Status page routes (both with and without .html)
+app.get('/status', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'status.html'));
+});
+
+app.get('/status.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'status.html'));
+});
+
+// Demo page routes
+app.get('/demo', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+});
+
+app.get('/demo.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+});
+
+// Auth page routes
+app.get('/auth', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+});
+
+app.get('/auth.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+});
+
+// Pricing page routes
+app.get('/pricing', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
+});
+
+app.get('/pricing.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
 });
 
 // Create subscription endpoint
