@@ -13,6 +13,7 @@
     "db:studio": "npx prisma studio",
     "build": "npx prisma generate",
     "postinstall": "npx prisma generate",
+    "railway:deploy": "node scripts/railway-deploy.js",
     "security:validate": "node scripts/validate-security.js",
     "security:generate-secrets": "node scripts/validate-security.js --generate-secrets",
     "security:report": "curl -s http://localhost:3000/api/security | jq .",
