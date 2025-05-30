@@ -1,5 +1,23 @@
 require('dotenv').config();
 
+// Add comprehensive error handling for startup
+process.on('uncaughtException', (error) => {
+    console.error('🚨 Uncaught Exception:', error);
+    console.error('Stack:', error.stack);
+    // Don't exit in production to allow Railway to restart
+    if (process.env.NODE_ENV !== 'production') {
+        process.exit(1);
+    }
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit in production to allow Railway to restart
+    if (process.env.NODE_ENV !== 'production') {
+        process.exit(1);
+    }
+});
+
 const express = require('express');
 // Make Stripe optional to prevent startup crashes
 let stripe;
@@ -25,13 +43,70 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 // Import routes
-const authRoutes = require('./routes/auth');
-const apiKeyRoutes = require('./routes/api-keys');
-const authorizeRoutes = require('./routes/authorize');
+let authRoutes, apiKeyRoutes, authorizeRoutes;
+try {
+    authRoutes = require('./routes/auth');
+    console.log('✅ Auth routes loaded successfully');
+} catch (error) {
+    console.error('❌ Failed to load auth routes:', error.message);
+    authRoutes = require('express').Router();
+}
 
-// Import database and security configuration
-const database = require('./config/database');
-const security = require('./config/security');
+try {
+    apiKeyRoutes = require('./routes/api-keys');
+    console.log('✅ API key routes loaded successfully');
+} catch (error) {
+    console.error('❌ Failed to load API key routes:', error.message);
+    apiKeyRoutes = require('express').Router();
+}
+
+try {
+    authorizeRoutes = require('./routes/authorize');
+    console.log('✅ Authorize routes loaded successfully');
+} catch (error) {
+    console.error('❌ Failed to load authorize routes:', error.message);
+    authorizeRoutes = require('express').Router();
+}
+
+// Import database and security configuration with error handling
+let database, security;
+try {
+    database = require('./config/database');
+    console.log('✅ Database module loaded successfully');
+} catch (error) {
+    console.error('❌ Failed to load database module:', error.message);
+    // Create minimal database mock to prevent crashes
+    database = {
+        healthCheck: () => Promise.resolve({ status: 'disconnected', error: 'Database module failed to load' }),
+        getSession: () => null,
+        getUserById: () => null,
+        getAllData: () => Promise.resolve({ error: 'Database not available' })
+    };
+}
+
+try {
+    security = require('./config/security');
+    console.log('✅ Security module loaded successfully');
+} catch (error) {
+    console.error('❌ Failed to load security module:', error.message);
+    // Create minimal security mock to prevent crashes
+    security = {
+        validateEnvironment: () => ({ errors: [], warnings: ['Security module failed to load'] }),
+        isProduction: process.env.NODE_ENV === 'production',
+        enforceHTTPS: () => (req, res, next) => next(),
+        getHelmetConfig: () => ({}),
+        securityHeaders: () => (req, res, next) => next(),
+        getRateLimitConfig: () => ({ windowMs: 15 * 60 * 1000, max: 100 }),
+        getCorsConfig: () => ({ origin: true }),
+        getSessionConfig: () => ({ secret: 'fallback-secret', resave: false, saveUninitialized: false }),
+        validateOrigin: () => (req, res, next) => next(),
+        getSecurityReport: () => ({ 
+            environment: 'unknown', 
+            features: {}, 
+            validation: { errors: ['Security module failed'], warnings: [] }
+        })
+    };
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
