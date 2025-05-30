@@ -143,7 +143,7 @@
                                 <span class="text-gray-400 text-sm ml-2">terminal</span>
                             </div>
                             <div class="overflow-x-auto">
-                                <pre class="text-sm whitespace-pre"><code><span class="text-gray-400"># Install Aslan SDK</span>
+                                <pre class="text-sm whitespace-pre min-w-0"><code><span class="text-gray-400"># Install Aslan SDK</span>
 <span class="text-green-400">npm install</span> @aslanpay/sdk
 
 <span class="text-gray-400"># Or using yarn</span>
@@ -152,8 +152,9 @@
                         </div>
 
                         <h3 class="text-xl font-semibold text-aslan-dark mb-4">Basic Setup</h3>
-                        <div class="bg-gray-100 rounded-lg p-4 overflow-x-auto mb-6">
-                            <pre class="text-sm whitespace-pre"><code>const { Aslan } = require('@aslanpay/sdk');
+                        <div class="bg-gray-100 rounded-lg p-4 overflow-hidden mb-6">
+                            <div class="overflow-x-auto">
+                                <pre class="text-sm whitespace-pre min-w-0"><code>const { Aslan } = require('@aslanpay/sdk');
 
 const aslan = new Aslan({
   apiKey: process.env.ASLAN_API_KEY,
@@ -170,6 +171,7 @@ async function enableAIPurchases() {
   
   console.log('Purchase successful:', result);
 }</code></pre>
+                            </div>
                         </div>
                     </section>
 
@@ -203,23 +205,27 @@ async function enableAIPurchases() {
                                 <p class="text-aslan-gray mb-4">Authorize a payment for an AI agent.</p>
                                 
                                 <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                                    <pre class="text-sm"><code>await aslan.authorize({
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>await aslan.authorize({
   amount: 2500,           // Required: Amount in cents
   description: 'string',  // Required: Purchase description
   agentId: 'string',     // Optional: Agent identifier
   metadata: {}           // Optional: Additional data
 })</code></pre>
+                                    </div>
                                 </div>
 
                                 <h4 class="font-semibold text-aslan-dark mb-2">Response</h4>
                                 <div class="bg-gray-50 rounded-lg p-4">
-                                    <pre class="text-sm"><code>{
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>{
   "id": "auth_1234567890",
   "amount": 2500,
   "status": "authorized",
   "description": "AWS credits for computation",
   "created_at": "2024-01-15T10:30:00Z"
 }</code></pre>
+                                    </div>
                                 </div>
                             </div>
 
@@ -228,9 +234,11 @@ async function enableAIPurchases() {
                                 <p class="text-aslan-gray mb-4">Confirm and execute an authorized payment.</p>
                                 
                                 <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                                    <pre class="text-sm"><code>await aslan.confirm({
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>await aslan.confirm({
   authorizationId: 'auth_1234567890'
 })</code></pre>
+                                    </div>
                                 </div>
                             </div>
 
@@ -239,11 +247,13 @@ async function enableAIPurchases() {
                                 <p class="text-aslan-gray mb-4">Refund a completed payment.</p>
                                 
                                 <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                                    <pre class="text-sm"><code>await aslan.refund({
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>await aslan.refund({
   paymentId: 'pay_1234567890',
   amount: 2500, // Optional: partial refund
   reason: 'Customer request'
 })</code></pre>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -256,8 +266,9 @@ async function enableAIPurchases() {
                         <div class="space-y-8">
                             <div>
                                 <h3 class="text-xl font-semibold text-aslan-dark mb-4">OpenAI Integration</h3>
-                                <div class="bg-aslan-dark rounded-lg p-6 text-white">
-                                    <pre class="text-sm"><code>import OpenAI from 'openai'
+                                <div class="bg-aslan-dark rounded-lg p-6 text-white overflow-hidden">
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>import OpenAI from 'openai'
 import { Aslan } from '@aslanpay/sdk'
 
 const openai = new OpenAI()
@@ -289,13 +300,15 @@ if (completion.choices[0].message.tool_calls) {
     description: "AWS credits"
   })
 }</code></pre>
+                                    </div>
                                 </div>
                             </div>
 
                             <div>
                                 <h3 class="text-xl font-semibold text-aslan-dark mb-4">LangChain Integration</h3>
-                                <div class="bg-aslan-dark rounded-lg p-6 text-white">
-                                    <pre class="text-sm"><code>from langchain.tools import Tool
+                                <div class="bg-aslan-dark rounded-lg p-6 text-white overflow-hidden">
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>from langchain.tools import Tool
 from aslanpay import Aslan
 
 aslan = Aslan(api_key="your_api_key")
@@ -312,6 +325,7 @@ purchase = Tool(
     description="Make purchases for the AI agent",
     func=purchase_tool
 )</code></pre>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -366,8 +380,9 @@ purchase = Tool(
 
                             <div>
                                 <h3 class="text-lg font-semibold text-aslan-dark mb-3">Spending Controls</h3>
-                                <div class="bg-gray-50 rounded-lg p-4">
-                                    <pre class="text-sm"><code>const aslan = new Aslan({
+                                <div class="bg-gray-50 rounded-lg p-4 overflow-hidden">
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>const aslan = new Aslan({
   apiKey: 'your_api_key',
   limits: {
     daily: 10000,        // $100 daily limit
@@ -378,6 +393,7 @@ purchase = Tool(
     }
   }
 })</code></pre>
+                                    </div>
                                 </div>
                             </div>
                         </div>
