@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - Autonomy</title>
+    <title>Checkout - Aslan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <script>
@@ -11,49 +11,50 @@
             theme: {
                 extend: {
                     colors: {
-                        'autonomy-blue': '#0066FF',
-                        'autonomy-dark': '#1a1a1a',
-                        'autonomy-gray': '#6B7280'
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                        'aslan-dark': '#1a1a1a',
+                        'aslan-gray': '#6B7280'
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 overflow-x-hidden">
     <!-- Navigation -->
     <nav class="border-b border-gray-200 bg-white">
-        <div class="max-w-7xl mx-auto px-6 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-autonomy-blue rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold text-sm">A</span>
+                    <div class="w-8 h-8 bg-aslan-orange rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">🦁</span>
                     </div>
-                    <span class="text-xl font-semibold text-autonomy-dark">Autonomy</span>
+                    <span class="text-xl font-semibold text-aslan-dark">Aslan</span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <a href="pricing.html" class="text-autonomy-gray hover:text-autonomy-dark transition-colors">← Back to Pricing</a>
+                    <a href="pricing.html" class="text-aslan-gray hover:text-aslan-dark transition-colors">← Back to Pricing</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-4xl mx-auto px-6 py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <!-- Loading State -->
         <div id="loading-state" class="text-center">
-            <div class="bg-white rounded-xl shadow-lg p-8">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-autonomy-blue mx-auto mb-4"></div>
-                <h2 class="text-xl font-semibold text-autonomy-dark mb-2">Loading checkout...</h2>
-                <p class="text-autonomy-gray">Please wait while we prepare your subscription</p>
+            <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-aslan-orange mx-auto mb-4"></div>
+                <h2 class="text-xl font-semibold text-aslan-dark mb-2">Loading checkout...</h2>
+                <p class="text-aslan-gray">Please wait while we prepare your subscription</p>
             </div>
         </div>
 
         <!-- Checkout Form -->
         <div id="checkout-form" class="hidden">
-            <div class="grid lg:grid-cols-2 gap-8">
+            <div class="grid lg:grid-cols-2 gap-6 lg:gap-8">
                 <!-- Order Summary -->
-                <div class="bg-white rounded-xl shadow-lg p-8">
-                    <h2 class="text-2xl font-bold text-autonomy-dark mb-6">Order Summary</h2>
+                <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-aslan-dark mb-6">Order Summary</h2>
                     
                     <div id="plan-details" class="mb-6">
                         <!-- Plan details will be populated by JavaScript -->
@@ -61,62 +62,62 @@
                     
                     <div class="border-t pt-6">
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-autonomy-gray">Subtotal</span>
-                            <span id="subtotal" class="font-semibold text-autonomy-dark"></span>
+                            <span class="text-aslan-gray">Subtotal</span>
+                            <span id="subtotal" class="font-semibold text-aslan-dark"></span>
                         </div>
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-autonomy-gray">Tax</span>
-                            <span class="text-autonomy-gray">Calculated at checkout</span>
+                            <span class="text-aslan-gray">Tax</span>
+                            <span class="text-aslan-gray">Calculated at checkout</span>
                         </div>
                         <div class="border-t pt-4">
                             <div class="flex justify-between items-center">
-                                <span class="text-lg font-semibold text-autonomy-dark">Total</span>
-                                <span id="total" class="text-lg font-bold text-autonomy-blue"></span>
+                                <span class="text-lg font-semibold text-aslan-dark">Total</span>
+                                <span id="total" class="text-lg font-bold text-aslan-orange"></span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Features -->
                     <div class="mt-6 pt-6 border-t">
-                        <h3 class="font-semibold text-autonomy-dark mb-3">What's included:</h3>
-                        <ul id="plan-features" class="space-y-2 text-sm text-autonomy-gray">
+                        <h3 class="font-semibold text-aslan-dark mb-3">What's included:</h3>
+                        <ul id="plan-features" class="space-y-2 text-sm text-aslan-gray">
                             <!-- Features will be populated by JavaScript -->
                         </ul>
                     </div>
                 </div>
 
                 <!-- Payment Form -->
-                <div class="bg-white rounded-xl shadow-lg p-8">
-                    <h2 class="text-2xl font-bold text-autonomy-dark mb-6">Payment Information</h2>
+                <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-aslan-dark mb-6">Payment Information</h2>
                     
                     <form id="payment-form">
                         <!-- Customer Information -->
                         <div class="space-y-4 mb-6">
                             <div>
-                                <label class="block text-sm font-medium text-autonomy-dark mb-2">Email Address</label>
-                                <input type="email" id="email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                                <label class="block text-sm font-medium text-aslan-dark mb-2">Email Address</label>
+                                <input type="email" id="email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                             </div>
                             
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-autonomy-dark mb-2">First Name</label>
-                                    <input type="text" id="first-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                                    <label class="block text-sm font-medium text-aslan-dark mb-2">First Name</label>
+                                    <input type="text" id="first-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-autonomy-dark mb-2">Last Name</label>
-                                    <input type="text" id="last-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                                    <label class="block text-sm font-medium text-aslan-dark mb-2">Last Name</label>
+                                    <input type="text" id="last-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                                 </div>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-autonomy-dark mb-2">Company (Optional)</label>
-                                <input type="text" id="company" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                                <label class="block text-sm font-medium text-aslan-dark mb-2">Company (Optional)</label>
+                                <input type="text" id="company" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                             </div>
                         </div>
 
                         <!-- Payment Method -->
                         <div class="mb-6">
-                            <label class="block text-sm font-medium text-autonomy-dark mb-2">Payment Method</label>
+                            <label class="block text-sm font-medium text-aslan-dark mb-2">Payment Method</label>
                             <div id="card-element" class="border border-gray-300 rounded-lg p-3">
                                 <!-- Stripe Elements will create form elements here -->
                             </div>
@@ -136,7 +137,7 @@
                         </div>
 
                         <!-- Submit Button -->
-                        <button type="submit" id="submit-button" class="w-full bg-autonomy-blue text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                        <button type="submit" id="submit-button" class="w-full bg-aslan-orange text-white py-3 px-4 rounded-lg font-semibold hover:bg-aslan-gold transition-colors">
                             <span id="button-text">Complete Purchase</span>
                             <div id="button-spinner" class="hidden inline-block ml-2">
                                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -144,7 +145,7 @@
                         </button>
 
                         <!-- Security Notice -->
-                        <div class="mt-4 text-center text-sm text-autonomy-gray">
+                        <div class="mt-4 text-center text-sm text-aslan-gray">
                             <div class="flex items-center justify-center space-x-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
@@ -159,19 +160,19 @@
 
         <!-- Success State -->
         <div id="success-state" class="hidden text-center">
-            <div class="bg-white rounded-xl shadow-lg p-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8">
                 <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                 </div>
-                <h2 class="text-2xl font-bold text-autonomy-dark mb-4">Payment Successful!</h2>
-                <p class="text-autonomy-gray mb-6">Your subscription has been activated and you're ready to start building with Autonomy.</p>
+                <h2 class="text-2xl font-bold text-aslan-dark mb-4">Payment Successful!</h2>
+                <p class="text-aslan-gray mb-6">Your subscription has been activated and you're ready to start building with Aslan.</p>
                 <div class="space-y-3">
-                    <a href="demo.html" class="block bg-autonomy-blue text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    <a href="/demo" class="block bg-aslan-orange text-white px-6 py-3 rounded-lg font-medium hover:bg-aslan-gold transition-colors">
                         Try the Demo
                     </a>
-                    <a href="mailto:hello@useautonomy.co" class="block text-autonomy-gray hover:text-autonomy-dark transition-colors">
+                    <a href="mailto:support@aslanpay.xyz" class="block text-aslan-gray hover:text-aslan-dark transition-colors">
                         Get help setting up →
                     </a>
                 </div>
@@ -180,15 +181,15 @@
 
         <!-- Error State -->
         <div id="error-state" class="hidden text-center">
-            <div class="bg-white rounded-xl shadow-lg p-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8">
                 <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </div>
-                <h2 class="text-2xl font-bold text-autonomy-dark mb-4">Payment Failed</h2>
-                <p id="error-message" class="text-autonomy-gray mb-6"></p>
-                <button onclick="location.reload()" class="bg-autonomy-blue text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                <h2 class="text-2xl font-bold text-aslan-dark mb-4">Payment Failed</h2>
+                <p id="error-message" class="text-aslan-gray mb-6"></p>
+                <button onclick="location.reload()" class="bg-aslan-orange text-white px-6 py-3 rounded-lg font-medium hover:bg-aslan-gold transition-colors">
                     Try Again
                 </button>
             </div>
@@ -287,7 +288,7 @@
             document.getElementById('success-state').classList.remove('hidden');
             
             // Update success message for free plan
-            document.querySelector('#success-state h2').textContent = 'Welcome to Autonomy!';
+            document.querySelector('#success-state h2').textContent = 'Welcome to Aslan!';
             document.querySelector('#success-state p').textContent = 'Your free Sandbox account is ready. Start building with 50 free authorizations per month.';
         }
 
@@ -321,12 +322,12 @@
             document.getElementById('plan-details').innerHTML = `
                 <div class="flex justify-between items-center mb-4">
                     <div>
-                        <h3 class="font-semibold text-autonomy-dark">${currentPlan.name} Plan</h3>
-                        <p class="text-sm text-autonomy-gray">Monthly subscription</p>
+                        <h3 class="font-semibold text-aslan-dark">${currentPlan.name} Plan</h3>
+                        <p class="text-sm text-aslan-gray">Monthly subscription</p>
                     </div>
                     <div class="text-right">
-                        <div class="text-xl font-bold text-autonomy-dark">$${currentPlan.price}</div>
-                        <div class="text-sm text-autonomy-gray">/month</div>
+                        <div class="text-xl font-bold text-aslan-dark">$${currentPlan.price}</div>
+                        <div class="text-sm text-aslan-gray">/month</div>
                     </div>
                 </div>
             `;
@@ -433,7 +434,7 @@
 
         // Handle enterprise plan contact
         if (new URLSearchParams(window.location.search).get('plan') === 'enterprise') {
-            window.location.href = 'mailto:hello@useautonomy.co?subject=Enterprise Plan Inquiry';
+            window.location.href = 'mailto:support@aslanpay.xyz?subject=Enterprise Plan Inquiry';
         }
     </script>
 </body>

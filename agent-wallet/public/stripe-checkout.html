@@ -3,34 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fund Wallet - AgentPay</title>
+    <title>Fund Wallet - Aslan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                        'aslan-dark': '#1a1a1a',
+                        'aslan-gray': '#6B7280'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen overflow-x-hidden">
     <!-- Header -->
     <header class="gradient-bg text-white py-4">
         <div class="container mx-auto px-4">
-            <h1 class="text-2xl font-bold">💳 Fund Your AgentPay Wallet</h1>
-            <p class="text-blue-100">Secure payment powered by Stripe</p>
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">🦁</span>
+                </div>
+                <h1 class="text-2xl font-bold">💳 Fund Your Aslan Wallet</h1>
+            </div>
+            <p class="text-orange-100">Secure payment powered by Stripe</p>
         </div>
     </header>
 
     <div class="container mx-auto px-4 py-8">
-        <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6 sm:p-8">
             <!-- Wallet Info -->
             <div class="mb-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-2">Wallet Details</h3>
                 <div class="bg-gray-50 rounded-lg p-4">
                     <p class="text-sm text-gray-600">Wallet ID:</p>
-                    <p id="wallet-id" class="font-mono text-sm bg-white p-2 rounded border"></p>
+                    <p id="wallet-id" class="font-mono text-sm bg-white p-2 rounded border break-all"></p>
                     <p class="text-sm text-gray-600 mt-2">Current Balance:</p>
-                    <p id="current-balance" class="text-2xl font-bold text-green-600">$0.00</p>
+                    <p id="current-balance" class="text-2xl font-bold text-aslan-orange">$0.00</p>
                 </div>
             </div>
 
@@ -38,19 +57,19 @@
             <div class="mb-6">
                 <h4 class="font-semibold text-gray-800 mb-3">Select Amount to Add</h4>
                 <div class="grid grid-cols-3 gap-3 mb-4">
-                    <button class="amount-btn bg-blue-100 hover:bg-blue-200 text-blue-800 py-3 px-4 rounded-lg font-semibold transition duration-300" data-amount="10">$10</button>
-                    <button class="amount-btn bg-blue-100 hover:bg-blue-200 text-blue-800 py-3 px-4 rounded-lg font-semibold transition duration-300" data-amount="25">$25</button>
-                    <button class="amount-btn bg-blue-100 hover:bg-blue-200 text-blue-800 py-3 px-4 rounded-lg font-semibold transition duration-300" data-amount="50">$50</button>
+                    <button class="amount-btn bg-orange-100 hover:bg-orange-200 text-aslan-orange py-3 px-4 rounded-lg font-semibold transition duration-300" data-amount="10">$10</button>
+                    <button class="amount-btn bg-orange-100 hover:bg-orange-200 text-aslan-orange py-3 px-4 rounded-lg font-semibold transition duration-300" data-amount="25">$25</button>
+                    <button class="amount-btn bg-orange-100 hover:bg-orange-200 text-aslan-orange py-3 px-4 rounded-lg font-semibold transition duration-300" data-amount="50">$50</button>
                 </div>
                 
                 <div class="flex space-x-2">
-                    <input type="number" id="custom-amount" placeholder="Custom amount" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" min="1" max="1000">
+                    <input type="number" id="custom-amount" placeholder="Custom amount" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aslan-orange focus:border-aslan-orange" min="1" max="1000">
                     <button id="set-custom" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-lg transition duration-300">Set</button>
                 </div>
                 
-                <div class="mt-4 p-4 bg-blue-50 rounded-lg">
-                    <p class="text-blue-800 font-semibold">Amount to charge: <span id="charge-amount">$0.00</span></p>
-                    <p class="text-sm text-blue-600">Including processing fee</p>
+                <div class="mt-4 p-4 bg-orange-50 rounded-lg">
+                    <p class="text-aslan-orange font-semibold">Amount to charge: <span id="charge-amount">$0.00</span></p>
+                    <p class="text-sm text-orange-600">Including processing fee</p>
                 </div>
             </div>
 
@@ -62,7 +81,7 @@
                     <!-- Card Holder Name -->
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Cardholder Name</label>
-                        <input type="text" id="cardholder-name" placeholder="John Doe" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        <input type="text" id="cardholder-name" placeholder="John Doe" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aslan-orange focus:border-aslan-orange" required>
                     </div>
                     
                     <!-- Stripe Elements will be mounted here -->
@@ -74,14 +93,14 @@
                     </div>
                     
                     <!-- Billing Address -->
-                    <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                            <input type="email" id="email" placeholder="john@example.com" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            <input type="email" id="email" placeholder="john@example.com" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aslan-orange focus:border-aslan-orange" required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
-                            <input type="text" id="zip-code" placeholder="90210" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            <input type="text" id="zip-code" placeholder="90210" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aslan-orange focus:border-aslan-orange" required>
                         </div>
                     </div>
                     
@@ -89,7 +108,7 @@
                     <div id="card-errors" class="text-red-600 text-sm mt-2"></div>
                 </div>
 
-                <button id="submit-payment" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button id="submit-payment" class="w-full bg-aslan-orange hover:bg-aslan-gold text-white font-bold py-4 px-6 rounded-lg text-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                     <span id="button-text">💰 Fund Wallet</span>
                     <div id="spinner" class="hidden inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
                 </button>
@@ -97,8 +116,8 @@
                 <!-- Terms and Privacy -->
                 <p class="text-xs text-gray-500 mt-4 text-center">
                     By completing this payment, you agree to our 
-                    <a href="/terms-of-service.html" class="text-blue-600 hover:underline">Terms of Service</a> and 
-                    <a href="/privacy-policy.html" class="text-blue-600 hover:underline">Privacy Policy</a>
+                    <a href="/terms-of-service.html" class="text-aslan-orange hover:underline">Terms of Service</a> and 
+                    <a href="/privacy-policy.html" class="text-aslan-orange hover:underline">Privacy Policy</a>
                 </p>
             </form>
 
@@ -111,7 +130,7 @@
                         <p class="text-green-600 text-sm">Your wallet has been funded successfully.</p>
                     </div>
                 </div>
-                <button id="return-dashboard" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition duration-300">
+                <button id="return-dashboard" class="mt-4 w-full bg-aslan-orange hover:bg-aslan-gold text-white py-2 px-4 rounded transition duration-300">
                     Return to Dashboard
                 </button>
             </div>
@@ -200,12 +219,12 @@
                     if (matchingBtn) {
                         // Select the button
                         document.querySelectorAll('.amount-btn').forEach(b => {
-                            b.classList.remove('bg-blue-600', 'text-white');
-                            b.classList.add('bg-blue-100', 'text-blue-800');
+                            b.classList.remove('bg-orange-600', 'text-white');
+                            b.classList.add('bg-orange-100', 'text-orange-800');
                         });
                         
-                        matchingBtn.classList.remove('bg-blue-100', 'text-blue-800');
-                        matchingBtn.classList.add('bg-blue-600', 'text-white');
+                        matchingBtn.classList.remove('bg-orange-100', 'text-orange-800');
+                        matchingBtn.classList.add('bg-orange-600', 'text-white');
                         
                         selectedAmount = amount;
                         updateChargeAmount();
@@ -241,13 +260,13 @@
             btn.addEventListener('click', () => {
                 // Remove selection from other buttons
                 document.querySelectorAll('.amount-btn').forEach(b => {
-                    b.classList.remove('bg-blue-600', 'text-white');
-                    b.classList.add('bg-blue-100', 'text-blue-800');
+                    b.classList.remove('bg-orange-600', 'text-white');
+                    b.classList.add('bg-orange-100', 'text-orange-800');
                 });
                 
                 // Select this button
-                btn.classList.remove('bg-blue-100', 'text-blue-800');
-                btn.classList.add('bg-blue-600', 'text-white');
+                btn.classList.remove('bg-orange-100', 'text-orange-800');
+                btn.classList.add('bg-orange-600', 'text-white');
                 
                 selectedAmount = parseInt(btn.dataset.amount);
                 updateChargeAmount();
@@ -259,8 +278,8 @@
             if (customAmount && customAmount > 0) {
                 // Clear other selections
                 document.querySelectorAll('.amount-btn').forEach(b => {
-                    b.classList.remove('bg-blue-600', 'text-white');
-                    b.classList.add('bg-blue-100', 'text-blue-800');
+                    b.classList.remove('bg-orange-600', 'text-white');
+                    b.classList.add('bg-orange-100', 'text-orange-800');
                 });
                 
                 selectedAmount = customAmount;
@@ -416,9 +435,9 @@
         function showProcessingMessage() {
             const errorElement = document.getElementById('card-errors');
             errorElement.innerHTML = `
-                <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div class="text-blue-600 mr-2">🔄</div>
-                    <div class="text-blue-800">Processing your payment securely...</div>
+                <div class="flex items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div class="text-aslan-orange mr-2">🔄</div>
+                    <div class="text-orange-800">Processing your payment securely...</div>
                 </div>
             `;
         }
@@ -456,7 +475,7 @@
                         </div>
                     </div>
                 </div>
-                <button id="return-dashboard" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg transition duration-300 mb-2">
+                <button id="return-dashboard" class="w-full bg-aslan-orange hover:bg-aslan-gold text-white py-3 px-4 rounded-lg transition duration-300 mb-2">
                     🏠 Return to Dashboard
                 </button>
                 <button onclick="window.print()" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition duration-300">

@@ -1,385 +1,415 @@
 // Email service with multiple provider support
 // Supports: Resend (recommended), SendGrid, Nodemailer (SMTP), Console (development)
 
+const nodemailer = require('nodemailer');
+
 class EmailService {
     constructor() {
-        this.provider = this.detectProvider();
-        this.initializeProvider();
+        this.providers = this.initializeProviders();
+        this.currentProvider = 0;
     }
 
-    detectProvider() {
-        if (process.env.RESEND_API_KEY) return 'resend';
-        if (process.env.SENDGRID_API_KEY) return 'sendgrid';
-        if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) return 'smtp';
-        return 'console'; // Development fallback
-    }
+    initializeProviders() {
+        const providers = [];
 
-    initializeProvider() {
-        switch (this.provider) {
-            case 'resend':
-                this.initializeResend();
-                break;
-            case 'sendgrid':
-                this.initializeSendGrid();
-                break;
-            case 'smtp':
-                this.initializeNodemailer();
-                break;
-            case 'console':
-                console.log('📧 Email service: Using console output (development mode)');
-                console.log('   Set RESEND_API_KEY, SENDGRID_API_KEY, or SMTP credentials for production');
-                break;
-        }
-    }
-
-    initializeResend() {
-        try {
-            const { Resend } = require('resend');
-            this.resend = new Resend(process.env.RESEND_API_KEY);
-            console.log('📧 Email service: Resend initialized');
-        } catch (error) {
-            console.warn('⚠️  Resend not available, falling back to console output');
-            this.provider = 'console';
-        }
-    }
-
-    initializeSendGrid() {
-        try {
-            const sgMail = require('@sendgrid/mail');
-            sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-            this.sendgrid = sgMail;
-            console.log('📧 Email service: SendGrid initialized');
-        } catch (error) {
-            console.warn('⚠️  SendGrid not available, falling back to console output');
-            this.provider = 'console';
-        }
-    }
-
-    initializeNodemailer() {
-        try {
-            const nodemailer = require('nodemailer');
-            this.transporter = nodemailer.createTransporter({
-                host: process.env.SMTP_HOST,
-                port: process.env.SMTP_PORT || 587,
-                secure: process.env.SMTP_SECURE === 'true',
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS
+        // SendGrid configuration
+        if (process.env.SENDGRID_API_KEY) {
+            providers.push({
+                name: 'SendGrid',
+                type: 'sendgrid',
+                config: {
+                    service: 'SendGrid',
+                    auth: {
+                        user: 'apikey',
+                        pass: process.env.SENDGRID_API_KEY
+                    }
                 }
             });
-            console.log('📧 Email service: SMTP (Nodemailer) initialized');
-        } catch (error) {
-            console.warn('⚠️  SMTP not available, falling back to console output');
-            this.provider = 'console';
         }
-    }
 
-    async sendVerificationEmail(email, token) {
-        const subject = 'Verify your Autonomy account';
-        const verificationLink = `${this.getBaseUrl()}/verify-email?token=${token}`;
-        
-        const html = this.generateVerificationEmailHTML(verificationLink);
-        const text = this.generateVerificationEmailText(verificationLink);
-
-        return await this.sendEmail({
-            to: email,
-            subject,
-            html,
-            text
-        });
-    }
-
-    async sendPasswordResetEmail(email, token) {
-        const subject = 'Reset your Autonomy password';
-        const resetLink = `${this.getBaseUrl()}/reset-password?token=${token}`;
-        
-        const html = this.generatePasswordResetEmailHTML(resetLink);
-        const text = this.generatePasswordResetEmailText(resetLink);
-
-        return await this.sendEmail({
-            to: email,
-            subject,
-            html,
-            text
-        });
-    }
-
-    async sendWelcomeEmail(email, name) {
-        const subject = 'Welcome to Autonomy!';
-        const dashboardLink = `${this.getBaseUrl()}/dashboard.html`;
-        
-        const html = this.generateWelcomeEmailHTML(name, dashboardLink);
-        const text = this.generateWelcomeEmailText(name, dashboardLink);
-
-        return await this.sendEmail({
-            to: email,
-            subject,
-            html,
-            text
-        });
-    }
-
-    async sendEmail({ to, subject, html, text }) {
-        const fromEmail = process.env.FROM_EMAIL || 'noreply@useautonomy.co';
-        const fromName = process.env.FROM_NAME || 'Autonomy';
-
-        switch (this.provider) {
-            case 'resend':
-                return await this.sendWithResend({ from: `${fromName} <${fromEmail}>`, to, subject, html, text });
-            case 'sendgrid':
-                return await this.sendWithSendGrid({ from: { email: fromEmail, name: fromName }, to, subject, html, text });
-            case 'smtp':
-                return await this.sendWithNodemailer({ from: `${fromName} <${fromEmail}>`, to, subject, html, text });
-            case 'console':
-                return this.sendWithConsole({ to, subject, html, text });
-        }
-    }
-
-    async sendWithResend({ from, to, subject, html, text }) {
-        try {
-            const result = await this.resend.emails.send({
-                from,
-                to,
-                subject,
-                html,
-                text
+        // Mailgun configuration
+        if (process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN) {
+            providers.push({
+                name: 'Mailgun',
+                type: 'mailgun',
+                config: {
+                    service: 'Mailgun',
+                    auth: {
+                        user: process.env.MAILGUN_USERNAME || 'postmaster@' + process.env.MAILGUN_DOMAIN,
+                        pass: process.env.MAILGUN_API_KEY
+                    }
+                }
             });
-            console.log(`📧 Email sent via Resend to ${to}: ${subject}`);
-            return result;
-        } catch (error) {
-            console.error('❌ Resend email error:', error);
-            throw error;
         }
+
+        // Generic SMTP configuration
+        if (process.env.SMTP_HOST) {
+            providers.push({
+                name: 'SMTP',
+                type: 'smtp',
+                config: {
+                    host: process.env.SMTP_HOST,
+                    port: process.env.SMTP_PORT || 587,
+                    secure: process.env.SMTP_SECURE === 'true',
+                    auth: {
+                        user: process.env.SMTP_USER,
+                        pass: process.env.SMTP_PASS
+                    }
+                }
+            });
+        }
+
+        // Console fallback (for development)
+        providers.push({
+            name: 'Console',
+            type: 'console',
+            config: {}
+        });
+
+        return providers;
     }
 
-    async sendWithSendGrid({ from, to, subject, html, text }) {
-        try {
-            const msg = {
-                to,
-                from,
-                subject,
-                text,
-                html
+    async createTransporter(provider) {
+        if (provider.type === 'console') {
+            return {
+                sendMail: async (mailOptions) => {
+                    console.log('\n📧 EMAIL WOULD BE SENT:');
+                    console.log('From:', mailOptions.from);
+                    console.log('To:', mailOptions.to);
+                    console.log('Subject:', mailOptions.subject);
+                    console.log('Content:', mailOptions.text || 'HTML content provided');
+                    console.log('---\n');
+                    return { messageId: 'console-' + Date.now() };
+                }
             };
-            await this.sendgrid.send(msg);
-            console.log(`📧 Email sent via SendGrid to ${to}: ${subject}`);
-            return true;
-        } catch (error) {
-            console.error('❌ SendGrid email error:', error);
-            throw error;
+        }
+
+        return nodemailer.createTransporter(provider.config);
+    }
+
+    /**
+     * Send email with automatic provider fallback
+     */
+    async sendEmail(options) {
+        const { to, subject, text, html } = options;
+        
+        const fromEmail = process.env.FROM_EMAIL || 'noreply@aslanpay.xyz';
+        const fromName = process.env.FROM_NAME || 'Aslan';
+
+        const mailOptions = {
+            from: `${fromName} <${fromEmail}>`,
+            to,
+            subject,
+            text,
+            html
+        };
+
+        // Try each provider in order
+        for (let i = 0; i < this.providers.length; i++) {
+            const providerIndex = (this.currentProvider + i) % this.providers.length;
+            const provider = this.providers[providerIndex];
+
+            try {
+                console.log(`📧 Attempting to send email via ${provider.name}...`);
+                
+                const transporter = await this.createTransporter(provider);
+                const result = await transporter.sendMail(mailOptions);
+                
+                console.log(`✅ Email sent successfully via ${provider.name}`);
+                
+                // Update current provider to this successful one
+                this.currentProvider = providerIndex;
+                
+                return {
+                    success: true,
+                    provider: provider.name,
+                    messageId: result.messageId
+                };
+
+            } catch (error) {
+                console.error(`❌ Failed to send via ${provider.name}:`, error.message);
+                
+                // If this is the last provider, throw the error
+                if (i === this.providers.length - 1) {
+                    throw new Error(`All email providers failed. Last error: ${error.message}`);
+                }
+                
+                // Continue to next provider
+                continue;
+            }
         }
     }
 
-    async sendWithNodemailer({ from, to, subject, html, text }) {
-        try {
-            const result = await this.transporter.sendMail({
-                from,
-                to,
-                subject,
-                text,
-                html
-            });
-            console.log(`📧 Email sent via SMTP to ${to}: ${subject}`);
-            return result;
-        } catch (error) {
-            console.error('❌ SMTP email error:', error);
-            throw error;
-        }
+    /**
+     * Send email verification
+     */
+    async sendVerificationEmail(email, token) {
+        const subject = 'Verify your Aslan account';
+        const verificationUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/verify-email?token=${token}`;
+        
+        const html = this.getVerificationEmailTemplate(verificationUrl);
+        const text = this.getVerificationEmailText(verificationUrl);
+
+        return this.sendEmail({
+            to: email,
+            subject,
+            html,
+            text
+        });
     }
 
-    sendWithConsole({ to, subject, html, text }) {
-        console.log(`\n📧 Email (${this.provider}): ${subject}`);
-        console.log(`📮 To: ${to}`);
-        console.log(`📝 Text: ${text}`);
-        console.log(`🔗 (In production, this would be sent via email provider)\n`);
-        return true;
+    /**
+     * Send password reset email
+     */
+    async sendPasswordResetEmail(email, token) {
+        const subject = 'Reset your Aslan password';
+        const resetUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+        
+        const html = this.getPasswordResetTemplate(resetUrl);
+        const text = this.getPasswordResetText(resetUrl);
+
+        return this.sendEmail({
+            to: email,
+            subject,
+            html,
+            text
+        });
     }
 
-    getBaseUrl() {
-        return process.env.BASE_URL || 'http://localhost:3000';
+    /**
+     * Send welcome email
+     */
+    async sendWelcomeEmail(email, name) {
+        const subject = 'Welcome to Aslan!';
+        
+        const html = this.getWelcomeEmailTemplate(name);
+        const text = this.getWelcomeEmailText(name);
+
+        return this.sendEmail({
+            to: email,
+            subject,
+            html,
+            text
+        });
     }
 
     // Email Templates
-    generateVerificationEmailHTML(verificationLink) {
+
+    getVerificationEmailTemplate(verificationUrl) {
         return `
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="utf-8">
+            <title>Verify Your Email</title>
             <style>
-                .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
-                .header { background: #0066FF; color: white; padding: 20px; text-align: center; }
-                .content { padding: 30px; background: #f9f9f9; }
-                .button { background: #0066FF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; }
-                .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+                .content { background: #f9f9f9; padding: 30px 20px; border-radius: 0 0 8px 8px; }
+                .button { display: inline-block; background: #FF6B35; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+                .logo { font-size: 24px; font-weight: bold; }
             </style>
         </head>
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>Autonomy</h1>
+                    <div class="logo">🦁 Aslan</div>
                 </div>
                 <div class="content">
                     <h2>Verify Your Email Address</h2>
-                    <p>Thanks for signing up for Autonomy! Please verify your email address to complete your account setup.</p>
-                    <p>
-                        <a href="${verificationLink}" class="button">Verify Email Address</a>
-                    </p>
-                    <p>Or copy and paste this link: <br>
-                    <a href="${verificationLink}">${verificationLink}</a></p>
+                    <p>Thanks for signing up for Aslan! Please verify your email address to complete your account setup.</p>
+                    <p>Click the button below to verify your email:</p>
+                    <a href="${verificationUrl}" class="button">Verify Email Address</a>
+                    <p>Or copy and paste this link into your browser:</p>
+                    <p style="word-break: break-all; color: #666;">${verificationUrl}</p>
                     <p>This link will expire in 24 hours.</p>
                 </div>
                 <div class="footer">
-                    <p>© 2024 Autonomy Inc. All rights reserved.</p>
+                    <p>© 2024 Aslan Technologies. All rights reserved.</p>
                 </div>
             </div>
         </body>
-        </html>`;
+        </html>
+        `;
     }
 
-    generateVerificationEmailText(verificationLink) {
+    getVerificationEmailText(verificationUrl) {
         return `
 Verify Your Email Address
 
-Thanks for signing up for Autonomy! Please verify your email address to complete your account setup.
+Thanks for signing up for Aslan! Please verify your email address to complete your account setup.
 
-Click here to verify: ${verificationLink}
+Visit this link to verify your email:
+${verificationUrl}
 
 This link will expire in 24 hours.
 
----
-© 2024 Autonomy Inc. All rights reserved.
+© 2024 Aslan Technologies. All rights reserved.
         `.trim();
     }
 
-    generatePasswordResetEmailHTML(resetLink) {
+    getPasswordResetTemplate(resetUrl) {
         return `
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="utf-8">
+            <title>Reset Your Password</title>
             <style>
-                .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
-                .header { background: #0066FF; color: white; padding: 20px; text-align: center; }
-                .content { padding: 30px; background: #f9f9f9; }
-                .button { background: #0066FF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; }
-                .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
-                .warning { background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 6px; margin: 15px 0; }
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+                .content { background: #f9f9f9; padding: 30px 20px; border-radius: 0 0 8px 8px; }
+                .button { display: inline-block; background: #FF6B35; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+                .logo { font-size: 24px; font-weight: bold; }
             </style>
         </head>
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>Autonomy</h1>
+                    <div class="logo">🦁 Aslan</div>
                 </div>
                 <div class="content">
                     <h2>Reset Your Password</h2>
-                    <p>We received a request to reset your password for your Autonomy account.</p>
-                    <p>
-                        <a href="${resetLink}" class="button">Reset Password</a>
-                    </p>
-                    <p>Or copy and paste this link: <br>
-                    <a href="${resetLink}">${resetLink}</a></p>
-                    <div class="warning">
-                        <strong>Security Note:</strong> This link will expire in 1 hour. If you didn't request this reset, please ignore this email.
-                    </div>
+                    <p>We received a request to reset your password for your Aslan account.</p>
+                    <p>Click the button below to reset your password:</p>
+                    <a href="${resetUrl}" class="button">Reset Password</a>
+                    <p>Or copy and paste this link into your browser:</p>
+                    <p style="word-break: break-all; color: #666;">${resetUrl}</p>
+                    <p>This link will expire in 1 hour.</p>
+                    <p>If you didn't request a password reset, you can safely ignore this email.</p>
                 </div>
                 <div class="footer">
-                    <p>© 2024 Autonomy Inc. All rights reserved.</p>
+                    <p>© 2024 Aslan Technologies. All rights reserved.</p>
                 </div>
             </div>
         </body>
-        </html>`;
+        </html>
+        `;
     }
 
-    generatePasswordResetEmailText(resetLink) {
+    getPasswordResetText(resetUrl) {
         return `
 Reset Your Password
 
-We received a request to reset your password for your Autonomy account.
+We received a request to reset your password for your Aslan account.
 
-Click here to reset: ${resetLink}
+Visit this link to reset your password:
+${resetUrl}
 
-This link will expire in 1 hour. If you didn't request this reset, please ignore this email.
+This link will expire in 1 hour.
 
----
-© 2024 Autonomy Inc. All rights reserved.
+If you didn't request a password reset, you can safely ignore this email.
+
+© 2024 Aslan Technologies. All rights reserved.
         `.trim();
     }
 
-    generateWelcomeEmailHTML(name, dashboardLink) {
+    getWelcomeEmailTemplate(name) {
         return `
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="utf-8">
+            <title>Welcome to Aslan</title>
             <style>
-                .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
-                .header { background: #0066FF; color: white; padding: 20px; text-align: center; }
-                .content { padding: 30px; background: #f9f9f9; }
-                .button { background: #0066FF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 10px 5px; }
-                .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
-                .feature { background: white; padding: 15px; margin: 10px 0; border-radius: 6px; }
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+                .content { background: #f9f9f9; padding: 30px 20px; border-radius: 0 0 8px 8px; }
+                .button { display: inline-block; background: #FF6B35; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+                .logo { font-size: 24px; font-weight: bold; }
+                .feature { margin: 15px 0; padding: 10px; background: white; border-radius: 4px; }
             </style>
         </head>
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>Welcome to Autonomy!</h1>
+                    <div class="logo">🦁 Aslan</div>
+                    <h1>Welcome to Aslan!</h1>
                 </div>
                 <div class="content">
-                    <h2>Hi ${name}! 👋</h2>
-                    <p>Welcome to Autonomy, the payment infrastructure for AI agents. You're now ready to enable autonomous transactions for your AI systems.</p>
+                    <h2>Hi ${name || 'there'}!</h2>
+                    <p>Welcome to Aslan, the payment infrastructure for AI agents. You're now ready to enable autonomous transactions for your AI systems.</p>
                     
+                    <h3>🚀 What you can do now:</h3>
                     <div class="feature">
-                        <h3>🚀 Get Started</h3>
-                        <p>Your account comes with a default API key and sandbox access. Start building immediately!</p>
+                        <strong>🔧 Set up your first AI agent</strong><br>
+                        Configure spending limits and payment controls
+                    </div>
+                    <div class="feature">
+                        <strong>💳 Add payment methods</strong><br>
+                        Securely store cards for autonomous transactions
+                    </div>
+                    <div class="feature">
+                        <strong>📊 Monitor transactions</strong><br>
+                        Real-time analytics and spending insights
                     </div>
                     
-                    <div class="feature">
-                        <h3>⚡ Sub-400ms Authorization</h3>
-                        <p>Lightning-fast payment validation that won't slow down your AI agents.</p>
-                    </div>
+                    <p>Ready to get started?</p>
+                    <a href="https://aslanpay.xyz/demo" class="button">Try the Demo</a>
+                    <a href="https://aslanpay.xyz/docs" class="button">View Documentation</a>
                     
-                    <div class="feature">
-                        <h3>🛡️ Enterprise Security</h3>
-                        <p>Built-in spending controls, rate limiting, and complete audit trails.</p>
-                    </div>
-                    
-                    <p>
-                        <a href="${dashboardLink}" class="button">Go to Dashboard</a>
-                        <a href="https://useautonomy.co/docs" class="button">View Documentation</a>
-                    </p>
+                    <p>If you have any questions, our team is here to help at support@aslanpay.xyz</p>
                 </div>
                 <div class="footer">
-                    <p>© 2024 Autonomy Inc. All rights reserved.</p>
+                    <p>© 2024 Aslan Technologies. All rights reserved.</p>
                 </div>
             </div>
         </body>
-        </html>`;
+        </html>
+        `;
     }
 
-    generateWelcomeEmailText(name, dashboardLink) {
+    getWelcomeEmailText(name) {
         return `
-Welcome to Autonomy!
+Welcome to Aslan!
 
-Hi ${name}!
+Hi ${name || 'there'}!
 
-Welcome to Autonomy, the payment infrastructure for AI agents. You're now ready to enable autonomous transactions for your AI systems.
+Welcome to Aslan, the payment infrastructure for AI agents. You're now ready to enable autonomous transactions for your AI systems.
 
-🚀 Get Started
-Your account comes with a default API key and sandbox access. Start building immediately!
+What you can do now:
+- Set up your first AI agent with spending limits and payment controls
+- Add payment methods securely for autonomous transactions  
+- Monitor transactions with real-time analytics and spending insights
 
-⚡ Sub-400ms Authorization
-Lightning-fast payment validation that won't slow down your AI agents.
+Get started:
+Demo: https://aslanpay.xyz/demo
+Documentation: https://aslanpay.xyz/docs
 
-🛡️ Enterprise Security
-Built-in spending controls, rate limiting, and complete audit trails.
+If you have any questions, our team is here to help at support@aslanpay.xyz
 
-Dashboard: ${dashboardLink}
-Documentation: https://useautonomy.co/docs
-
----
-© 2024 Autonomy Inc. All rights reserved.
+© 2024 Aslan Technologies. All rights reserved.
         `.trim();
+    }
+
+    /**
+     * Test email configuration
+     */
+    async testConfiguration() {
+        console.log('🧪 Testing email configuration...');
+        console.log(`📧 Available providers: ${this.providers.map(p => p.name).join(', ')}`);
+        
+        try {
+            const result = await this.sendEmail({
+                to: 'test@example.com',
+                subject: 'Aslan Email Service Test',
+                text: 'This is a test email from Aslan email service.',
+                html: '<h1>Test Email</h1><p>This is a test email from Aslan email service.</p>'
+            });
+            
+            console.log('✅ Email configuration test successful!');
+            return result;
+        } catch (error) {
+            console.error('❌ Email configuration test failed:', error.message);
+            throw error;
+        }
     }
 }
 
-module.exports = new EmailService(); 
+module.exports = EmailService; 
