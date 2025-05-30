@@ -305,6 +305,15 @@ app.get('/security.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'security.html'));
 });
 
+// Favicon generator utility page
+app.get('/favicon-generator', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'favicon-generator.html'));
+});
+
+app.get('/favicon-generator.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'favicon-generator.html'));
+});
+
 // Create subscription endpoint
 app.post('/api/create-subscription', async (req, res) => {
     if (!stripe) {

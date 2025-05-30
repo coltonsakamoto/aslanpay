@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aslan Demo - AI Agents Making Real Purchases</title>
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#FF6B35">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -21,40 +30,59 @@
     <script src="demo-config.js"></script>
     <script src="card-demo.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen overflow-x-hidden">
     <!-- Header -->
     <header class="bg-white shadow-sm border-b">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-8 h-8 bg-aslan-orange rounded-lg flex items-center justify-center">
                     <span class="text-white font-bold text-sm">🦁</span>
                 </div>
                 <h1 class="text-xl font-semibold text-gray-900">Aslan Demo</h1>
             </div>
+            
+            <!-- Desktop Menu -->
             <div class="hidden md:flex items-center space-x-8">
-                <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
+                <a href="/" class="text-gray-600 hover:text-gray-900 transition-colors">Home</a>
                 <a href="/docs" id="docs-link" class="text-aslan-orange hover:text-aslan-gold font-medium">Docs</a>
                 <a href="https://github.com/coltonsakamoto/aslanpay" id="github-link" class="text-gray-600 hover:text-gray-700">GitHub</a>
             </div>
+            
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            
             <div class="flex items-center space-x-4">
-                <button id="get-started-btn" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-aslan-gold transition-colors">
+                <button id="get-started-btn" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-aslan-gold transition-colors text-sm">
                     Get Started
                 </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 bg-white">
+            <div class="px-4 sm:px-6 py-4 space-y-4">
+                <a href="/" class="block text-gray-600 hover:text-gray-900 transition-colors">Home</a>
+                <a href="/docs" class="block text-aslan-orange hover:text-aslan-gold font-medium">Docs</a>
+                <a href="https://github.com/coltonsakamoto/aslanpay" class="block text-gray-600 hover:text-gray-700">GitHub</a>
             </div>
         </div>
     </header>
 
     <!-- Hero Section -->
-    <section class="max-w-6xl mx-auto px-6 py-12">
-        <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4">
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div class="text-center mb-8 sm:mb-12">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                 Watch AI Agents Make <span class="text-aslan-orange">Real Purchases</span>
             </h1>
-            <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            <p class="text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto px-4">
                 Aslan is the universal payment infrastructure for AI agents. 
                 See ChatGPT, Claude, and other AI agents make autonomous purchases with spending controls.
             </p>
-            <div class="flex justify-center space-x-4">
+            <div class="flex flex-wrap justify-center gap-2 sm:gap-4">
                 <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                     ✅ Enterprise Security
                 </div>
@@ -68,17 +96,17 @@
         </div>
 
         <!-- Live Demo -->
-        <div class="bg-white rounded-xl shadow-lg p-8 mb-12">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-8 mb-8 sm:mb-12">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">
                 🎪 Live Demo: ChatGPT with Purchase Powers
             </h2>
             
             <!-- Demo Interface -->
-            <div class="grid md:grid-cols-2 gap-8">
+            <div class="grid lg:grid-cols-2 gap-6 lg:gap-8">
                 <!-- Chat Interface -->
                 <div class="space-y-4">
                     <h3 class="text-lg font-semibold text-gray-800">Chat with AI Agent</h3>
-                    <div id="chat-messages" class="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto space-y-4">
+                    <div id="chat-messages" class="bg-gray-50 rounded-lg p-4 h-80 sm:h-96 overflow-y-auto space-y-4">
                         <div class="flex items-start space-x-3">
                             <div class="w-8 h-8 bg-aslan-orange rounded-full flex items-center justify-center flex-shrink-0">
                                 <span class="text-white text-sm">🤖</span>
@@ -226,30 +254,30 @@
         </div>
 
         <!-- Integration Examples -->
-        <div class="grid md:grid-cols-3 gap-8 mb-12">
-            <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
+            <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-3">🔥 2-Minute Integration</h3>
-                <pre class="bg-gray-100 rounded text-sm p-3 overflow-x-auto">
-<code>npm install aslan
+                <div class="bg-gray-100 rounded text-sm p-3 overflow-x-auto">
+                    <pre class="whitespace-pre"><code>npm install aslan
 export ASLAN_TOKEN=your_token
 node examples/first-purchase.js
-# ✅ AI agent just bought $10 gift card!</code>
-                </pre>
+# ✅ AI agent just bought $10 gift card!</code></pre>
+                </div>
             </div>
             
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-3">🤖 OpenAI Function Calling</h3>
-                <pre class="bg-gray-100 rounded text-sm p-3 overflow-x-auto">
-<code>const aslan = require('aslan');
+                <div class="bg-gray-100 rounded text-sm p-3 overflow-x-auto">
+                    <pre class="whitespace-pre"><code>const aslan = require('aslan');
 const functions = aslan.getFunctionSchema();
 
 // Add to ChatGPT completion:
 functions: functions,
-function_call: "auto"</code>
-                </pre>
+function_call: "auto"</code></pre>
+                </div>
             </div>
             
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
                 <h3 class="text-lg font-semibold text-gray-900 mb-3">🛡️ Enterprise Security</h3>
                 <div class="space-y-2 text-sm">
                     <div class="flex items-center space-x-2">
@@ -273,12 +301,12 @@ function_call: "auto"</code>
         </div>
 
         <!-- Call to Action -->
-        <div class="bg-gradient-to-r from-aslan-orange to-purple-600 rounded-xl text-white p-8 text-center">
-            <h2 class="text-3xl font-bold mb-4">Ready to Give Your AI Agents Purchase Powers?</h2>
-            <p class="text-xl mb-6 opacity-90">
+        <div class="bg-gradient-to-r from-aslan-orange to-purple-600 rounded-xl text-white p-6 sm:p-8 text-center">
+            <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to Give Your AI Agents Purchase Powers?</h2>
+            <p class="text-lg sm:text-xl mb-6 opacity-90">
                 Join hundreds of developers building the future of autonomous commerce
             </p>
-            <div class="flex justify-center space-x-4">
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
                 <button id="quick-start-btn"
                    class="bg-white text-aslan-orange px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
                     Quick Start Guide
@@ -292,6 +320,26 @@ function_call: "auto"</code>
     </section>
 
     <script>
+        // Mobile menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+                
+                // Close mobile menu when clicking on links
+                const mobileLinks = mobileMenu.querySelectorAll('a');
+                mobileLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenu.classList.add('hidden');
+                    });
+                });
+            }
+        });
+
         // Demo functionality with payment controls
         let transactionCount = 0;
         let totalAmount = 0;
