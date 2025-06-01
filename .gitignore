@@ -4,38 +4,62 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment variables (CRITICAL - never commit these!)
+# Environment variables and secrets
 .env
+.env.*
+!.env.example
 .env.local
-.env.production
-.env.development
+.env.development.local
+.env.test.local
+.env.production.local
+.env.save
+.env.backup
+.env.bak
+*.env
 
-# Database files
+# Database
 *.db
-*.db-journal
-dev.db*
+*.sqlite
+*.sqlite3
+dev.db
+test.db
 
 # Logs
-logs/
+logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
 # Runtime data
-pids/
+pids
 *.pid
 *.seed
 *.pid.lock
 
 # Coverage directory used by tools like istanbul
 coverage/
+*.lcov
 
 # nyc test coverage
 .nyc_output
 
 # Dependency directories
+node_modules/
 jspm_packages/
 
 # Optional npm cache directory
 .npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
 
 # Optional REPL history
 .node_repl_history
@@ -48,49 +72,87 @@ jspm_packages/
 
 # dotenv environment variables file
 .env
+.env.test
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
 
-# next.js build output
+# Next.js build output
 .next
 
-# nuxt.js build output
+# Nuxt.js build / generate output
 .nuxt
+dist
 
-# vuepress build output
-.vuepress/dist
+# Gatsby files
+.cache/
+public
 
-# Serverless directories
-.serverless
+# Storybook build outputs
+.out
+.storybook-out
 
-# FuseBox cache
-.fusebox/
+# Temporary folders
+tmp/
+temp/
 
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
-
-# VS Code
-.vscode/
-
-# MacOS
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Prisma
+prisma/dev.db
+prisma/migrations/
+
+# Build outputs
+build/
+dist/
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+certs/
 
 # Backup files
 *.backup
 *.bak
+*.save
+*.orig
 
-# Prisma
-prisma/dev.db*
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# PM2
-ecosystem.config.js
+# Test files
+test-results/
+coverage/
 
-# SSL certificates
-*.pem
-*.key
-*.crt
+# Deployment
+.vercel
+.netlify
+
+# Local development
+.local
