@@ -22,7 +22,20 @@
                         'aslan-orange': '#FF6B35',
                         'aslan-gold': '#F7931E',
                         'aslan-dark': '#1a1a1a',
-                        'aslan-gray': '#6B7280'
+                        'aslan-gray': '#6B7280',
+                        // Add all gray shades explicitly
+                        gray: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
                     }
                 }
             }
@@ -31,7 +44,7 @@
 </head>
 <body class="bg-white overflow-x-hidden">
     <!-- Navigation -->
-    <nav class="border-b border-gray-200">
+    <nav class="border-b" style="border-color: #e5e7eb;">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -49,7 +62,7 @@
                 </div>
                 
                 <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-aslan-gray hover:text-aslan-dark hover:bg-gray-100">
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-aslan-gray hover:text-aslan-dark" style="background-color: #f3f4f6;">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
@@ -57,7 +70,7 @@
             </div>
             
             <!-- Mobile Menu -->
-            <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
+            <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t pt-4" style="border-color: #e5e7eb;">
                 <div class="flex flex-col space-y-4">
                     <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
                     <a href="/docs" class="text-aslan-gray hover:text-aslan-dark transition-colors">Documentation</a>
@@ -115,10 +128,10 @@
                     </p>
 
                     <!-- Base URL -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6 mb-8">
-                        <h3 class="text-lg font-semibold text-blue-900 mb-2">Base URL</h3>
+                    <div class="border rounded-lg p-4 sm:p-6 mb-8" style="background-color: #eff6ff; border-color: #bfdbfe;">
+                        <h3 class="text-lg font-semibold mb-2" style="color: #1e3a8a;">Base URL</h3>
                         <div class="bg-white rounded p-3 font-mono text-sm overflow-x-auto">
-                            <span class="text-blue-600">https://api.aslanpay.xyz/v1</span>
+                            <span style="color: #2563eb;">https://api.aslanpay.xyz/v1</span>
                         </div>
                     </div>
 
@@ -132,59 +145,38 @@
 
                         <div class="bg-aslan-dark rounded-lg p-6 text-white mb-6">
                             <pre class="text-sm"><code>curl -X POST https://aslanpay.xyz/api/v1/authorize \
-                <h1 class="text-4xl font-bold text-aslan-dark mb-6">API Reference</h1>
-                <p class="text-xl text-aslan-gray mb-8">
-                    Complete REST API reference for integrating AI agents with Aslan payment infrastructure.
-                </p>
-
-                <!-- Base URL -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                    <h3 class="text-lg font-semibold text-blue-900 mb-2">Base URL</h3>
-                    <code class="text-blue-800">https://aslanpay.xyz/api/v1</code>
-                </div>
-
-                <!-- Authentication -->
-                <section id="authentication" class="mb-12">
-                    <h2 class="text-3xl font-bold text-aslan-dark mb-6">Authentication</h2>
-                    
-                    <p class="text-aslan-gray mb-6">
-                        All API requests require authentication using an API key in the Authorization header.
-                    </p>
-
-                    <div class="bg-aslan-dark rounded-lg p-6 text-white mb-6">
-                        <pre class="text-sm"><code>curl -X POST https://aslanpay.xyz/api/v1/authorize \
   -H "Authorization: Bearer ak_live_your_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "amount": 2500,
     "description": "AWS credits"
   }'</code></pre>
-                    </div>
-
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                        <h4 class="font-semibold text-yellow-900 mb-2">🔑 API Key Formats</h4>
-                        <ul class="text-yellow-800 text-sm space-y-1">
-                            <li>• <strong>Live:</strong> <code>ak_live_...</code> - For production transactions</li>
-                            <li>• <strong>Test:</strong> <code>ak_test_...</code> - For sandbox testing</li>
-                        </ul>
-                    </div>
-                </section>
-
-                <!-- Authorize Endpoint -->
-                <section id="authorize" class="mb-12">
-                    <div class="border border-gray-200 rounded-lg p-8">
-                        <div class="flex items-center space-x-3 mb-6">
-                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">POST</span>
-                            <code class="text-lg">/api/v1/authorize</code>
                         </div>
 
-                        <p class="text-aslan-gray mb-6">
-                            Create a payment authorization for an AI agent. This reserves funds but does not charge the payment method.
-                        </p>
+                        <div class="border rounded-lg p-6" style="background-color: #fef3c7; border-color: #fde68a;">
+                            <h4 class="font-semibold mb-2" style="color: #92400e;">🔑 API Key Formats</h4>
+                            <ul class="text-sm space-y-1" style="color: #92400e;">
+                                <li>• <strong>Live:</strong> <code>ak_live_...</code> - For production transactions</li>
+                                <li>• <strong>Test:</strong> <code>ak_test_...</code> - For sandbox testing</li>
+                            </ul>
+                        </div>
+                    </section>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">Request Body</h3>
-                        <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                            <pre class="text-sm"><code>{
+                    <!-- Authorize Endpoint -->
+                    <section id="authorize" class="mb-12">
+                        <div class="border rounded-lg p-8" style="border-color: #e5e7eb;">
+                            <div class="flex items-center space-x-3 mb-6">
+                                <span class="px-3 py-1 rounded-full text-sm font-medium" style="background-color: #d1fae5; color: #065f46;">POST</span>
+                                <code class="text-lg">/api/v1/authorize</code>
+                            </div>
+
+                            <p class="text-aslan-gray mb-6">
+                                Create a payment authorization for an AI agent. This reserves funds but does not charge the payment method.
+                            </p>
+
+                            <h3 class="text-xl font-semibold text-aslan-dark mb-4">Request Body</h3>
+                            <div class="rounded-lg p-4 mb-6" style="background-color: #f9fafb;">
+                                <pre class="text-sm"><code>{
   "amount": 2500,                    // Required: Amount in cents
   "description": "AWS credits",      // Required: Human-readable description
   "agentId": "agent_123",           // Optional: AI agent identifier
@@ -193,11 +185,11 @@
     "department": "engineering"
   }
 }</code></pre>
-                        </div>
+                            </div>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">Response</h3>
-                        <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                            <pre class="text-sm"><code>{
+                            <h3 class="text-xl font-semibold text-aslan-dark mb-4">Response</h3>
+                            <div class="rounded-lg p-4 mb-6" style="background-color: #f9fafb;">
+                                <pre class="text-sm"><code>{
   "id": "auth_1NirD82eZvKYlo2CjQk6B8XK",
   "object": "authorization",
   "amount": 2500,
@@ -212,11 +204,11 @@
     "department": "engineering"
   }
 }</code></pre>
-                        </div>
+                            </div>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">cURL Example</h3>
-                        <div class="bg-aslan-dark rounded-lg p-4 text-white">
-                            <pre class="text-sm"><code>curl -X POST https://aslanpay.xyz/api/v1/authorize \
+                            <h3 class="text-xl font-semibold text-aslan-dark mb-4">cURL Example</h3>
+                            <div class="bg-aslan-dark rounded-lg p-4 text-white">
+                                <pre class="text-sm"><code>curl -X POST https://aslanpay.xyz/api/v1/authorize \
   -H "Authorization: Bearer ak_live_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -224,32 +216,32 @@
     "description": "AWS credits for GPT-4 training",
     "agentId": "training_agent_001"
   }'</code></pre>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                <!-- Confirm Endpoint -->
-                <section id="confirm" class="mb-12">
-                    <div class="border border-gray-200 rounded-lg p-8">
-                        <div class="flex items-center space-x-3 mb-6">
-                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">POST</span>
-                            <code class="text-lg">/api/v1/confirm</code>
-                        </div>
+                    <!-- Confirm Endpoint -->
+                    <section id="confirm" class="mb-12">
+                        <div class="border rounded-lg p-8" style="border-color: #e5e7eb;">
+                            <div class="flex items-center space-x-3 mb-6">
+                                <span class="px-3 py-1 rounded-full text-sm font-medium" style="background-color: #dbeafe; color: #1e40af;">POST</span>
+                                <code class="text-lg">/api/v1/confirm</code>
+                            </div>
 
-                        <p class="text-aslan-gray mb-6">
-                            Confirm and execute a previously authorized payment. This charges the payment method.
-                        </p>
+                            <p class="text-aslan-gray mb-6">
+                                Confirm and execute a previously authorized payment. This charges the payment method.
+                            </p>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">Request Body</h3>
-                        <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                            <pre class="text-sm"><code>{
+                            <h3 class="text-xl font-semibold text-aslan-dark mb-4">Request Body</h3>
+                            <div class="rounded-lg p-4 mb-6" style="background-color: #f9fafb;">
+                                <pre class="text-sm"><code>{
   "authorizationId": "auth_1NirD82eZvKYlo2CjQk6B8XK"
 }</code></pre>
-                        </div>
+                            </div>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">Response</h3>
-                        <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                            <pre class="text-sm"><code>{
+                            <h3 class="text-xl font-semibold text-aslan-dark mb-4">Response</h3>
+                            <div class="rounded-lg p-4 mb-6" style="background-color: #f9fafb;">
+                                <pre class="text-sm"><code>{
   "id": "pay_1NirD82eZvKYlo2CjQkMBhXe",
   "object": "payment",
   "amount": 2500,
@@ -260,44 +252,44 @@
   "created": 1640995800,
   "receiptUrl": "https://pay.stripe.com/receipts/..."
 }</code></pre>
-                        </div>
+                            </div>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">cURL Example</h3>
-                        <div class="bg-aslan-dark rounded-lg p-4 text-white">
-                            <pre class="text-sm"><code>curl -X POST https://aslanpay.xyz/api/v1/confirm \
+                            <h3 class="text-xl font-semibold text-aslan-dark mb-4">cURL Example</h3>
+                            <div class="bg-aslan-dark rounded-lg p-4 text-white">
+                                <pre class="text-sm"><code>curl -X POST https://aslanpay.xyz/api/v1/confirm \
   -H "Authorization: Bearer ak_live_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
     "authorizationId": "auth_1NirD82eZvKYlo2CjQk6B8XK"
   }'</code></pre>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                <!-- Refund Endpoint -->
-                <section id="refund" class="mb-12">
-                    <div class="border border-gray-200 rounded-lg p-8">
-                        <div class="flex items-center space-x-3 mb-6">
-                            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">POST</span>
-                            <code class="text-lg">/api/v1/refund</code>
-                        </div>
+                    <!-- Refund Endpoint -->
+                    <section id="refund" class="mb-12">
+                        <div class="border rounded-lg p-8" style="border-color: #e5e7eb;">
+                            <div class="flex items-center space-x-3 mb-6">
+                                <span class="px-3 py-1 rounded-full text-sm font-medium" style="background-color: #fee2e2; color: #991b1b;">POST</span>
+                                <code class="text-lg">/api/v1/refund</code>
+                            </div>
 
-                        <p class="text-aslan-gray mb-6">
-                            Refund a completed payment, either partially or in full.
-                        </p>
+                            <p class="text-aslan-gray mb-6">
+                                Refund a completed payment, either partially or in full.
+                            </p>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">Request Body</h3>
-                        <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                            <pre class="text-sm"><code>{
+                            <h3 class="text-xl font-semibold text-aslan-dark mb-4">Request Body</h3>
+                            <div class="rounded-lg p-4 mb-6" style="background-color: #f9fafb;">
+                                <pre class="text-sm"><code>{
   "paymentId": "pay_1NirD82eZvKYlo2CjQkMBhXe",
   "amount": 1000,                   // Optional: partial refund amount
   "reason": "Customer request"      // Optional: refund reason
 }</code></pre>
-                        </div>
+                            </div>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">Response</h3>
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <pre class="text-sm"><code>{
+                            <h3 class="text-xl font-semibold text-aslan-dark mb-4">Response</h3>
+                            <div class="rounded-lg p-4" style="background-color: #f9fafb;">
+                                <pre class="text-sm"><code>{
   "id": "re_1NirD82eZvKYlo2CjReFund1",
   "object": "refund",
   "amount": 1000,
@@ -307,25 +299,25 @@
   "status": "succeeded",
   "created": 1640996400
 }</code></pre>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                <!-- Status Endpoint -->
-                <section id="status" class="mb-12">
-                    <div class="border border-gray-200 rounded-lg p-8">
-                        <div class="flex items-center space-x-3 mb-6">
-                            <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">GET</span>
-                            <code class="text-lg">/api/status</code>
-                        </div>
+                    <!-- Status Endpoint -->
+                    <section id="status" class="mb-12">
+                        <div class="border rounded-lg p-8" style="border-color: #e5e7eb;">
+                            <div class="flex items-center space-x-3 mb-6">
+                                <span class="px-3 py-1 rounded-full text-sm font-medium" style="background-color: #f3f4f6; color: #374151;">GET</span>
+                                <code class="text-lg">/api/status</code>
+                            </div>
 
-                        <p class="text-aslan-gray mb-6">
-                            Get the current system status and health of all components.
-                        </p>
+                            <p class="text-aslan-gray mb-6">
+                                Get the current system status and health of all components.
+                            </p>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">Response</h3>
-                        <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                            <pre class="text-sm"><code>{
+                            <h3 class="text-xl font-semibold text-aslan-dark mb-4">Response</h3>
+                            <div class="rounded-lg p-4 mb-6" style="background-color: #f9fafb;">
+                                <pre class="text-sm"><code>{
   "service": "Aslan Payment Infrastructure",
   "status": "operational",
   "timestamp": "2024-05-29T17:55:12.746Z",
@@ -348,58 +340,58 @@
     }
   }
 }</code></pre>
-                        </div>
+                            </div>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">cURL Example</h3>
-                        <div class="bg-aslan-dark rounded-lg p-4 text-white">
-                            <pre class="text-sm"><code>curl -X GET https://aslanpay.xyz/api/status</code></pre>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Error Codes -->
-                <section id="errors" class="mb-12">
-                    <h2 class="text-3xl font-bold text-aslan-dark mb-6">Error Codes</h2>
-                    
-                    <div class="space-y-6">
-                        <div class="border border-gray-200 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-aslan-dark mb-3">HTTP Status Codes</h3>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex justify-between">
-                                    <code class="text-green-600">200</code>
-                                    <span class="text-aslan-gray">OK - Request succeeded</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <code class="text-yellow-600">400</code>
-                                    <span class="text-aslan-gray">Bad Request - Invalid parameters</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <code class="text-red-600">401</code>
-                                    <span class="text-aslan-gray">Unauthorized - Invalid API key</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <code class="text-red-600">403</code>
-                                    <span class="text-aslan-gray">Forbidden - Insufficient permissions</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <code class="text-red-600">404</code>
-                                    <span class="text-aslan-gray">Not Found - Resource doesn't exist</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <code class="text-red-600">429</code>
-                                    <span class="text-aslan-gray">Too Many Requests - Rate limit exceeded</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <code class="text-red-600">500</code>
-                                    <span class="text-aslan-gray">Internal Server Error</span>
-                                </div>
+                            <h3 class="text-xl font-semibold text-aslan-dark mb-4">cURL Example</h3>
+                            <div class="bg-aslan-dark rounded-lg p-4 text-white">
+                                <pre class="text-sm"><code>curl -X GET https://aslanpay.xyz/api/status</code></pre>
                             </div>
                         </div>
+                    </section>
 
-                        <div class="border border-gray-200 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-aslan-dark mb-3">Error Response Format</h3>
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <pre class="text-sm"><code>{
+                    <!-- Error Codes -->
+                    <section id="errors" class="mb-12">
+                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Error Codes</h2>
+                        
+                        <div class="space-y-6">
+                            <div class="border rounded-lg p-6" style="border-color: #e5e7eb;">
+                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">HTTP Status Codes</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <code style="color: #16a34a;">200</code>
+                                        <span class="text-aslan-gray">OK - Request succeeded</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <code style="color: #ca8a04;">400</code>
+                                        <span class="text-aslan-gray">Bad Request - Invalid parameters</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <code style="color: #dc2626;">401</code>
+                                        <span class="text-aslan-gray">Unauthorized - Invalid API key</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <code style="color: #dc2626;">403</code>
+                                        <span class="text-aslan-gray">Forbidden - Insufficient permissions</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <code style="color: #dc2626;">404</code>
+                                        <span class="text-aslan-gray">Not Found - Resource doesn't exist</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <code style="color: #dc2626;">429</code>
+                                        <span class="text-aslan-gray">Too Many Requests - Rate limit exceeded</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <code style="color: #dc2626;">500</code>
+                                        <span class="text-aslan-gray">Internal Server Error</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border rounded-lg p-6" style="border-color: #e5e7eb;">
+                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">Error Response Format</h3>
+                                <div class="rounded-lg p-4" style="background-color: #f9fafb;">
+                                    <pre class="text-sm"><code>{
   "error": {
     "type": "invalid_request_error",
     "code": "amount_too_small",
@@ -407,47 +399,47 @@
     "param": "amount"
   }
 }</code></pre>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                <!-- SDKs -->
-                <section class="bg-gray-50 rounded-lg p-8">
-                    <h2 class="text-2xl font-bold text-aslan-dark mb-4">SDKs & Libraries</h2>
-                    <p class="text-aslan-gray mb-6">
-                        Use our official SDKs for easier integration with your AI frameworks.
-                    </p>
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div class="bg-white rounded-lg p-4">
-                            <h3 class="font-semibold text-aslan-dark mb-2">Node.js</h3>
-                            <code class="text-sm text-aslan-gray">npm install @aslanpay/sdk</code>
+                    <!-- SDKs -->
+                    <section class="rounded-lg p-8" style="background-color: #f9fafb;">
+                        <h2 class="text-2xl font-bold text-aslan-dark mb-4">SDKs & Libraries</h2>
+                        <p class="text-aslan-gray mb-6">
+                            Use our official SDKs for easier integration with your AI frameworks.
+                        </p>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="bg-white rounded-lg p-4">
+                                <h3 class="font-semibold text-aslan-dark mb-2">Node.js</h3>
+                                <code class="text-sm text-aslan-gray">npm install @aslanpay/sdk</code>
+                            </div>
+                            <div class="bg-white rounded-lg p-4">
+                                <h3 class="font-semibold text-aslan-dark mb-2">Python</h3>
+                                <code class="text-sm text-aslan-gray">pip install aslanpay</code>
+                            </div>
                         </div>
-                        <div class="bg-white rounded-lg p-4">
-                            <h3 class="font-semibold text-aslan-dark mb-2">Python</h3>
-                            <code class="text-sm text-aslan-gray">pip install aslanpay</code>
+                        <div class="mt-6 flex gap-4">
+                            <a href="/docs" class="bg-aslan-orange text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors">
+                                View Documentation
+                            </a>
+                            <a href="https://github.com/coltonsakamoto/aslanpay" class="border text-aslan-dark px-6 py-3 rounded-lg font-medium transition-colors" style="border-color: #d1d5db; background-color: transparent;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='transparent'">
+                                GitHub Repository
+                            </a>
                         </div>
-                    </div>
-                    <div class="mt-6 flex gap-4">
-                        <a href="/docs" class="bg-aslan-orange text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors">
-                            View Documentation
-                        </a>
-                        <a href="https://github.com/coltonsakamoto/aslanpay" class="border border-gray-300 text-aslan-dark px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                            GitHub Repository
-                        </a>
-                    </div>
-                </section>
+                    </section>
 
-                <!-- Example code with proper overflow handling -->
-                <div class="bg-gray-900 rounded-lg p-4 sm:p-6 text-white overflow-hidden mb-6">
-                    <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span class="text-gray-400 text-sm ml-2">curl</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <pre class="text-sm whitespace-pre"><code>curl -X POST https://api.aslanpay.xyz/v1/purchase \
+                    <!-- Example code with proper overflow handling -->
+                    <div class="rounded-lg p-4 sm:p-6 text-white overflow-hidden mb-6" style="background-color: #111827;">
+                        <div class="flex items-center space-x-2 mb-4">
+                            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                            <span class="text-sm ml-2" style="color: #9ca3af;">curl</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <pre class="text-sm whitespace-pre"><code>curl -X POST https://api.aslanpay.xyz/v1/purchase \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -455,12 +447,12 @@
     "description": "AWS credits",
     "agent_id": "gpt-4-assistant"
   }'</code></pre>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Response example -->
-                <div class="bg-gray-100 rounded-lg p-4 overflow-x-auto mb-6">
-                    <pre class="text-sm whitespace-pre"><code>{
+                    <!-- Response example -->
+                    <div class="rounded-lg p-4 overflow-x-auto mb-6" style="background-color: #f3f4f6;">
+                        <pre class="text-sm whitespace-pre"><code>{
   "success": true,
   "transaction_id": "txn_1abc234def",
   "status": "authorized",
@@ -469,6 +461,7 @@
   "latency_ms": 127,
   "timestamp": "2024-01-15T10:30:00Z"
 }</code></pre>
+                    </div>
                 </div>
             </div>
         </div>
