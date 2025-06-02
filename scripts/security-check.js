@@ -192,8 +192,9 @@ function main() {
     }
 
     console.log('\n' + colorize('🔐 Generate new secrets:', 'cyan'));
-    console.log('JWT_SECRET=' + generateSecureSecret(64));
-    console.log('SESSION_SECRET=' + generateSecureSecret(64));
+    console.log('Run these commands to generate secure secrets:');
+    console.log('node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"  # For JWT_SECRET');
+    console.log('node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"  # For SESSION_SECRET');
 }
 
 if (require.main === module) {

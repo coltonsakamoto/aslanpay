@@ -23,7 +23,7 @@
     "railway:setup": "node scripts/railway-setup.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "security-check": "node scripts/security-check.js",
-    "generate-secrets": "node -e \"const crypto = require('crypto'); console.log('JWT_SECRET=' + crypto.randomBytes(32).toString('hex')); console.log('SESSION_SECRET=' + crypto.randomBytes(32).toString('hex'));\""
+    "generate-secrets": "echo 'Generate JWT_SECRET:' && echo 'node -e \"console.log(require(\\\"crypto\\\").randomBytes(32).toString(\\\"hex\\\"))\"' && echo '' && echo 'Generate SESSION_SECRET:' && echo 'node -e \"console.log(require(\\\"crypto\\\").randomBytes(32).toString(\\\"hex\\\"))\"'"
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",

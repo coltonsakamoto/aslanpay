@@ -245,10 +245,13 @@ function calculateEntropy(str) {
 // Generate secure secrets helper
 function generateSecrets() {
     printHeader('Generate Secure Secrets');
-    console.log('Copy these secure secrets to your .env file:');
+    console.log('Run these commands to generate secure secrets:');
     console.log('');
-    console.log(colorize('JWT_SECRET=', 'cyan') + security.generateSecureSecret(64));
-    console.log(colorize('SESSION_SECRET=', 'cyan') + security.generateSecureSecret(64));
+    console.log(colorize('# For JWT_SECRET:', 'cyan'));
+    console.log('node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+    console.log('');
+    console.log(colorize('# For SESSION_SECRET:', 'cyan'));
+    console.log('node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
     console.log('');
 }
 

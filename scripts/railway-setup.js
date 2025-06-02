@@ -2,23 +2,21 @@
 
 /**
  * Railway Setup Script for Aslan
- * Generates secure environment variables for Railway deployment
+ * Provides instructions for Railway deployment without exposing secrets
  */
-
-const crypto = require('crypto');
 
 console.log('🦁 Aslan Railway Setup Script');
 console.log('=====================================\n');
 
-console.log('🔐 Generated Secure Secrets:');
-console.log('-----------------------------');
-
-// Generate secure secrets
-const jwtSecret = crypto.randomBytes(32).toString('hex');
-const sessionSecret = crypto.randomBytes(32).toString('hex');
-
-console.log(`JWT_SECRET=${jwtSecret}`);
-console.log(`SESSION_SECRET=${sessionSecret}`);
+console.log('🔐 Generate Secure Secrets:');
+console.log('---------------------------');
+console.log('Run these commands to generate secure secrets:');
+console.log('');
+console.log('# Generate JWT_SECRET:');
+console.log('node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+console.log('');
+console.log('# Generate SESSION_SECRET:');
+console.log('node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
 
 console.log('\n📋 Required Environment Variables for Railway:');
 console.log('----------------------------------------------');
@@ -26,8 +24,8 @@ console.log('----------------------------------------------');
 const requiredVars = [
     'NODE_ENV=production',
     'PORT=3000',
-    `JWT_SECRET=${jwtSecret}`,
-    `SESSION_SECRET=${sessionSecret}`,
+    'JWT_SECRET=<GENERATE_WITH_COMMAND_ABOVE>',
+    'SESSION_SECRET=<GENERATE_WITH_COMMAND_ABOVE>',
     'DATABASE_URL=postgresql://postgres:password@host:port/railway',
     'STRIPE_SECRET_KEY=sk_live_...',
     'STRIPE_PUBLISHABLE_KEY=pk_live_...',
@@ -65,12 +63,13 @@ optionalVars.forEach(variable => {
 
 console.log('\n📝 Next Steps:');
 console.log('-------------');
-console.log('1. Copy the environment variables above');
-console.log('2. Go to your Railway project dashboard');
-console.log('3. Navigate to the Variables tab');
-console.log('4. Add each variable one by one');
-console.log('5. Replace placeholder values with your actual keys');
-console.log('6. Deploy your application');
+console.log('1. Generate secrets using the commands above');
+console.log('2. Copy the environment variables above');
+console.log('3. Go to your Railway project dashboard');
+console.log('4. Navigate to the Variables tab');
+console.log('5. Add each variable one by one');
+console.log('6. Replace placeholder values with your actual keys');
+console.log('7. Deploy your application');
 
 console.log('\n🚀 Railway Deployment Commands:');
 console.log('-------------------------------');
