@@ -31,7 +31,7 @@ console.log('Environment variables loaded:');
 console.log('Environment Configuration:');
 console.log('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY);
 console.log('DATABASE_URL:', process.env.DATABASE_URL);
-console.log('JWT_SECRET:', process.env.JWT_SECRET);
+console.log('JWT_SECRET configured:', !!process.env.JWT_SECRET);
 
 // SECURITY: Load Stripe key from environment only - NEVER hardcode secrets!
 if (!process.env.STRIPE_SECRET_KEY) {
