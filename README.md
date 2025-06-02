@@ -52,7 +52,7 @@ Visit `http://localhost:3000` to see Aslan in action!
 
 ```bash
 # Security (generate strong random values)
-JWT_SECRET=your-super-secure-jwt-secret
+JWT_SECRET=<generate_with_crypto_randomBytes_32_hex>
 SESSION_SECRET=your-super-secure-session-secret
 
 # Stripe (get from Stripe Dashboard)

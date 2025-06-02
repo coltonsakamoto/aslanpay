@@ -2,8 +2,26 @@ const jwt = require('jsonwebtoken');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
 const database = require('../config/database');
 
-// JWT secret (use environment variable in production)
-const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-change-in-production';
+// JWT secret validation and secure fallback
+function getSecureJWTSecret() {
+    const envSecret = process.env.JWT_SECRET;
+    
+    if (!envSecret) {
+        console.error('🚨 SECURITY WARNING: JWT_SECRET environment variable not set!');
+        console.error('🔧 Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+        process.exit(1);
+    }
+    
+    if (envSecret.length < 32) {
+        console.error('🚨 SECURITY ERROR: JWT_SECRET must be at least 32 characters long!');
+        console.error('🔧 Current length:', envSecret.length);
+        process.exit(1);
+    }
+    
+    return envSecret;
+}
+
+const JWT_SECRET = getSecureJWTSecret();
 
 // Rate limiters
 const rateLimiters = {

@@ -593,7 +593,7 @@ app.get('/api/test-session', (req, res) => {
         
         // Try to decode JWT
         const jwt = require('jsonwebtoken');
-        const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-change-in-production';
+        const JWT_SECRET = getSecureJWTSecret();
         
         try {
             const decoded = jwt.verify(token, JWT_SECRET);
@@ -623,7 +623,7 @@ app.get('/api/auth/me-direct', (req, res) => {
         }
         
         const jwt = require('jsonwebtoken');
-        const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-change-in-production';
+        const JWT_SECRET = getSecureJWTSecret();
         
         const decoded = jwt.verify(token, JWT_SECRET);
         const session = database.getSession(decoded.sessionId);
@@ -656,7 +656,7 @@ app.get('/api/keys-direct', (req, res) => {
         }
         
         const jwt = require('jsonwebtoken');
-        const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-change-in-production';
+        const JWT_SECRET = getSecureJWTSecret();
         
         const decoded = jwt.verify(token, JWT_SECRET);
         const session = database.getSession(decoded.sessionId);
@@ -690,7 +690,7 @@ app.post('/api/keys-direct', (req, res) => {
         }
         
         const jwt = require('jsonwebtoken');
-        const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-change-in-production';
+        const JWT_SECRET = getSecureJWTSecret();
         
         const decoded = jwt.verify(token, JWT_SECRET);
         const session = database.getSession(decoded.sessionId);
@@ -841,4 +841,45 @@ app.listen(port, () => {
     console.log('   • SESSION_SECRET (strong random value)');
     console.log('   • STRIPE_SECRET_KEY');
     console.log('   • CORS_ORIGINS (production domains)');
-}); 
+});
+
+// JWT Secret validation and secure fallback
+function getSecureJWTSecret() {
+    const envSecret = process.env.JWT_SECRET;
+    
+    if (!envSecret) {
+        console.error('🚨 SECURITY WARNING: JWT_SECRET environment variable not set!');
+        console.error('🔧 Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+        process.exit(1);
+    }
+    
+    if (envSecret.length < 32) {
+        console.error('🚨 SECURITY ERROR: JWT_SECRET must be at least 32 characters long!');
+        console.error('🔧 Current length:', envSecret.length);
+        process.exit(1);
+    }
+    
+    // Check for common weak patterns
+    const weakPatterns = [
+        'your-jwt-secret',
+        'jwt-secret',
+        'secret',
+        'password',
+        'test',
+        'dev',
+        'development'
+    ];
+    
+    const lowerSecret = envSecret.toLowerCase();
+    for (const pattern of weakPatterns) {
+        if (lowerSecret.includes(pattern)) {
+            console.error('🚨 SECURITY ERROR: JWT_SECRET contains weak pattern:', pattern);
+            console.error('🔧 Generate a secure secret with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+            process.exit(1);
+        }
+    }
+    
+    return envSecret;
+}
+
+const JWT_SECRET = getSecureJWTSecret(); 

@@ -20,7 +20,10 @@
     "security:generate-secrets": "node scripts/validate-security.js --generate-secrets",
     "security:report": "curl -s http://localhost:3000/api/security | jq .",
     "test:security": "npm run security:validate && echo 'Security validation passed!'",
-    "railway:setup": "node scripts/railway-setup.js"
+    "railway:setup": "node scripts/railway-setup.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "security-check": "node scripts/security-check.js",
+    "generate-secrets": "node -e \"const crypto = require('crypto'); console.log('JWT_SECRET=' + crypto.randomBytes(32).toString('hex')); console.log('SESSION_SECRET=' + crypto.randomBytes(32).toString('hex'));\""
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",
