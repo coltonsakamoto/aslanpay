@@ -111,6 +111,30 @@ try {
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Emergency diagnostic endpoint - add this first to catch startup issues
+app.get('/debug', (req, res) => {
+    res.json({
+        status: 'Server is running',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        port: port,
+        nodeVersion: process.version,
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        env: {
+            hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+            hasJwtSecret: !!process.env.JWT_SECRET,
+            hasDatabaseUrl: !!process.env.DATABASE_URL,
+            nodeEnv: process.env.NODE_ENV
+        }
+    });
+});
+
+// Simple test endpoint to verify basic server functionality
+app.get('/test', (req, res) => {
+    res.send('✅ Aslan server is running! Time: ' + new Date().toISOString());
+});
+
 // Validate environment variables on startup
 const envValidation = security.validateEnvironment();
 if (envValidation.errors.length > 0) {
