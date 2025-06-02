@@ -97,6 +97,8 @@ Use any future expiration date, any 3-digit CVC, and any postal code.
 4. Use a test card number
 5. Complete the payment
 
+**💡 Note:** You can also try the live demo at [aslanpay.xyz](https://aslanpay.xyz) to see how it works before setting up locally!
+
 ## Production Deployment
 
 1. Replace test API keys with live keys

@@ -44,7 +44,9 @@ cp .env.example .env
 npm run dev
 ```
 
-Visit `http://localhost:3000` to see Aslan in action!
+Your local server will start on `http://localhost:3000`.
+
+**🌐 Try the Live Demo:** [aslanpay.xyz](https://aslanpay.xyz) - No setup required!
 
 ## 🔧 Configuration
 
