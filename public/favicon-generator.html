@@ -74,25 +74,27 @@
 </head>
 <body>
     <div class="container">
-        <h1>🦁 Aslan Favicon Generator</h1>
-        <p>Generate PNG favicons from the SVG lion icon for complete browser compatibility.</p>
+        <h1>
+            <span class="text-aslan-dark font-bold text-2xl tracking-tight" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">Aslan</span> Favicon Generator
+        </h1>
+        <p>Generate favicons for the Aslan brand</p>
         
-        <div class="favicon-preview">
-            <div class="size-demo">
-                <div class="favicon-icon" style="width: 16px; height: 16px; font-size: 10px;">🦁</div>
-                <div>16x16</div>
+        <div class="preview-grid">
+            <div class="preview-item">
+                <div class="favicon-icon" style="width: 16px; height: 16px; font-size: 8px; background: #FF6B35; color: white; display: flex; align-items: center; justify-content: center; border-radius: 2px; font-weight: bold;">A</div>
+                <span>16x16</span>
             </div>
-            <div class="size-demo">
-                <div class="favicon-icon" style="width: 32px; height: 32px; font-size: 20px;">🦁</div>
-                <div>32x32</div>
+            <div class="preview-item">
+                <div class="favicon-icon" style="width: 32px; height: 32px; font-size: 16px; background: #FF6B35; color: white; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-weight: bold;">A</div>
+                <span>32x32</span>
             </div>
-            <div class="size-demo">
-                <div class="favicon-icon" style="width: 48px; height: 48px; font-size: 30px;">🦁</div>
-                <div>48x48</div>
+            <div class="preview-item">
+                <div class="favicon-icon" style="width: 48px; height: 48px; font-size: 24px; background: #FF6B35; color: white; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-weight: bold;">A</div>
+                <span>48x48</span>
             </div>
-            <div class="size-demo">
-                <div class="favicon-icon" style="width: 180px; height: 180px; font-size: 120px;">🦁</div>
-                <div>180x180 (Apple Touch)</div>
+            <div class="preview-item">
+                <div class="favicon-icon" style="width: 180px; height: 180px; font-size: 80px; background: #FF6B35; color: white; display: flex; align-items: center; justify-content: center; border-radius: 20px; font-weight: bold;">A</div>
+                <span>180x180 (Apple Touch)</span>
             </div>
         </div>
 
@@ -161,12 +163,12 @@
             ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
             ctx.fill();
             
-            // Draw lion emoji
-            ctx.fillStyle = 'white';
-            ctx.font = `${size * 0.6}px system-ui, -apple-system, "Segoe UI Emoji", "Apple Color Emoji"`;
+            // Draw the Aslan 'A' logo
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = `bold ${Math.floor(size * 0.6)}px Inter, -apple-system, BlinkMacSystemFont, sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('🦁', size/2, size/2);
+            ctx.fillText('A', size/2, size/2);
             
             // Add canvas to page for preview
             const canvasContainer = document.getElementById('canvases');
@@ -204,7 +206,7 @@
         }
         
         // Show current favicon in browser
-        console.log('🦁 Aslan Favicon Generator loaded');
+        console.log('Aslan Favicon Generator loaded - Text-based logo');
         console.log('Use the buttons above to generate PNG versions of the favicon');
     </script>
 </body>
