@@ -241,15 +241,366 @@ setTimeout(() => {
             console.log('⚠️  Security module not available:', error.message);
         }
         
-        // Try to load routes
+        // Try to load ALL routes
         try {
             const authRoutes = require('./routes/auth');
             app.use('/api/auth', authRoutes);
-            featuresLoaded.authentication = true;
             console.log('✅ Auth routes loaded');
         } catch (error) {
             console.log('⚠️  Auth routes not available:', error.message);
         }
+        
+        try {
+            const apiKeyRoutes = require('./routes/api-keys');
+            app.use('/api/keys', apiKeyRoutes);
+            console.log('✅ API Key routes loaded');
+        } catch (error) {
+            console.log('⚠️  API Key routes not available:', error.message);
+        }
+        
+        try {
+            const authorizeRoutes = require('./routes/authorize');
+            app.use('/api/v1/authorize', authorizeRoutes);
+            console.log('✅ Authorize routes loaded');
+        } catch (error) {
+            console.log('⚠️  Authorize routes not available:', error.message);
+        }
+        
+        // Load static page routes
+        const path = require('path');
+        const fs = require('fs');
+        
+        // Environment variable injection middleware for HTML files
+        function injectEnvironmentVariables(req, res, next) {
+            const originalSend = res.sendFile;
+            
+            res.sendFile = function(filePath, options, callback) {
+                // Check if this is an HTML file
+                if (filePath.endsWith('.html')) {
+                    try {
+                        // Read the HTML file
+                        let htmlContent = fs.readFileSync(filePath, 'utf8');
+                        
+                        // Comprehensive XSS-safe escaping
+                        function escapeForScript(str) {
+                            if (!str) return '';
+                            
+                            // First, encode for JSON string context
+                            const jsonEncoded = JSON.stringify(str);
+                            
+                            // Then escape for HTML script context
+                            return jsonEncoded
+                                .replace(/</g, '\\u003c')  // Escape < to prevent script tag injection
+                                .replace(/>/g, '\\u003e')  // Escape > for completeness
+                                .replace(/&/g, '\\u0026')  // Escape & to prevent HTML entity attacks
+                                .replace(/\u2028/g, '\\u2028') // Escape line separator
+                                .replace(/\u2029/g, '\\u2029') // Escape paragraph separator
+                                .slice(1, -1); // Remove the quotes added by JSON.stringify
+                        }
+                        
+                        // Only inject minimal, safe configuration
+                        const safeStripeKey = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
+                        const safeNodeEnv = process.env.NODE_ENV || 'development';
+                        
+                        // Validate that Stripe key follows expected pattern
+                        if (!safeStripeKey.match(/^pk_(test|live)_[a-zA-Z0-9]+$/)) {
+                            console.error('Invalid Stripe publishable key format detected');
+                        }
+                        
+                        // Inject environment variables with proper escaping
+                        const envScript = `
+<script>
+(function() {
+    'use strict';
+    // Create immutable configuration object
+    const config = Object.freeze({
+        STRIPE_PUBLISHABLE_KEY: '${escapeForScript(safeStripeKey)}',
+        NODE_ENV: '${escapeForScript(safeNodeEnv)}'
+    });
+    
+    // Expose configuration safely
+    Object.defineProperty(window, 'AGENTPAY_CONFIG', {
+        value: config,
+        writable: false,
+        enumerable: false,
+        configurable: false
+    });
+    
+    // Legacy support with deprecation warning
+    Object.defineProperty(window, 'STRIPE_PUBLISHABLE_KEY', {
+        get: function() {
+            console.warn('Direct access to STRIPE_PUBLISHABLE_KEY is deprecated. Use AGENTPAY_CONFIG.STRIPE_PUBLISHABLE_KEY');
+            return config.STRIPE_PUBLISHABLE_KEY;
+        },
+        set: function() {
+            console.error('Cannot modify STRIPE_PUBLISHABLE_KEY');
+        },
+        enumerable: false,
+        configurable: false
+    });
+})();
+</script>`;
+                        
+                        // Insert script before closing head tag or at the beginning of body
+                        if (htmlContent.includes('</head>')) {
+                            htmlContent = htmlContent.replace('</head>', `${envScript}\n</head>`);
+                        } else if (htmlContent.includes('<body')) {
+                            htmlContent = htmlContent.replace(/(<body[^>]*>)/, `$1\n${envScript}`);
+                        } else {
+                            // Fallback: add at the beginning
+                            htmlContent = envScript + '\n' + htmlContent;
+                        }
+                        
+                        // Set security headers for HTML responses
+                        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                        res.setHeader('X-Content-Type-Options', 'nosniff');
+                        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+                        res.setHeader('Pragma', 'no-cache');
+                        res.setHeader('Expires', '0');
+                        
+                        res.send(htmlContent);
+                        
+                        if (callback) callback();
+                    } catch (error) {
+                        console.error('Error injecting environment variables:', error);
+                        // Fallback to original behavior
+                        originalSend.call(this, filePath, options, callback);
+                    }
+                } else {
+                    // Not an HTML file, use original behavior
+                    originalSend.call(this, filePath, options, callback);
+                }
+            };
+            
+            next();
+        }
+
+        // Apply environment injection middleware to all routes
+        app.use(injectEnvironmentVariables);
+        
+        // Status page routes (both with and without .html)
+        app.get('/status', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'status.html'));
+        });
+
+        app.get('/status.html', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'status.html'));
+        });
+
+        // Documentation page routes
+        app.get('/docs', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'docs.html'));
+        });
+
+        app.get('/docs.html', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'docs.html'));
+        });
+
+        // API Reference Page
+        app.get('/api-reference', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'api.html'));
+        });
+
+        app.get('/api', (req, res) => {
+            // Serve fixed API HTML directly
+            const fixedApiHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aslan API Reference - Payment Infrastructure for AI Agents</title>
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#FF6B35">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                        'aslan-dark': '#1a1a1a',
+                        'aslan-gray': '#6B7280',
+                        gray: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white overflow-x-hidden">
+    <!-- Navigation -->
+    <nav class="border-b" style="border-color: #e5e7eb;">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
+                    <a href="/docs" class="text-aslan-gray hover:text-aslan-dark transition-colors">Documentation</a>
+                    <a href="/api" class="text-aslan-orange font-medium">API Reference</a>
+                    <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                        Try Demo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div class="prose prose-lg max-w-none">
+            <h1 class="text-3xl sm:text-4xl font-bold text-aslan-dark mb-6">🦁 API Reference</h1>
+            
+            <p class="text-lg text-aslan-gray mb-8">
+                Complete API reference for integrating Aslan payment infrastructure with your AI agents.
+            </p>
+
+            <!-- Base URL -->
+            <div class="border rounded-lg p-4 sm:p-6 mb-8" style="background-color: #eff6ff; border-color: #bfdbfe;">
+                <h3 class="text-lg font-semibold mb-2" style="color: #1e3a8a;">Base URL</h3>
+                <div class="bg-white rounded p-3 font-mono text-sm overflow-x-auto">
+                    <span style="color: #2563eb;">https://aslanpay-production.up.railway.app/api/v1</span>
+                </div>
+            </div>
+
+            <!-- Authentication -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-aslan-dark mb-6">🔑 Authentication</h2>
+                
+                <p class="text-aslan-gray mb-6">
+                    All API requests require authentication using an API key in the Authorization header.
+                </p>
+
+                <div class="bg-aslan-dark rounded-lg p-6 text-white mb-6">
+                    <pre class="text-sm"><code>curl -X POST https://aslanpay-production.up.railway.app/api/v1/authorize \\
+  -H "Authorization: Bearer ak_live_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "amount": 2500,
+    "description": "AWS credits"
+  }'</code></pre>
+                </div>
+
+                <div class="border rounded-lg p-6" style="background-color: #fef3c7; border-color: #fde68a;">
+                    <h4 class="font-semibold mb-2" style="color: #92400e;">🔑 API Key Formats</h4>
+                    <ul class="text-sm space-y-1" style="color: #92400e;">
+                        <li>• <strong>Live:</strong> <code>ak_live_...</code> - For production transactions</li>
+                        <li>• <strong>Test:</strong> <code>ak_test_...</code> - For sandbox testing</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Endpoints -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-aslan-dark mb-6">📡 Core Endpoints</h2>
+                
+                <div class="space-y-8">
+                    <!-- Authorize -->
+                    <div class="border rounded-lg p-6" style="border-color: #e5e7eb;">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span class="px-3 py-1 rounded-full text-sm font-medium" style="background-color: #d1fae5; color: #065f46;">POST</span>
+                            <code class="text-lg">/api/v1/authorize</code>
+                        </div>
+                        <p class="text-aslan-gray mb-4">Create a payment authorization for an AI agent.</p>
+                        <div class="rounded-lg p-4" style="background-color: #f9fafb;">
+                            <pre class="text-sm"><code>{
+  "amount": 2500,
+  "description": "AWS credits",
+  "agentId": "agent_123"
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="border rounded-lg p-6" style="border-color: #e5e7eb;">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span class="px-3 py-1 rounded-full text-sm font-medium" style="background-color: #f3f4f6; color: #374151;">GET</span>
+                            <code class="text-lg">/api/status</code>
+                        </div>
+                        <p class="text-aslan-gray mb-4">Get the current system status and health.</p>
+                        <div class="rounded-lg p-4" style="background-color: #f9fafb;">
+                            <pre class="text-sm"><code>{
+  "service": "Aslan Payment Infrastructure",
+  "status": "operational",
+  "environment": "production"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Test Section -->
+            <section class="rounded-lg p-8" style="background-color: #f9fafb;">
+                <h2 class="text-2xl font-bold text-aslan-dark mb-4">🧪 Test the API</h2>
+                <p class="text-aslan-gray mb-6">
+                    Try these commands to test the API endpoints:
+                </p>
+                <div class="space-y-4">
+                    <div class="bg-white rounded-lg p-4">
+                        <h3 class="font-semibold text-aslan-dark mb-2">Health Check</h3>
+                        <code class="text-sm text-aslan-gray">curl https://aslanpay-production.up.railway.app/health</code>
+                    </div>
+                    <div class="bg-white rounded-lg p-4">
+                        <h3 class="font-semibold text-aslan-dark mb-2">API Status</h3>
+                        <code class="text-sm text-aslan-gray">curl https://aslanpay-production.up.railway.app/api/status</code>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+</html>`;
+        
+            res.send(fixedApiHTML);
+        });
+
+        // Demo page routes
+        app.get('/demo', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+        });
+
+        app.get('/demo.html', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+        });
+
+        // Auth page routes
+        app.get('/auth', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+        });
+
+        app.get('/auth.html', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+        });
+
+        // Pricing page routes
+        app.get('/pricing', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
+        });
+
+        console.log('✅ All static page routes loaded');
+        featuresLoaded.routes = true;
+        featuresLoaded.authentication = true;
         
         console.log('🦁 Advanced features loading completed');
         
