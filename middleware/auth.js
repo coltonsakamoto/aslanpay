@@ -23,30 +23,41 @@ function getSecureJWTSecret() {
 
 const JWT_SECRET = getSecureJWTSecret();
 
-// Rate limiters
+// Rate limiters for different endpoints with appropriate limits
 const rateLimiters = {
-    // API Key rate limiting: 1000 requests per hour per API key
+    // General API key usage: 100 requests per 15 minutes
     apiKey: new RateLimiterMemory({
-        keyGenerator: (req) => req.apiKey?.keyId || req.ip,
-        points: 1000, // Number of requests
-        duration: 3600, // Per 3600 seconds (1 hour)
-        blockDuration: 3600, // Block for 1 hour if limit exceeded
+        points: 100,
+        duration: 15 * 60, // 15 minutes
+        blockDuration: 15 * 60, // Block for 15 minutes
     }),
     
-    // Login rate limiting: 5 attempts per 15 minutes per IP
+    // Login attempts: 5 attempts per 15 minutes per IP
     login: new RateLimiterMemory({
-        keyGenerator: (req) => req.ip,
         points: 5,
-        duration: 900, // 15 minutes
-        blockDuration: 900,
+        duration: 15 * 60, // 15 minutes
+        blockDuration: 15 * 60, // Block for 15 minutes
     }),
     
-    // Password reset: 3 attempts per hour per IP
+    // Password reset: 3 attempts per hour per IP (more restrictive)
     passwordReset: new RateLimiterMemory({
-        keyGenerator: (req) => req.ip,
         points: 3,
-        duration: 3600,
-        blockDuration: 3600,
+        duration: 60 * 60, // 1 hour
+        blockDuration: 60 * 60, // Block for 1 hour
+    }),
+    
+    // Email verification: 5 attempts per hour per IP
+    emailVerification: new RateLimiterMemory({
+        points: 5,
+        duration: 60 * 60, // 1 hour
+        blockDuration: 30 * 60, // Block for 30 minutes
+    }),
+    
+    // API key creation: 10 per day per user
+    apiKeyCreation: new RateLimiterMemory({
+        points: 10,
+        duration: 24 * 60 * 60, // 24 hours
+        blockDuration: 60 * 60, // Block for 1 hour
     })
 };
 

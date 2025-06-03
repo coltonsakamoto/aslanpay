@@ -1,56 +1,41 @@
 // Developer Dashboard JavaScript
 class DeveloperDashboard {
     constructor() {
-        this.apiKeys = this.loadApiKeys();
-        this.activity = this.generateActivity();
+        this.apiKeys = [];
+        this.activity = [];
         this.init();
     }
     
-    init() {
+    async init() {
+        await this.loadApiKeysFromServer();
         this.renderApiKeys();
         this.renderActivity();
         this.animateStats();
     }
     
-    loadApiKeys() {
-        const stored = localStorage.getItem('agentpayApiKeys');
-        if (stored) {
-            return JSON.parse(stored);
-        }
-        
-        // Default demo API keys
-        return [
-            {
-                id: 'key_1',
-                name: 'Production Key',
-                key: 'sk_live_' + this.generateKeyId(),
-                environment: 'live',
-                created: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-                lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-                permissions: ['read', 'write'],
-                status: 'active'
-            },
-            {
-                id: 'key_2', 
-                name: 'Development Key',
-                key: 'sk_test_' + this.generateKeyId(),
-                environment: 'test',
-                created: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-                lastUsed: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-                permissions: ['read', 'write'],
-                status: 'active'
+    async loadApiKeysFromServer() {
+        try {
+            const response = await fetch('/api/keys', {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                // Server should only return masked keys
+                this.apiKeys = data.apiKeys || [];
+            } else {
+                console.error('Failed to load API keys');
+                this.apiKeys = [];
             }
-        ];
-    }
-    
-    saveApiKeys() {
-        localStorage.setItem('agentpayApiKeys', JSON.stringify(this.apiKeys));
+        } catch (error) {
+            console.error('Error loading API keys:', error);
+            this.apiKeys = [];
+        }
     }
     
     generateKeyId() {
-        return Array.from({length: 24}, () => 
-            'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 62)]
-        ).join('');
+        // This should NEVER be used - keys must be generated server-side
+        throw new Error('API keys must be generated on the server');
     }
     
     generateActivity() {
@@ -89,7 +74,7 @@ class DeveloperDashboard {
             <div class="border border-gray-200 rounded-lg p-4">
                 <div class="flex items-center justify-between mb-3">
                     <div>
-                        <h3 class="font-medium text-gray-900">${key.name}</h3>
+                        <h3 class="font-medium text-gray-900">${this.escapeHtml(key.name)}</h3>
                         <div class="flex items-center space-x-2 mt-1">
                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                 key.environment === 'live' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
@@ -100,8 +85,8 @@ class DeveloperDashboard {
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <button onclick="dashboard.toggleKeyVisibility('${key.id}')" class="text-gray-400 hover:text-gray-600">
-                            <span id="eye-${key.id}">👁️</span>
+                        <button onclick="dashboard.requestFullKey('${key.id}')" class="text-gray-400 hover:text-gray-600" title="Request full key">
+                            🔓
                         </button>
                         <button onclick="dashboard.deleteKey('${key.id}')" class="text-red-400 hover:text-red-600">
                             🗑️
@@ -110,16 +95,13 @@ class DeveloperDashboard {
                 </div>
                 
                 <div class="bg-gray-50 rounded p-3 font-mono text-sm">
-                    <span id="key-${key.id}" data-key="${key.key}">
-                        ${this.maskKey(key.key)}
+                    <span id="key-${key.id}">
+                        ${key.maskedKey || this.maskKey(key.key)}
                     </span>
-                    <button onclick="dashboard.copyKey('${key.id}')" class="ml-2 text-blue-600 hover:text-blue-800">
-                        📋
-                    </button>
                 </div>
                 
                 <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
-                    <span>Last used: ${this.formatDate(key.lastUsed)}</span>
+                    <span>Last used: ${key.lastUsed ? this.formatDate(key.lastUsed) : 'Never'}</span>
                     <span>Permissions: ${key.permissions.join(', ')}</span>
                 </div>
             </div>
@@ -258,7 +240,6 @@ class DeveloperDashboard {
         };
         
         this.apiKeys.push(newKey);
-        this.saveApiKeys();
         this.renderApiKeys();
         
         // Show success notification
@@ -268,33 +249,48 @@ class DeveloperDashboard {
     deleteKey(keyId) {
         if (confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
             this.apiKeys = this.apiKeys.filter(key => key.id !== keyId);
-            this.saveApiKeys();
             this.renderApiKeys();
             this.showNotification('🗑️ API key deleted', 'warning');
         }
     }
     
-    toggleKeyVisibility(keyId) {
-        const keyElement = document.getElementById(`key-${keyId}`);
-        const eyeElement = document.getElementById(`eye-${keyId}`);
-        const fullKey = keyElement.dataset.key;
-        
-        if (keyElement.textContent.includes('•')) {
-            keyElement.textContent = fullKey;
-            eyeElement.textContent = '🙈';
-        } else {
-            keyElement.textContent = this.maskKey(fullKey);
-            eyeElement.textContent = '👁️';
+    async requestFullKey(keyId) {
+        if (!confirm('⚠️ Warning: The full API key will be displayed. Make sure no one is watching your screen. Continue?')) {
+            return;
         }
-    }
-    
-    copyKey(keyId) {
-        const keyElement = document.getElementById(`key-${keyId}`);
-        const fullKey = keyElement.dataset.key;
         
-        navigator.clipboard.writeText(fullKey).then(() => {
-            this.showNotification('📋 API key copied to clipboard', 'success');
-        });
+        try {
+            const response = await fetch(`/api/keys/${keyId}/reveal`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                // Show key temporarily
+                const keyElement = document.getElementById(`key-${keyId}`);
+                const originalContent = keyElement.textContent;
+                keyElement.textContent = data.key;
+                
+                // Copy to clipboard
+                navigator.clipboard.writeText(data.key).then(() => {
+                    this.showNotification('📋 API key copied to clipboard', 'success');
+                });
+                
+                // Hide after 10 seconds
+                setTimeout(() => {
+                    keyElement.textContent = originalContent;
+                }, 10000);
+            } else {
+                this.showNotification('❌ Failed to retrieve API key', 'error');
+            }
+        } catch (error) {
+            console.error('Error requesting full key:', error);
+            this.showNotification('❌ Failed to retrieve API key', 'error');
+        }
     }
     
     showNotification(message, type) {
@@ -310,6 +306,15 @@ class DeveloperDashboard {
         setTimeout(() => {
             notification.remove();
         }, 3000);
+    }
+    
+    escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 }
 

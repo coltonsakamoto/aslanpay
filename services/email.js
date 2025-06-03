@@ -412,4 +412,5 @@ If you have any questions, our team is here to help at support@aslanpay.xyz
     }
 }
 
-module.exports = EmailService; 
+// Export a singleton instance
+module.exports = new EmailService(); 

@@ -17,6 +17,16 @@ yarn-error.log*
 .env.bak
 *.env
 
+# Cookies and session data
+cookies.txt
+*.cookies
+cookies/
+.cookies/
+session.txt
+*.session
+sessions/
+.sessions/
+
 # Database
 *.db
 *.sqlite
@@ -292,3 +302,27 @@ local.properties
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# Security Fixes and Quarantine
+security-fixes/quarantine/
+security-fixes/patches/
+security-fixes/test-results/
+security-fixes/*.log
+
+# Test files (additional security)
+test-*.js
+test_*.py
+*-test.js
+*-test.ts
+test-results.txt
+run-*-tests.sh
+
+# Security audit files
+security-audit*.js
+*-audit.js
+audit-*.js
+
+# Temporary security files
+*.security.bak
+*.security.tmp
+security-backup/

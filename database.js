@@ -46,8 +46,8 @@ class Database {
 
         database.users.set(userId, user);
         
-        // Create default API key
-        await this.createApiKey(userId, 'Default Key');
+        // Don't create default API key during user creation to avoid timing issues
+        // Users can create API keys after registration
         
         return this.sanitizeUser(user);
     }

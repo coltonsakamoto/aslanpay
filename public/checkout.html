@@ -239,7 +239,7 @@
         };
 
         // Initialize Stripe (you'll need to replace with your publishable key)
-        const stripe = Stripe('pk_test_YOUR_STRIPE_PUBLISHABLE_KEY');
+        const stripe = Stripe(window.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
         const elements = stripe.elements();
 
         // Create card element

@@ -43,6 +43,75 @@ const session = require('express-session');
 const passport = require('./config/passport');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const CSRFProtection = require('./middleware/csrf');
+const SecurityHeaders = require('./config/security-headers');
+const SecurityAudit = require('./middleware/security-audit');
+const RequestSigning = require('./middleware/request-signing');
+
+// Security modules
+const SecureSessionManager = require('./security-fixes/new-middleware/secure-sessions');
+const EnhancedRateLimiter = require('./security-fixes/new-middleware/enhanced-rate-limiting');
+
+// Initialize Redis client (optional but recommended)
+let redisClient = null;
+let sessionManager;
+let rateLimiter;
+
+// Initialize function for security modules
+async function initializeSecurityModules() {
+    if (process.env.REDIS_URL) {
+        try {
+            const redis = require('redis');
+            redisClient = redis.createClient({
+                url: process.env.REDIS_URL,
+                socket: {
+                    reconnectStrategy: (retries) => Math.min(retries * 50, 500)
+                }
+            });
+            
+            redisClient.on('error', (err) => console.error('Redis Client Error', err));
+            
+            // Wait for connection
+            await redisClient.connect();
+            console.log('✅ Redis connected for sessions and rate limiting');
+        } catch (err) {
+            console.error('❌ Redis connection failed:', err.message);
+            console.log('⚠️  Falling back to in-memory storage');
+            redisClient = null;
+        }
+    }
+    
+    // Initialize security modules after Redis connection attempt
+    sessionManager = new SecureSessionManager(redisClient);
+    rateLimiter = new EnhancedRateLimiter(redisClient);
+}
+
+// Initialize security modules (this runs the async function)
+let securityModulesReady = false;
+initializeSecurityModules()
+    .then(() => {
+        securityModulesReady = true;
+        console.log('✅ Security modules initialized');
+    })
+    .catch(err => {
+        console.error('Failed to initialize security modules:', err);
+        // Create fallback instances with no Redis
+        sessionManager = new SecureSessionManager(null);
+        rateLimiter = new EnhancedRateLimiter(null);
+        securityModulesReady = true;
+    });
+
+// Wrapper to ensure security modules are ready
+function requireSecurityModules(callback) {
+    return (req, res, next) => {
+        if (!securityModulesReady || !sessionManager || !rateLimiter) {
+            // If modules aren't ready yet, skip security for this request
+            console.warn('Security modules not ready, skipping security checks for:', req.path);
+            return next();
+        }
+        return callback(req, res, next);
+    };
+}
 
 // Import routes
 let authRoutes, apiKeyRoutes, authorizeRoutes;
@@ -113,8 +182,18 @@ try {
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Emergency diagnostic endpoint - add this first to catch startup issues
+// Emergency diagnostic endpoint - protected in production
 app.get('/debug', (req, res) => {
+    // Completely disable in production
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ error: 'Not found' });
+    }
+    
+    // Development only - still require authentication
+    if (!req.headers['x-dev-token'] || req.headers['x-dev-token'] !== process.env.DEV_DEBUG_TOKEN) {
+        return res.status(404).json({ error: 'Not found' });
+    }
+    
     res.json({
         status: 'Server is running',
         timestamp: new Date().toISOString(),
@@ -170,21 +249,49 @@ app.use(helmet(security.getHelmetConfig()));
 app.use(security.securityHeaders());
 
 // Rate limiting
-const limiter = rateLimit(security.getRateLimitConfig());
-app.use('/api/', limiter);
+// Old rate limiter replaced
+// const limiter = rateLimit(security.getRateLimitConfig());
+// app.use('/api/', limiter);
+
+// New endpoint-specific rate limiting
+app.use('/api/auth/login', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('login')(req, res, next)));
+app.use('/api/auth/register', requireSecurityModules((req, res, next) => rateLimiter.compound('login', 'public')(req, res, next)));
+app.use('/api/auth/forgot-password', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('passwordReset')(req, res, next)));
+app.use('/api/auth/reset-password', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('passwordReset')(req, res, next)));
+app.use('/api/keys', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('apiKeyCreation')(req, res, next)));
+app.use('/api/v1/authorize', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('paymentAuth')(req, res, next)));
+app.use('/api/webhook', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('webhook')(req, res, next)));
+app.use('/api/', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('api')(req, res, next)));
+
+// Add adaptive rate limiting
+app.use(requireSecurityModules((req, res, next) => rateLimiter.adaptive()(req, res, next)));
 
 // CORS configuration
 app.use(cors(security.getCorsConfig()));
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Cookie parsing
+// Cookie parser (needed for session cookies)
 app.use(cookieParser());
 
+// Security headers and CSP
+SecurityHeaders.initialize(app);
+
+// Body parsing middleware (with size limits)
+app.use(express.json({ 
+    limit: '10mb',
+    verify: (req, res, buf) => {
+        // Store raw body for webhook signature verification
+        if (req.path === '/api/webhook') {
+            req.rawBody = buf.toString('utf8');
+        }
+    }
+}));
+
 // Session middleware with security configuration
-app.use(session(security.getSessionConfig()));
+// Old session middleware replaced
+// app.use(session(security.getSessionConfig()));
+
+// New secure session middleware
+app.use(requireSecurityModules((req, res, next) => sessionManager.middleware()(req, res, next)));
 
 // Origin validation for sensitive endpoints
 app.use('/api/auth', security.validateOrigin());
@@ -193,6 +300,21 @@ app.use('/api/keys', security.validateOrigin());
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Security audit logging
+app.use(SecurityAudit.requestLogger());
+
+// CSRF Protection (before API routes)
+app.use(CSRFProtection.injectToken());
+app.use(CSRFProtection.validateRequest());
+
+// CSRF token endpoint for AJAX requests
+app.get('/api/csrf-token', CSRFProtection.getTokenEndpoint());
+
+// API Routes (after CSRF but exempted from validation)
+app.use('/api/v1/authorize', authorizeRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/keys', apiKeyRoutes);
 
 // Static files (with security headers)
 app.use(express.static('public', {
@@ -215,11 +337,64 @@ function injectEnvironmentVariables(req, res, next) {
                 // Read the HTML file
                 let htmlContent = fs.readFileSync(filePath, 'utf8');
                 
-                // Inject environment variables
+                // Comprehensive XSS-safe escaping
+                function escapeForScript(str) {
+                    if (!str) return '';
+                    
+                    // First, encode for JSON string context
+                    const jsonEncoded = JSON.stringify(str);
+                    
+                    // Then escape for HTML script context
+                    return jsonEncoded
+                        .replace(/</g, '\\u003c')  // Escape < to prevent script tag injection
+                        .replace(/>/g, '\\u003e')  // Escape > for completeness
+                        .replace(/&/g, '\\u0026')  // Escape & to prevent HTML entity attacks
+                        .replace(/\u2028/g, '\\u2028') // Escape line separator
+                        .replace(/\u2029/g, '\\u2029') // Escape paragraph separator
+                        .slice(1, -1); // Remove the quotes added by JSON.stringify
+                }
+                
+                // Only inject minimal, safe configuration
+                const safeStripeKey = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
+                const safeNodeEnv = process.env.NODE_ENV || 'development';
+                
+                // Validate that Stripe key follows expected pattern
+                if (!safeStripeKey.match(/^pk_(test|live)_[a-zA-Z0-9]+$/)) {
+                    console.error('Invalid Stripe publishable key format detected');
+                }
+                
+                // Inject environment variables with proper escaping
                 const envScript = `
 <script>
-window.STRIPE_PUBLISHABLE_KEY = '${process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder'}';
-window.NODE_ENV = '${process.env.NODE_ENV || 'development'}';
+(function() {
+    'use strict';
+    // Create immutable configuration object
+    const config = Object.freeze({
+        STRIPE_PUBLISHABLE_KEY: '${escapeForScript(safeStripeKey)}',
+        NODE_ENV: '${escapeForScript(safeNodeEnv)}'
+    });
+    
+    // Expose configuration safely
+    Object.defineProperty(window, 'AGENTPAY_CONFIG', {
+        value: config,
+        writable: false,
+        enumerable: false,
+        configurable: false
+    });
+    
+    // Legacy support with deprecation warning
+    Object.defineProperty(window, 'STRIPE_PUBLISHABLE_KEY', {
+        get: function() {
+            console.warn('Direct access to STRIPE_PUBLISHABLE_KEY is deprecated. Use AGENTPAY_CONFIG.STRIPE_PUBLISHABLE_KEY');
+            return config.STRIPE_PUBLISHABLE_KEY;
+        },
+        set: function() {
+            console.error('Cannot modify STRIPE_PUBLISHABLE_KEY');
+        },
+        enumerable: false,
+        configurable: false
+    });
+})();
 </script>`;
                 
                 // Insert script before closing head tag or at the beginning of body
@@ -232,9 +407,13 @@ window.NODE_ENV = '${process.env.NODE_ENV || 'development'}';
                     htmlContent = envScript + '\n' + htmlContent;
                 }
                 
-                // Set content type and send modified HTML
-                res.setHeader('Content-Type', 'text/html');
-                res.setHeader('Cache-Control', 'no-cache');
+                // Set security headers for HTML responses
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                res.setHeader('X-Content-Type-Options', 'nosniff');
+                res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+                res.setHeader('Pragma', 'no-cache');
+                res.setHeader('Expires', '0');
+                
                 res.send(htmlContent);
                 
                 if (callback) callback();
@@ -254,11 +433,6 @@ window.NODE_ENV = '${process.env.NODE_ENV || 'development'}';
 
 // Apply environment injection middleware to all routes
 app.use(injectEnvironmentVariables);
-
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/keys', apiKeyRoutes);
-app.use('/api/v1/authorize', authorizeRoutes);
 
 // Security report endpoint
 app.get('/api/security', (req, res) => {
@@ -893,56 +1067,69 @@ app.post('/api/setup-products', async (req, res) => {
 // Webhook endpoint for Stripe events
 app.post('/api/webhook', express.raw({ type: 'application/json' }), (req, res) => {
     if (!stripe) {
-        return res.status(503).json({
-            error: 'Stripe not configured',
-            code: 'STRIPE_NOT_CONFIGURED'
-        });
+        console.log('⚠️  Webhook received but Stripe not initialized');
+        return res.status(503).json({ error: 'Stripe not configured' });
     }
     
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
+    
+    if (!endpointSecret) {
+        console.error('⚠️  STRIPE_WEBHOOK_SECRET not configured');
+        return res.status(500).json({ error: 'Webhook secret not configured' });
+    }
+    
     let event;
-
+    
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
     } catch (err) {
-        console.log(`Webhook signature verification failed.`, err.message);
+        console.log(`❌ Webhook signature verification failed.`, err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
-
+    
+    // Log the event
+    console.log(`✅ Webhook received: ${event.type}`);
+    
     // Handle the event
-    switch (event.type) {
-        case 'subscription.created':
-            const subscription = event.data.object;
-            console.log('Subscription created:', subscription.id);
-            // Here you would typically:
-            // - Update your database
-            // - Send welcome email
-            // - Provision account access
-            break;
-
-        case 'subscription.updated':
-            console.log('Subscription updated:', event.data.object.id);
-            break;
-
-        case 'subscription.deleted':
-            console.log('Subscription cancelled:', event.data.object.id);
-            break;
-
-        case 'invoice.payment_succeeded':
-            console.log('Payment succeeded:', event.data.object.id);
-            break;
-
-        case 'invoice.payment_failed':
-            console.log('Payment failed:', event.data.object.id);
-            break;
-
-        default:
-            console.log(`Unhandled event type ${event.type}`);
+    try {
+        switch (event.type) {
+            case 'payment_intent.succeeded':
+                const paymentIntent = event.data.object;
+                console.log('💰 PaymentIntent was successful!', paymentIntent.id);
+                // TODO: Update your database, send email, etc.
+                break;
+                
+            case 'payment_intent.payment_failed':
+                const failedPayment = event.data.object;
+                console.log('❌ PaymentIntent failed:', failedPayment.id);
+                // TODO: Notify customer, retry logic, etc.
+                break;
+                
+            case 'customer.subscription.deleted':
+                const subscription = event.data.object;
+                console.log('🚫 Subscription cancelled:', subscription.id);
+                // TODO: Update user access, send cancellation email
+                break;
+                
+            case 'customer.subscription.updated':
+                const updatedSubscription = event.data.object;
+                console.log('🔄 Subscription updated:', updatedSubscription.id);
+                // TODO: Update user plan/features
+                break;
+                
+            default:
+                console.log(`🤷 Unhandled event type ${event.type}`);
+        }
+        
+        // Return a 200 response to acknowledge receipt of the event
+        res.json({ received: true });
+        
+    } catch (error) {
+        console.error('❌ Error processing webhook:', error);
+        // Return 200 to prevent retries, but log the error
+        res.json({ received: true, error: 'Processing failed but acknowledged' });
     }
-
-    res.json({ received: true });
 });
 
 // Simple test endpoint (no middleware)
@@ -959,7 +1146,7 @@ app.get('/api/test', (req, res) => {
 app.get('/api/test-session', (req, res) => {
     console.log('📍 Direct session test endpoint hit');
     try {
-        const token = req.cookies?.session;
+        const token = req.cookies?.agentpay_session;
         console.log('📍 Session cookie:', token ? 'Found' : 'Not found');
         
         if (!token) {
@@ -992,7 +1179,7 @@ app.get('/api/test-session', (req, res) => {
 app.get('/api/auth/me-direct', (req, res) => {
     console.log('📍 Direct /me endpoint hit');
     try {
-        const token = req.cookies?.session;
+        const token = req.cookies?.agentpay_session;
         if (!token) {
             return res.status(401).json({ error: 'No session token provided', code: 'NO_SESSION' });
         }
@@ -1025,7 +1212,7 @@ app.get('/api/auth/me-direct', (req, res) => {
 app.get('/api/keys-direct', (req, res) => {
     console.log('📍 Direct API keys endpoint hit');
     try {
-        const token = req.cookies?.session;
+        const token = req.cookies?.agentpay_session;
         if (!token) {
             return res.status(401).json({ error: 'No session token provided', code: 'NO_SESSION' });
         }
@@ -1059,7 +1246,7 @@ app.get('/api/keys-direct', (req, res) => {
 app.post('/api/keys-direct', (req, res) => {
     console.log('📍 Direct create API key endpoint hit');
     try {
-        const token = req.cookies?.session;
+        const token = req.cookies?.agentpay_session;
         if (!token) {
             return res.status(401).json({ error: 'No session token provided', code: 'NO_SESSION' });
         }
@@ -1093,18 +1280,6 @@ app.post('/api/keys-direct', (req, res) => {
         res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
     }
 });
-
-// Development endpoint to view database (remove in production)
-if (process.env.NODE_ENV !== 'production') {
-    app.get('/api/dev/database', async (req, res) => {
-        try {
-            const data = await database.getAllData();
-            res.json(data);
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-    });
-}
 
 // Railway database diagnostic endpoint
 app.get('/api/railway/db-test', async (req, res) => {

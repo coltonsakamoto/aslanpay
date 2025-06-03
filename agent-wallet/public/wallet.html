@@ -361,7 +361,7 @@
 
     <script>
         // Initialize Stripe (using live keys - make sure this matches your backend)
-        const stripe = Stripe('pk_live_51RSQ8vBGmgmavoOiowp0edPTdZhCOpinRLg5GFWXgaUxPeIj5jTdtaqL6HmbRMVSS4KpQukSmLqdvFNUj5FnlhVn00AVZywaIU'); // Live publishable key
+        const stripe = Stripe(window.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder'); // Environment-based key loading
         let cardElement;
         let currentWallet = null;
         let currentAgent = null;

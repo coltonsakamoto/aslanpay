@@ -3,6 +3,8 @@ const passport = require('passport');
 const database = require('../config/database');
 const authMiddleware = require('../middleware/auth');
 const emailService = require('../services/email');
+const AccountLockout = require('../middleware/account-lockout');
+const InputValidation = require('../middleware/input-validation');
 const { 
     validateSession, 
     validateSessionSimple,
@@ -14,51 +16,69 @@ const {
 const router = express.Router();
 
 // Register new user
-router.post('/register', async (req, res) => {
+router.post('/register', 
+    InputValidation.validateBody(InputValidation.authSchemas.register),
+    async (req, res) => {
     try {
         const { email, password, name } = req.body;
         
-        // Validation
-        if (!email || !password || !name) {
-            return res.status(400).json({
-                error: 'Email, password, and name are required',
-                code: 'MISSING_FIELDS'
-            });
-        }
+        console.log('📝 Registration attempt for:', email);
         
-        if (password.length < 8) {
-            return res.status(400).json({
-                error: 'Password must be at least 8 characters long',
-                code: 'WEAK_PASSWORD'
+        // Create user (validation already done by middleware)
+        let user;
+        try {
+            user = await database.createUser({
+                email: email.toLowerCase(),
+                password,
+                name,
+                provider: 'email'
             });
+            console.log('✅ User created successfully:', user.id);
+        } catch (createError) {
+            console.error('❌ User creation failed:', createError);
+            throw createError;
         }
-        
-        // Email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({
-                error: 'Invalid email format',
-                code: 'INVALID_EMAIL'
-            });
-        }
-        
-        // Create user
-        const user = await database.createUser({
-            email: email.toLowerCase(),
-            password,
-            name,
-            provider: 'email'
-        });
         
         // Create email verification token
-        const verificationToken = database.createEmailVerification(user.id, user.email);
+        let verificationToken;
+        try {
+            verificationToken = database.createEmailVerification(user.id, user.email);
+            console.log('✅ Verification token created');
+        } catch (tokenError) {
+            console.error('⚠️ Verification token creation failed:', tokenError);
+            // Continue anyway
+        }
         
-        // Send verification email
-        await emailService.sendVerificationEmail(user.email, verificationToken);
+        // Send verification email (wrapped in try-catch to not fail registration)
+        if (verificationToken) {
+            try {
+                await emailService.sendVerificationEmail(user.email, verificationToken);
+                console.log('✅ Verification email sent');
+            } catch (emailError) {
+                console.warn('⚠️ Failed to send verification email:', emailError.message);
+                // Continue with registration even if email fails
+            }
+        }
         
         // Create session
-        const sessionId = database.createSession(user.id);
-        const token = generateToken(sessionId);
+        let sessionId;
+        try {
+            sessionId = database.createSession(user.id);
+            console.log('✅ Session created:', sessionId);
+        } catch (sessionError) {
+            console.error('❌ Session creation failed:', sessionError);
+            throw sessionError;
+        }
+        
+        // Generate JWT token
+        let token;
+        try {
+            token = generateToken(sessionId);
+            console.log('✅ JWT token generated');
+        } catch (tokenError) {
+            console.error('❌ JWT generation failed:', tokenError);
+            throw tokenError;
+        }
         
         // Set HTTP-only cookie
         res.cookie('session', token, {
@@ -67,6 +87,8 @@ router.post('/register', async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
             sameSite: 'strict'
         });
+        
+        console.log('✅ Registration successful for:', email);
         
         res.status(201).json({
             user,
@@ -82,7 +104,8 @@ router.post('/register', async (req, res) => {
             });
         }
         
-        console.error('Registration error:', error);
+        console.error('❌ Registration error:', error);
+        console.error('Stack trace:', error.stack);
         res.status(500).json({
             error: 'Internal server error',
             code: 'INTERNAL_ERROR'
@@ -91,7 +114,11 @@ router.post('/register', async (req, res) => {
 });
 
 // Login user
-router.post('/login', rateLimitLogin, async (req, res) => {
+router.post('/login', 
+    InputValidation.validateBody(InputValidation.authSchemas.login),
+    rateLimitLogin, 
+    AccountLockout.checkLockout(), 
+    async (req, res) => {
     try {
         const { email, password } = req.body;
         
@@ -106,13 +133,33 @@ router.post('/login', rateLimitLogin, async (req, res) => {
         const user = await database.verifyPassword(email.toLowerCase(), password);
         
         if (!user) {
-            return res.status(401).json({
+            // Record failed attempt
+            const lockoutResult = AccountLockout.recordFailedAttempt(email);
+            
+            const errorResponse = {
                 error: 'Invalid email or password',
                 code: 'INVALID_CREDENTIALS'
-            });
+            };
+            
+            // Add lockout information if applicable
+            if (lockoutResult.isLocked) {
+                errorResponse.lockout = {
+                    isLocked: true,
+                    lockedUntil: new Date(lockoutResult.lockedUntil).toISOString(),
+                    message: 'Account locked due to too many failed attempts'
+                };
+            } else if (lockoutResult.attempts > 2) {
+                // Warn about approaching lockout
+                errorResponse.warning = `${5 - lockoutResult.attempts} attempts remaining before account lockout`;
+            }
+            
+            return res.status(401).json(errorResponse);
         }
         
-        // Create session
+        // Clear failed attempts on successful login
+        AccountLockout.clearFailedAttempts(email);
+        
+        // Create new session
         const sessionId = database.createSession(user.id);
         const token = generateToken(sessionId);
         
@@ -164,7 +211,10 @@ router.get('/me', validateSessionSimple, (req, res) => {
 });
 
 // Request password reset
-router.post('/forgot-password', rateLimitPasswordReset, async (req, res) => {
+router.post('/forgot-password', 
+    InputValidation.validateBody(InputValidation.authSchemas.forgotPassword),
+    rateLimitPasswordReset, 
+    async (req, res) => {
     try {
         const { email } = req.body;
         
@@ -198,7 +248,9 @@ router.post('/forgot-password', rateLimitPasswordReset, async (req, res) => {
 });
 
 // Reset password with token
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', 
+    InputValidation.validateBody(InputValidation.authSchemas.resetPassword),
+    async (req, res) => {
     try {
         const { token, password } = req.body;
         
@@ -239,7 +291,9 @@ router.post('/reset-password', async (req, res) => {
 });
 
 // Verify email
-router.post('/verify-email', async (req, res) => {
+router.post('/verify-email', 
+    InputValidation.validateBody(InputValidation.authSchemas.verifyEmail),
+    async (req, res) => {
     try {
         const { token } = req.body;
         
