@@ -1,6 +1,8 @@
 require('dotenv').config();
 
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -68,11 +70,8 @@ let featuresLoaded = {
 
 // Load static files safely
 try {
-    const path = require('path');
-    
     // Serve public directory if it exists
     try {
-        const fs = require('fs');
         if (fs.existsSync('public')) {
             app.use(express.static('public', {
                 maxAge: '1y',
