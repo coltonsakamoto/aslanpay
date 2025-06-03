@@ -218,97 +218,93 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-// Gracefully load advanced features AFTER server starts
-setTimeout(() => {
-    try {
-        console.log('🔄 Loading advanced features...');
+// Load advanced features IMMEDIATELY - no setTimeout
+console.log('🔄 Loading advanced features immediately...');
+
+// Try to load database
+try {
+    const database = require('./config/database');
+    featuresLoaded.database = true;
+    console.log('✅ Database module loaded');
+} catch (error) {
+    console.log('⚠️  Database module not available:', error.message);
+}
+
+// Try to load security features
+try {
+    const security = require('./config/security');
+    featuresLoaded.security = true;
+    console.log('✅ Security module loaded');
+} catch (error) {
+    console.log('⚠️  Security module not available:', error.message);
+}
+
+// Try to load ALL routes
+try {
+    const authRoutes = require('./routes/auth');
+    app.use('/api/auth', authRoutes);
+    console.log('✅ Auth routes loaded');
+} catch (error) {
+    console.log('⚠️  Auth routes not available:', error.message);
+}
+
+try {
+    const apiKeyRoutes = require('./routes/api-keys');
+    app.use('/api/keys', apiKeyRoutes);
+    console.log('✅ API Key routes loaded');
+} catch (error) {
+    console.log('⚠️  API Key routes not available:', error.message);
+}
+
+try {
+    const authorizeRoutes = require('./routes/authorize');
+    app.use('/api/v1/authorize', authorizeRoutes);
+    console.log('✅ Authorize routes loaded');
+} catch (error) {
+    console.log('⚠️  Authorize routes not available:', error.message);
+}
+
+// Load static page routes
+try {
+    // Environment variable injection middleware for HTML files
+    function injectEnvironmentVariables(req, res, next) {
+        const originalSend = res.sendFile;
         
-        // Try to load database
-        try {
-            const database = require('./config/database');
-            featuresLoaded.database = true;
-            console.log('✅ Database module loaded');
-        } catch (error) {
-            console.log('⚠️  Database module not available:', error.message);
-        }
-        
-        // Try to load security features
-        try {
-            const security = require('./config/security');
-            featuresLoaded.security = true;
-            console.log('✅ Security module loaded');
-        } catch (error) {
-            console.log('⚠️  Security module not available:', error.message);
-        }
-        
-        // Try to load ALL routes
-        try {
-            const authRoutes = require('./routes/auth');
-            app.use('/api/auth', authRoutes);
-            console.log('✅ Auth routes loaded');
-        } catch (error) {
-            console.log('⚠️  Auth routes not available:', error.message);
-        }
-        
-        try {
-            const apiKeyRoutes = require('./routes/api-keys');
-            app.use('/api/keys', apiKeyRoutes);
-            console.log('✅ API Key routes loaded');
-        } catch (error) {
-            console.log('⚠️  API Key routes not available:', error.message);
-        }
-        
-        try {
-            const authorizeRoutes = require('./routes/authorize');
-            app.use('/api/v1/authorize', authorizeRoutes);
-            console.log('✅ Authorize routes loaded');
-        } catch (error) {
-            console.log('⚠️  Authorize routes not available:', error.message);
-        }
-        
-        // Load static page routes
-        const path = require('path');
-        const fs = require('fs');
-        
-        // Environment variable injection middleware for HTML files
-        function injectEnvironmentVariables(req, res, next) {
-            const originalSend = res.sendFile;
-            
-            res.sendFile = function(filePath, options, callback) {
-                // Check if this is an HTML file
-                if (filePath.endsWith('.html')) {
-                    try {
-                        // Read the HTML file
-                        let htmlContent = fs.readFileSync(filePath, 'utf8');
+        res.sendFile = function(filePath, options, callback) {
+            // Check if this is an HTML file
+            if (filePath.endsWith('.html')) {
+                try {
+                    // Read the HTML file
+                    let htmlContent = fs.readFileSync(filePath, 'utf8');
+                    
+                    // Comprehensive XSS-safe escaping
+                    function escapeForScript(str) {
+                        if (!str) return '';
                         
-                        // Comprehensive XSS-safe escaping
-                        function escapeForScript(str) {
-                            if (!str) return '';
-                            
-                            // First, encode for JSON string context
-                            const jsonEncoded = JSON.stringify(str);
-                            
-                            // Then escape for HTML script context
-                            return jsonEncoded
-                                .replace(/</g, '\\u003c')  // Escape < to prevent script tag injection
-                                .replace(/>/g, '\\u003e')  // Escape > for completeness
-                                .replace(/&/g, '\\u0026')  // Escape & to prevent HTML entity attacks
-                                .replace(/\u2028/g, '\\u2028') // Escape line separator
-                                .replace(/\u2029/g, '\\u2029') // Escape paragraph separator
-                                .slice(1, -1); // Remove the quotes added by JSON.stringify
-                        }
+                        // First, encode for JSON string context
+                        const jsonEncoded = JSON.stringify(str);
                         
-                        // Only inject minimal, safe configuration
-                        const safeStripeKey = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
-                        const safeNodeEnv = process.env.NODE_ENV || 'development';
-                        
-                        // Validate that Stripe key follows expected pattern
-                        if (!safeStripeKey.match(/^pk_(test|live)_[a-zA-Z0-9]+$/)) {
-                            console.error('Invalid Stripe publishable key format detected');
-                        }
-                        
-                        // Inject environment variables with proper escaping
-                        const envScript = `
+                        // Then escape for HTML script context
+                        return jsonEncoded
+                            .replace(/</g, '\\u003c')  // Escape < to prevent script tag injection
+                            .replace(/>/g, '\\u003e')  // Escape > for completeness
+                            .replace(/&/g, '\\u0026')  // Escape & to prevent HTML entity attacks
+                            .replace(/\u2028/g, '\\u2028') // Escape line separator
+                            .replace(/\u2029/g, '\\u2029') // Escape paragraph separator
+                            .slice(1, -1); // Remove the quotes added by JSON.stringify
+                    }
+                    
+                    // Only inject minimal, safe configuration
+                    const safeStripeKey = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
+                    const safeNodeEnv = process.env.NODE_ENV || 'development';
+                    
+                    // Validate that Stripe key follows expected pattern
+                    if (!safeStripeKey.match(/^pk_(test|live)_[a-zA-Z0-9]+$/)) {
+                        console.error('Invalid Stripe publishable key format detected');
+                    }
+                    
+                    // Inject environment variables with proper escaping
+                    const envScript = `
 <script>
 (function() {
     'use strict';
@@ -340,70 +336,70 @@ setTimeout(() => {
     });
 })();
 </script>`;
-                        
-                        // Insert script before closing head tag or at the beginning of body
-                        if (htmlContent.includes('</head>')) {
-                            htmlContent = htmlContent.replace('</head>', `${envScript}\n</head>`);
-                        } else if (htmlContent.includes('<body')) {
-                            htmlContent = htmlContent.replace(/(<body[^>]*>)/, `$1\n${envScript}`);
-                        } else {
-                            // Fallback: add at the beginning
-                            htmlContent = envScript + '\n' + htmlContent;
-                        }
-                        
-                        // Set security headers for HTML responses
-                        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-                        res.setHeader('X-Content-Type-Options', 'nosniff');
-                        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-                        res.setHeader('Pragma', 'no-cache');
-                        res.setHeader('Expires', '0');
-                        
-                        res.send(htmlContent);
-                        
-                        if (callback) callback();
-                    } catch (error) {
-                        console.error('Error injecting environment variables:', error);
-                        // Fallback to original behavior
-                        originalSend.call(this, filePath, options, callback);
+                    
+                    // Insert script before closing head tag or at the beginning of body
+                    if (htmlContent.includes('</head>')) {
+                        htmlContent = htmlContent.replace('</head>', `${envScript}\n</head>`);
+                    } else if (htmlContent.includes('<body')) {
+                        htmlContent = htmlContent.replace(/(<body[^>]*>)/, `$1\n${envScript}`);
+                    } else {
+                        // Fallback: add at the beginning
+                        htmlContent = envScript + '\n' + htmlContent;
                     }
-                } else {
-                    // Not an HTML file, use original behavior
+                    
+                    // Set security headers for HTML responses
+                    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                    res.setHeader('X-Content-Type-Options', 'nosniff');
+                    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+                    res.setHeader('Pragma', 'no-cache');
+                    res.setHeader('Expires', '0');
+                    
+                    res.send(htmlContent);
+                    
+                    if (callback) callback();
+                } catch (error) {
+                    console.error('Error injecting environment variables:', error);
+                    // Fallback to original behavior
                     originalSend.call(this, filePath, options, callback);
                 }
-            };
-            
-            next();
-        }
-
-        // Apply environment injection middleware to all routes
-        app.use(injectEnvironmentVariables);
+            } else {
+                // Not an HTML file, use original behavior
+                originalSend.call(this, filePath, options, callback);
+            }
+        };
         
-        // Status page routes (both with and without .html)
-        app.get('/status', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'status.html'));
-        });
+        next();
+    }
 
-        app.get('/status.html', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'status.html'));
-        });
+    // Apply environment injection middleware to all routes
+    app.use(injectEnvironmentVariables);
+    
+    // Status page routes (both with and without .html)
+    app.get('/status', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'status.html'));
+    });
 
-        // Documentation page routes
-        app.get('/docs', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'docs.html'));
-        });
+    app.get('/status.html', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'status.html'));
+    });
 
-        app.get('/docs.html', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'docs.html'));
-        });
+    // Documentation page routes
+    app.get('/docs', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'docs.html'));
+    });
 
-        // API Reference Page
-        app.get('/api-reference', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'api.html'));
-        });
+    app.get('/docs.html', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'docs.html'));
+    });
 
-        app.get('/api', (req, res) => {
-            // Serve fixed API HTML directly
-            const fixedApiHTML = `<!DOCTYPE html>
+    // API Reference Page
+    app.get('/api-reference', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'api.html'));
+    });
+
+    app.get('/api', (req, res) => {
+        // Serve fixed API HTML directly
+        const fixedApiHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -571,44 +567,43 @@ setTimeout(() => {
     </div>
 </body>
 </html>`;
-        
-            res.send(fixedApiHTML);
-        });
+    
+        res.send(fixedApiHTML);
+    });
 
-        // Demo page routes
-        app.get('/demo', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'demo.html'));
-        });
+    // Demo page routes
+    app.get('/demo', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+    });
 
-        app.get('/demo.html', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'demo.html'));
-        });
+    app.get('/demo.html', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+    });
 
-        // Auth page routes
-        app.get('/auth', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'auth.html'));
-        });
+    // Auth page routes
+    app.get('/auth', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+    });
 
-        app.get('/auth.html', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'auth.html'));
-        });
+    app.get('/auth.html', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+    });
 
-        // Pricing page routes
-        app.get('/pricing', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
-        });
+    // Pricing page routes
+    app.get('/pricing', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
+    });
 
-        console.log('✅ All static page routes loaded');
-        featuresLoaded.routes = true;
-        featuresLoaded.authentication = true;
-        
-        console.log('🦁 Advanced features loading completed');
-        
-    } catch (error) {
-        console.error('⚠️  Advanced feature loading failed:', error.message);
-        console.log('🦁 Continuing with basic functionality');
-    }
-}, 5000); // Load advanced features 5 seconds after startup
+    console.log('✅ All static page routes loaded');
+    featuresLoaded.routes = true;
+    featuresLoaded.authentication = true;
+    
+} catch (error) {
+    console.error('⚠️  Static route loading failed:', error.message);
+    console.log('🦁 Continuing with basic functionality');
+}
+
+console.log('🦁 Advanced features loading completed');
 
 // Catch-all for 404s
 app.use('*', (req, res) => {
