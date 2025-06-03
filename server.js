@@ -9,6 +9,9 @@ if (process.env.NODE_ENV === 'production') {
     process.env.SESSION_SECRET = process.env.SESSION_SECRET || require('crypto').randomBytes(32).toString('hex');
     process.env.DEV_DEBUG_TOKEN = process.env.DEV_DEBUG_TOKEN || require('crypto').randomBytes(32).toString('hex');
     
+    // Explicitly disable Redis in production
+    delete process.env.REDIS_URL;
+    
     // Log production startup
     console.log('🚀 Starting Aslan in PRODUCTION mode');
     console.log('📍 Environment variables configured:', {
@@ -17,7 +20,8 @@ if (process.env.NODE_ENV === 'production') {
         hasStripe: !!process.env.STRIPE_SECRET_KEY,
         hasDebugToken: !!process.env.DEV_DEBUG_TOKEN,
         nodeEnv: process.env.NODE_ENV,
-        port: process.env.PORT || 3000
+        port: process.env.PORT || 3000,
+        redisDisabled: true
     });
 } else {
     console.log('🧪 Starting Aslan in DEVELOPMENT mode');
@@ -84,15 +88,20 @@ let rateLimiter;
 
 // Initialize function for security modules
 async function initializeSecurityModules() {
-    // Only try Redis in development or if explicitly configured
-    if (process.env.REDIS_URL && process.env.NODE_ENV !== 'production') {
+    // NEVER use Redis in production - always use in-memory storage
+    if (process.env.NODE_ENV === 'production') {
+        console.log('🏭 Production mode: Using in-memory storage (Redis disabled)');
+        redisClient = null;
+    } else if (process.env.REDIS_URL) {
+        // Only try Redis in development
+        console.log('🧪 Development mode: Attempting Redis connection...');
         try {
             const redis = require('redis');
             redisClient = redis.createClient({
                 url: process.env.REDIS_URL,
                 socket: {
                     connectTimeout: 5000, // 5 second timeout
-                    reconnectStrategy: false // Don't reconnect in production
+                    reconnectStrategy: false // Don't reconnect
                 }
             });
             
@@ -112,7 +121,8 @@ async function initializeSecurityModules() {
             redisClient = null;
         }
     } else {
-        console.log('ℹ️  Using in-memory storage (Redis not configured for production)');
+        console.log('ℹ️  Development mode: No Redis URL provided, using in-memory storage');
+        redisClient = null;
     }
     
     // Initialize security modules after Redis connection attempt
