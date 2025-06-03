@@ -1,6 +1,55 @@
-# Railway Deployment Guide for Aslan 🦁
+# 🚂 Railway Deployment Guide
 
-This guide will help you deploy your Aslan payment infrastructure to Railway.
+## 🚀 Quick Deploy
+
+1. **Connect Repository**: Link your GitHub repository to Railway
+2. **Set Environment Variables** (in Railway dashboard):
+   ```
+   NODE_ENV=production
+   STRIPE_SECRET_KEY=sk_live_your_key_here
+   STRIPE_PUBLISHABLE_KEY=pk_live_your_key_here
+   ```
+3. **Deploy**: Railway will automatically deploy on git push
+
+## 🔧 Environment Variables
+
+### Required:
+- `NODE_ENV=production` (automatically handled)
+
+### Optional (for Stripe):
+- `STRIPE_SECRET_KEY` - Your Stripe secret key
+- `STRIPE_PUBLISHABLE_KEY` - Your Stripe publishable key
+
+### Auto-Generated:
+- `JWT_SECRET` - Generated automatically if not provided
+- `SESSION_SECRET` - Generated automatically if not provided
+- `DEV_DEBUG_TOKEN` - Generated automatically if not provided
+
+## 🏥 Health Check
+
+Railway will check `/health` endpoint to ensure the service is running.
+
+## 🔒 Security
+
+- Redis is **disabled** in production (uses in-memory storage)
+- All security modules work with in-memory fallback
+- Environment variables are auto-generated with secure defaults
+
+## 🐛 Troubleshooting
+
+If deployment fails:
+
+1. **Check Railway logs** for errors
+2. **Verify environment variables** are set correctly
+3. **Ensure** your repository is up to date
+4. **Try redeploying** from Railway dashboard
+
+## 📞 Support
+
+If you encounter issues, check:
+- Railway service logs
+- GitHub repository is connected
+- Environment variables are configured
 
 ## Prerequisites
 

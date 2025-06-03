@@ -2,20 +2,45 @@ require('dotenv').config();
 
 const fs = require('fs');
 
+// Production environment variable defaults
+if (process.env.NODE_ENV === 'production') {
+    // Set secure defaults for production
+    process.env.JWT_SECRET = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
+    process.env.SESSION_SECRET = process.env.SESSION_SECRET || require('crypto').randomBytes(32).toString('hex');
+    process.env.DEV_DEBUG_TOKEN = process.env.DEV_DEBUG_TOKEN || require('crypto').randomBytes(32).toString('hex');
+    
+    // Log production startup
+    console.log('🚀 Starting Aslan in PRODUCTION mode');
+    console.log('📍 Environment variables configured:', {
+        hasJWT: !!process.env.JWT_SECRET,
+        hasSession: !!process.env.SESSION_SECRET,
+        hasStripe: !!process.env.STRIPE_SECRET_KEY,
+        hasDebugToken: !!process.env.DEV_DEBUG_TOKEN,
+        nodeEnv: process.env.NODE_ENV,
+        port: process.env.PORT || 3000
+    });
+} else {
+    console.log('🧪 Starting Aslan in DEVELOPMENT mode');
+}
+
 // Add comprehensive error handling for startup
 process.on('uncaughtException', (error) => {
-    console.error('🚨 Uncaught Exception:', error);
-    console.error('Stack:', error.stack);
-    // Don't exit in production to allow Railway to restart
-    if (process.env.NODE_ENV !== 'production') {
+    console.error('🚨 Uncaught Exception:', error.message);
+    if (process.env.NODE_ENV === 'production') {
+        console.error('Stack:', error.stack);
+        // In production, log but don't exit to allow Railway to handle restarts
+        console.log('⚠️  Continuing in production mode...');
+    } else {
+        console.error('Stack:', error.stack);
         process.exit(1);
     }
 });
 
 process.on('unhandledRejection', (reason, promise) => {
     console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
-    // Don't exit in production to allow Railway to restart
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV === 'production') {
+        console.log('⚠️  Continuing in production mode...');
+    } else {
         process.exit(1);
     }
 });
@@ -59,31 +84,42 @@ let rateLimiter;
 
 // Initialize function for security modules
 async function initializeSecurityModules() {
-    if (process.env.REDIS_URL) {
+    // Only try Redis in development or if explicitly configured
+    if (process.env.REDIS_URL && process.env.NODE_ENV !== 'production') {
         try {
             const redis = require('redis');
             redisClient = redis.createClient({
                 url: process.env.REDIS_URL,
                 socket: {
-                    reconnectStrategy: (retries) => Math.min(retries * 50, 500)
+                    connectTimeout: 5000, // 5 second timeout
+                    reconnectStrategy: false // Don't reconnect in production
                 }
             });
             
-            redisClient.on('error', (err) => console.error('Redis Client Error', err));
+            redisClient.on('error', (err) => {
+                console.warn('⚠️  Redis Client Error (falling back to memory):', err.message);
+                redisClient = null;
+            });
             
-            // Wait for connection
-            await redisClient.connect();
+            // Wait for connection with timeout
+            await Promise.race([
+                redisClient.connect(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timeout')), 5000))
+            ]);
             console.log('✅ Redis connected for sessions and rate limiting');
         } catch (err) {
-            console.error('❌ Redis connection failed:', err.message);
-            console.log('⚠️  Falling back to in-memory storage');
+            console.warn('⚠️  Redis connection failed (using in-memory storage):', err.message);
             redisClient = null;
         }
+    } else {
+        console.log('ℹ️  Using in-memory storage (Redis not configured for production)');
     }
     
     // Initialize security modules after Redis connection attempt
     sessionManager = new SecureSessionManager(redisClient);
     rateLimiter = new EnhancedRateLimiter(redisClient);
+    
+    console.log('✅ Security modules initialized with', redisClient ? 'Redis' : 'in-memory storage');
 }
 
 // Initialize security modules (this runs the async function)

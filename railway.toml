@@ -1,0 +1,18 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "always"
+
+[env]
+NODE_ENV = "production"
+PORT = "$PORT"
+
+# Optional: Add these in Railway dashboard
+# STRIPE_SECRET_KEY = "your_stripe_secret_key"
+# STRIPE_PUBLISHABLE_KEY = "your_stripe_publishable_key"
+# JWT_SECRET = "your_jwt_secret" 
+# SESSION_SECRET = "your_session_secret" 
