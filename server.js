@@ -50,6 +50,27 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+// BULLETPROOF health check - FIRST, before anything else can fail
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        service: 'aslan', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage()
+    });
+});
+
+// Simple test endpoint - also bulletproof
+app.get('/test', (req, res) => {
+    res.send('✅ Aslan server is running! Time: ' + new Date().toISOString());
+});
+
+console.log('🏥 Health endpoints initialized');
+
 // Make Stripe optional to prevent startup crashes
 let stripe;
 try {
@@ -86,77 +107,24 @@ let redisClient = null;
 let sessionManager;
 let rateLimiter;
 
-// Initialize function for security modules
-async function initializeSecurityModules() {
-    // NEVER use Redis in production - always use in-memory storage
-    if (process.env.NODE_ENV === 'production') {
-        console.log('🏭 Production mode: Using in-memory storage (Redis disabled)');
-        redisClient = null;
-    } else if (process.env.REDIS_URL) {
-        // Only try Redis in development
-        console.log('🧪 Development mode: Attempting Redis connection...');
-        try {
-            const redis = require('redis');
-            redisClient = redis.createClient({
-                url: process.env.REDIS_URL,
-                socket: {
-                    connectTimeout: 5000, // 5 second timeout
-                    reconnectStrategy: false // Don't reconnect
-                }
-            });
-            
-            redisClient.on('error', (err) => {
-                console.warn('⚠️  Redis Client Error (falling back to memory):', err.message);
-                redisClient = null;
-            });
-            
-            // Wait for connection with timeout
-            await Promise.race([
-                redisClient.connect(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timeout')), 5000))
-            ]);
-            console.log('✅ Redis connected for sessions and rate limiting');
-        } catch (err) {
-            console.warn('⚠️  Redis connection failed (using in-memory storage):', err.message);
-            redisClient = null;
-        }
-    } else {
-        console.log('ℹ️  Development mode: No Redis URL provided, using in-memory storage');
-        redisClient = null;
-    }
-    
-    // Initialize security modules after Redis connection attempt
-    sessionManager = new SecureSessionManager(redisClient);
-    rateLimiter = new EnhancedRateLimiter(redisClient);
-    
-    console.log('✅ Security modules initialized with', redisClient ? 'Redis' : 'in-memory storage');
-}
-
 // Initialize security modules (this runs the async function)
 let securityModulesReady = false;
-initializeSecurityModules()
-    .then(() => {
-        securityModulesReady = true;
-        console.log('✅ Security modules initialized');
-    })
-    .catch(err => {
-        console.error('Failed to initialize security modules:', err);
-        // Create fallback instances with no Redis
-        sessionManager = new SecureSessionManager(null);
-        rateLimiter = new EnhancedRateLimiter(null);
-        securityModulesReady = true;
-    });
 
-// Wrapper to ensure security modules are ready
-function requireSecurityModules(callback) {
-    return (req, res, next) => {
-        if (!securityModulesReady || !sessionManager || !rateLimiter) {
-            // If modules aren't ready yet, skip security for this request
-            console.warn('Security modules not ready, skipping security checks for:', req.path);
-            return next();
-        }
-        return callback(req, res, next);
-    };
+// SYNCHRONOUS security module initialization - no Redis, no async
+console.log('🔒 Initializing security modules synchronously...');
+try {
+    // ALWAYS use in-memory storage in production, no exceptions
+    sessionManager = new SecureSessionManager(null);  // Force null Redis client
+    rateLimiter = new EnhancedRateLimiter(null);      // Force null Redis client
+    securityModulesReady = true;
+    console.log('✅ Security modules initialized with in-memory storage');
+} catch (error) {
+    console.error('❌ Security module initialization failed:', error.message);
+    // Create minimal fallback instances
+    sessionManager = { middleware: () => (req, res, next) => next() };
+    rateLimiter = { getMiddleware: () => (req, res, next) => next(), adaptive: () => (req, res, next) => next(), compound: () => (req, res, next) => next() };
+    securityModulesReady = true;
+    console.log('⚠️  Using minimal security fallback');
 }
 
 // Import routes
@@ -225,42 +193,8 @@ try {
     };
 }
 
-const app = express();
-const port = process.env.PORT || 3000;
-
-// Emergency diagnostic endpoint - protected in production
-app.get('/debug', (req, res) => {
-    // Completely disable in production
-    if (process.env.NODE_ENV === 'production') {
-        return res.status(404).json({ error: 'Not found' });
-    }
-    
-    // Development only - still require authentication
-    if (!req.headers['x-dev-token'] || req.headers['x-dev-token'] !== process.env.DEV_DEBUG_TOKEN) {
-        return res.status(404).json({ error: 'Not found' });
-    }
-    
-    res.json({
-        status: 'Server is running',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development',
-        port: port,
-        nodeVersion: process.version,
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        env: {
-            hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
-            hasJwtSecret: !!process.env.JWT_SECRET,
-            hasDatabaseUrl: !!process.env.DATABASE_URL,
-            nodeEnv: process.env.NODE_ENV
-        }
-    });
-});
-
-// Simple test endpoint to verify basic server functionality
-app.get('/test', (req, res) => {
-    res.send('✅ Aslan server is running! Time: ' + new Date().toISOString());
-});
+// Enhanced health check endpoint - MOVED TO BEGINNING, removing duplicate
+// Security report endpoint
 
 // Validate environment variables on startup
 const envValidation = security.validateEnvironment();
@@ -300,17 +234,17 @@ app.use(security.securityHeaders());
 // app.use('/api/', limiter);
 
 // New endpoint-specific rate limiting
-app.use('/api/auth/login', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('login')(req, res, next)));
-app.use('/api/auth/register', requireSecurityModules((req, res, next) => rateLimiter.compound('login', 'public')(req, res, next)));
-app.use('/api/auth/forgot-password', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('passwordReset')(req, res, next)));
-app.use('/api/auth/reset-password', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('passwordReset')(req, res, next)));
-app.use('/api/keys', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('apiKeyCreation')(req, res, next)));
-app.use('/api/v1/authorize', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('paymentAuth')(req, res, next)));
-app.use('/api/webhook', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('webhook')(req, res, next)));
-app.use('/api/', requireSecurityModules((req, res, next) => rateLimiter.getMiddleware('api')(req, res, next)));
+app.use('/api/auth/login', rateLimiter.getMiddleware('login'));
+app.use('/api/auth/register', rateLimiter.compound('login', 'public'));
+app.use('/api/auth/forgot-password', rateLimiter.getMiddleware('passwordReset'));
+app.use('/api/auth/reset-password', rateLimiter.getMiddleware('passwordReset'));
+app.use('/api/keys', rateLimiter.getMiddleware('apiKeyCreation'));
+app.use('/api/v1/authorize', rateLimiter.getMiddleware('paymentAuth'));
+app.use('/api/webhook', rateLimiter.getMiddleware('webhook'));
+app.use('/api/', rateLimiter.getMiddleware('api'));
 
 // Add adaptive rate limiting
-app.use(requireSecurityModules((req, res, next) => rateLimiter.adaptive()(req, res, next)));
+app.use(rateLimiter.adaptive());
 
 // CORS configuration
 app.use(cors(security.getCorsConfig()));
@@ -337,7 +271,7 @@ app.use(express.json({
 // app.use(session(security.getSessionConfig()));
 
 // New secure session middleware
-app.use(requireSecurityModules((req, res, next) => sessionManager.middleware()(req, res, next)));
+app.use(sessionManager.middleware());
 
 // Origin validation for sensitive endpoints
 app.use('/api/auth', security.validateOrigin());
@@ -532,11 +466,6 @@ app.get('/api/health', async (req, res) => {
             environment: process.env.NODE_ENV || 'development'
         });
     }
-});
-
-// Simple health check for Railway (always returns OK)
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'OK', service: 'aslan', timestamp: new Date().toISOString() });
 });
 
 // JSON Status API endpoint
