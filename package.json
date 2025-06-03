@@ -2,9 +2,10 @@
   "name": "aslan",
   "version": "1.0.0",
   "description": "Payment infrastructure for AI agents - Like the great lion, Aslan guides AI agents to accomplish their missions in the real world",
-  "main": "server-minimal.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node server-minimal.js",
+    "start": "node server.js",
+    "start-minimal": "node server-minimal.js",
     "start-full": "node server.js",
     "dev": "nodemon server.js",
     "setup-stripe": "curl -X POST http://localhost:3000/api/setup-products",
