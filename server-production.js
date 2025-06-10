@@ -509,8 +509,10 @@ app.get('/security.html', (req, res) => {
 
 app.get('/comparison', (req, res) => {
     try {
+        console.log('📊 Serving comparison page');
         res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
     } catch (error) {
+        console.error('❌ Comparison page error:', error);
         res.status(404).json({ error: 'Comparison page not found' });
     }
 });
@@ -527,7 +529,7 @@ app.get('/vs-stripe', (req, res) => {
 app.use('*', (req, res) => {
     res.status(404).json({
         error: 'Endpoint not found',
-        message: 'Available pages: /, /docs, /api, /demo, /pricing, /auth, /status, /security | API endpoints: /health, /test, /api/status, /api/auth/*, /api/keys, /api/v1/authorize',
+        message: 'Available pages: /, /docs, /api, /demo, /pricing, /auth, /status, /security, /comparison, /vs-stripe | API endpoints: /health, /test, /api/status, /api/auth/*, /api/keys, /api/v1/authorize',
         timestamp: new Date().toISOString()
     });
 });
