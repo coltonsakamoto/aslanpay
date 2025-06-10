@@ -1,6 +1,8 @@
 require('dotenv').config();
 
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -114,6 +116,33 @@ app.get('/', (req, res) => {
 </body>
 </html>
     `);
+});
+
+// Serve static files
+try {
+    if (fs.existsSync('public')) {
+        app.use(express.static('public'));
+        console.log('✅ Static files enabled');
+    }
+} catch (error) {
+    console.log('⚠️  Static files disabled:', error.message);
+}
+
+// Comparison page route
+app.get('/comparison', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Comparison page not found' });
+    }
+});
+
+app.get('/vs-stripe', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Comparison page not found' });
+    }
 });
 
 // Catch-all for 404s
