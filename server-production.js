@@ -178,6 +178,25 @@ function validateSession(req, res, next) {
     }
 }
 
+// Custom page routes (BEFORE static middleware)
+app.get('/comparison', (req, res) => {
+    try {
+        console.log('📊 Serving comparison page');
+        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
+    } catch (error) {
+        console.error('❌ Comparison page error:', error);
+        res.status(404).json({ error: 'Comparison page not found' });
+    }
+});
+
+app.get('/vs-stripe', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Comparison page not found' });
+    }
+});
+
 // Serve static files
 try {
     if (fs.existsSync('public')) {
@@ -504,24 +523,6 @@ app.get('/security.html', (req, res) => {
         res.sendFile(path.join(__dirname, 'public', 'security.html'));
     } catch (error) {
         res.status(404).json({ error: 'Security page not found' });
-    }
-});
-
-app.get('/comparison', (req, res) => {
-    try {
-        console.log('📊 Serving comparison page');
-        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
-    } catch (error) {
-        console.error('❌ Comparison page error:', error);
-        res.status(404).json({ error: 'Comparison page not found' });
-    }
-});
-
-app.get('/vs-stripe', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Comparison page not found' });
     }
 });
 
