@@ -593,6 +593,19 @@ try {
         res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
     });
 
+    // Comparison page routes
+    app.get('/comparison', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
+    });
+
+    app.get('/comparison.html', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
+    });
+
+    app.get('/vs-stripe', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
+    });
+
     console.log('✅ All static page routes loaded');
     featuresLoaded.routes = true;
     featuresLoaded.authentication = true;

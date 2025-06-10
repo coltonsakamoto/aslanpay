@@ -42,6 +42,7 @@
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#features" class="text-aslan-gray hover:text-aslan-dark transition-colors">Features</a>
                     <a href="/docs" class="text-aslan-gray hover:text-aslan-dark transition-colors">Documentation</a>
+                    <a href="/comparison" class="text-aslan-gray hover:text-aslan-dark transition-colors">vs Stripe</a>
                     <a href="/pricing" class="text-aslan-gray hover:text-aslan-dark transition-colors">Pricing</a>
                     <a href="/auth" class="text-aslan-gray hover:text-aslan-dark transition-colors">Sign In</a>
                     <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
@@ -62,6 +63,7 @@
                 <div class="flex flex-col space-y-4">
                     <a href="#features" class="text-aslan-gray hover:text-aslan-dark transition-colors">Features</a>
                     <a href="/docs" class="text-aslan-gray hover:text-aslan-dark transition-colors">Documentation</a>
+                    <a href="/comparison" class="text-aslan-gray hover:text-aslan-dark transition-colors">vs Stripe</a>
                     <a href="/pricing" class="text-aslan-gray hover:text-aslan-dark transition-colors">Pricing</a>
                     <a href="/auth" class="text-aslan-gray hover:text-aslan-dark transition-colors">Sign In</a>
                     <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-center">
@@ -76,12 +78,12 @@
     <section class="pt-12 sm:pt-20 pb-12 sm:pb-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 text-center">
             <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-aslan-dark mb-6 leading-tight">
-                Payment infrastructure<br>
-                <span class="text-aslan-orange">for AI agents</span>
+                Let AI agents<br>
+                <span class="text-aslan-orange">spend money autonomously</span>
             </h1>
             <p class="text-lg sm:text-xl text-aslan-gray mb-8 max-w-3xl mx-auto leading-relaxed px-4">
-                Enable any AI agent to make autonomous purchases with enterprise-grade security, 
-                real-time spending controls, and sub-400ms authorization.
+                While Stripe helps you charge FOR AI, Aslan helps AI spend money safely. 
+                Enterprise payment infrastructure with real-time controls and sub-400ms authorization.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12 px-4">
                 <a href="/demo" class="bg-aslan-orange text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-lg font-medium hover:bg-orange-600 transition-colors">
@@ -105,6 +107,153 @@
                 <div class="flex items-center space-x-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span>MIT License</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stripe vs Aslan Comparison Section -->
+    <section class="py-12 sm:py-16 bg-gradient-to-r from-blue-50 to-indigo-100">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="text-center mb-8 sm:mb-12">
+                <h2 class="text-2xl sm:text-3xl font-bold text-aslan-dark mb-4">
+                    🤔 "Why not just use Stripe's Agent Toolkit?"
+                </h2>
+                <p class="text-lg text-aslan-gray max-w-3xl mx-auto">
+                    Great question! We're complementary, not competitive. Here's when to use each:
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 sm:gap-8">
+                <!-- Stripe Column -->
+                <div class="bg-white p-6 sm:p-8 rounded-xl border-2 border-gray-200 shadow-sm">
+                    <div class="flex items-center mb-6">
+                        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center mr-3">
+                            <span class="text-white text-sm font-bold">S</span>
+                        </div>
+                        <h3 class="text-xl font-semibold text-aslan-dark">Stripe Agent Toolkit</h3>
+                    </div>
+                    <p class="text-aslan-gray mb-6 font-medium">For developers building AI apps that charge users</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-aslan-dark">Add payment functions to your agent</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-aslan-dark">Create payment links & subscriptions</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-aslan-dark">Bill users for AI token usage</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                                <span class="text-red-600 text-xs">✗</span>
+                            </div>
+                            <span class="text-sm text-gray-500">No agent spending controls</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                                <span class="text-red-600 text-xs">✗</span>
+                            </div>
+                            <span class="text-sm text-gray-500">No multi-agent management</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                                <span class="text-red-600 text-xs">✗</span>
+                            </div>
+                            <span class="text-sm text-gray-500">No production infrastructure</span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <div class="font-semibold text-blue-900 text-sm mb-1">Perfect for:</div>
+                        <div class="text-blue-800 text-sm">"Let my chatbot create payment links"</div>
+                    </div>
+                </div>
+
+                <!-- Aslan Column -->
+                <div class="bg-gradient-to-br from-orange-50 to-red-50 p-6 sm:p-8 rounded-xl border-2 border-aslan-orange shadow-lg">
+                    <div class="flex items-center mb-6">
+                        <span class="text-2xl mr-3">🦁</span>
+                        <h3 class="text-xl font-semibold text-aslan-dark">Aslan Payment Infrastructure</h3>
+                    </div>
+                    <p class="text-aslan-gray mb-6 font-medium">For enterprises deploying autonomous AI agents</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-aslan-dark">Complete payment authorization platform</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-aslan-dark">Multi-agent spending controls</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-aslan-dark">Real-world purchase capabilities</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-aslan-dark">Enterprise security & compliance</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-aslan-dark">Production-ready infrastructure</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-aslan-dark">Custom business logic & controls</span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-orange-100 rounded-lg">
+                        <div class="font-semibold text-orange-900 text-sm mb-1">Perfect for:</div>
+                        <div class="text-orange-800 text-sm">"Let my AI agents buy AWS credits autonomously"</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Both Together Section -->
+            <div class="mt-8 sm:mt-12 p-6 sm:p-8 bg-white rounded-xl border-2 border-green-200 shadow-sm">
+                <div class="text-center">
+                    <div class="flex items-center justify-center space-x-4 mb-4">
+                        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white text-sm font-bold">S</span>
+                        </div>
+                        <span class="text-2xl">+</span>
+                        <span class="text-2xl">🦁</span>
+                        <span class="text-2xl">=</span>
+                        <span class="text-2xl">🚀</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-aslan-dark mb-3">Best of Both Worlds</h3>
+                    <p class="text-aslan-gray mb-6 max-w-2xl mx-auto">
+                        Use Stripe's toolkit to charge customers for AI services, and Aslan to let those same AI agents make autonomous purchases. Complete the economic loop!
+                    </p>
+                    <div class="inline-flex items-center space-x-2 text-sm font-medium text-green-700 bg-green-100 px-4 py-2 rounded-lg">
+                        <span>💡</span>
+                        <span>They work together, not against each other</span>
+                    </div>
                 </div>
             </div>
         </div>
