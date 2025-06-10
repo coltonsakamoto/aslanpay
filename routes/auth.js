@@ -81,7 +81,7 @@ router.post('/register',
         }
         
         // Set HTTP-only cookie
-        res.cookie('session', token, {
+        res.cookie('agentpay_session', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -164,7 +164,7 @@ router.post('/login',
         const token = generateToken(sessionId);
         
         // Set HTTP-only cookie
-        res.cookie('session', token, {
+        res.cookie('agentpay_session', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -192,7 +192,7 @@ router.post('/logout', validateSession, (req, res) => {
         database.revokeSession(req.session.id);
         
         // Clear cookie
-        res.clearCookie('session');
+        res.clearCookie('agentpay_session');
         
         res.json({ message: 'Logout successful' });
         
@@ -385,7 +385,7 @@ router.post('/oauth/callback', async (req, res) => {
         const token = generateToken(sessionId);
         
         // Set HTTP-only cookie
-        res.cookie('session', token, {
+        res.cookie('agentpay_session', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -436,7 +436,7 @@ router.get('/google/callback', (req, res, next) => {
             const token = generateToken(sessionId);
             
             // Set HTTP-only cookie
-            res.cookie('session', token, {
+            res.cookie('agentpay_session', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -483,7 +483,7 @@ router.get('/github/callback', (req, res, next) => {
             const token = generateToken(sessionId);
             
             // Set HTTP-only cookie
-            res.cookie('session', token, {
+            res.cookie('agentpay_session', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days

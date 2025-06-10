@@ -136,7 +136,7 @@ const validateApiKey = async (req, res, next) => {
 const validateSession = async (req, res, next) => {
     console.log('🔍 Session validation started for:', req.path);
     try {
-        const token = req.cookies?.session || req.headers.authorization?.substring(7);
+        const token = req.cookies?.agentpay_session || req.headers.authorization?.substring(7);
         console.log('🔍 Token found:', token ? 'YES' : 'NO');
         
         if (!token) {
@@ -211,7 +211,7 @@ const validateSessionSimple = async (req, res, next) => {
     console.log('🔍 Simple session validation started for:', req.path);
     
     try {
-        const token = req.cookies?.session;
+        const token = req.cookies?.agentpay_session;
         console.log('🔍 Cookie token:', token ? 'Found' : 'Not found');
         
         if (!token) {
