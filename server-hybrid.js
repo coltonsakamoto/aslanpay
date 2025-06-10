@@ -75,8 +75,8 @@ try {
         if (fs.existsSync('public')) {
             app.use(express.static('public', {
                 maxAge: '1y',
-                setHeaders: (res, path) => {
-                    if (path.endsWith('.html')) {
+                setHeaders: (res, filePath) => {
+                    if (filePath.endsWith('.html')) {
                         res.setHeader('Cache-Control', 'no-cache');
                     }
                 }
