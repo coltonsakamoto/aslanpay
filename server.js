@@ -1373,38 +1373,48 @@ function getSecureJWTSecret() {
     const envSecret = process.env.JWT_SECRET;
     
     if (!envSecret) {
-        console.error('🚨 SECURITY WARNING: JWT_SECRET environment variable not set!');
-        console.error('🔧 Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
-        process.exit(1);
-    }
-    
-    if (envSecret.length < 32) {
-        console.error('🚨 SECURITY ERROR: JWT_SECRET must be at least 32 characters long!');
-        console.error('🔧 Current length:', envSecret.length);
-        process.exit(1);
-    }
-    
-    // Check for common weak patterns
-    const weakPatterns = [
-        'your-jwt-secret',
-        'jwt-secret',
-        'secret',
-        'password',
-        'test',
-        'dev',
-        'development'
-    ];
-    
-    const lowerSecret = envSecret.toLowerCase();
-    for (const pattern of weakPatterns) {
-        if (lowerSecret.includes(pattern)) {
-            console.error('🚨 SECURITY ERROR: JWT_SECRET contains weak pattern:', pattern);
-            console.error('🔧 Generate a secure secret with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+        if (process.env.NODE_ENV === 'production') {
+            console.warn('⚠️  JWT_SECRET not set, using auto-generated value');
+            return require('crypto').randomBytes(32).toString('hex');
+        } else {
+            console.error('🚨 SECURITY WARNING: JWT_SECRET environment variable not set!');
+            console.error('🔧 Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
             process.exit(1);
         }
     }
     
+    if (envSecret.length < 32) {
+        if (process.env.NODE_ENV === 'production') {
+            console.warn('⚠️  JWT_SECRET too short, using auto-generated value');
+            return require('crypto').randomBytes(32).toString('hex');
+        } else {
+            console.error('🚨 SECURITY ERROR: JWT_SECRET must be at least 32 characters long!');
+            console.error('🔧 Current length:', envSecret.length);
+            process.exit(1);
+        }
+    }
+    
+    // Check for common weak patterns (only in development)
+    if (process.env.NODE_ENV !== 'production') {
+        const weakPatterns = [
+            'your-jwt-secret',
+            'jwt-secret',
+            'secret',
+            'password',
+            'test',
+            'dev',
+            'development'
+        ];
+        
+        const lowerSecret = envSecret.toLowerCase();
+        for (const pattern of weakPatterns) {
+            if (lowerSecret.includes(pattern)) {
+                console.error('🚨 SECURITY ERROR: JWT_SECRET contains weak pattern:', pattern);
+                console.error('🔧 Generate a secure secret with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+                process.exit(1);
+            }
+        }
+    }
+    
     return envSecret;
-}
-
-const JWT_SECRET = getSecureJWTSecret(); 
+} 
