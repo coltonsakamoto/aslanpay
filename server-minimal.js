@@ -75,30 +75,32 @@ app.get('/api/status', (req, res) => {
 
 // Main page
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    
-    // Check if rich index.html exists
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        // Fallback to basic page if index.html not found
-        res.send(`
+    res.send(`
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Aslan - Payment Infrastructure</title>
+    <title>🦁 Aslan - Payment Infrastructure for AI Agents</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 2rem; background: #f5f5f5; }
         .container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; }
         .status { color: #10b981; font-weight: bold; }
         .lion { font-size: 2rem; }
         pre { background: #f3f4f6; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+        .nav { margin-bottom: 2rem; }
+        .nav a { margin-right: 1rem; color: #3b82f6; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🦁 Aslan Payment Infrastructure</h1>
         <p class="status">✅ Server is running successfully!</p>
+        
+        <div class="nav">
+            <a href="/comparison">🆚 vs Stripe Comparison</a>
+            <a href="/health">❤️ Health Check</a>
+            <a href="/api/status">📊 API Status</a>
+        </div>
         
         <h2>Status</h2>
         <ul>
@@ -108,11 +110,16 @@ app.get('/', (req, res) => {
             <li>Version: <strong>1.0.0-minimal</strong></li>
         </ul>
         
+        <h2>🆚 Stripe vs Aslan</h2>
+        <p><strong>While Stripe helps you charge FOR AI, Aslan helps AI spend money safely.</strong></p>
+        <p>👉 <a href="/comparison">View detailed comparison</a></p>
+        
         <h2>Available Endpoints</h2>
         <ul>
             <li><code>GET /health</code> - Health check</li>
             <li><code>GET /test</code> - Simple test</li>
             <li><code>GET /api/status</code> - API status</li>
+            <li><code>GET /comparison</code> - Stripe vs Aslan comparison</li>
         </ul>
         
         <h2>Test the API</h2>
@@ -122,8 +129,7 @@ app.get('/', (req, res) => {
     </div>
 </body>
 </html>
-        `);
-    }
+    `);
 });
 
 // Serve static files
