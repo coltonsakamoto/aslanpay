@@ -386,11 +386,132 @@ app.post('/api/v1/authorize', (req, res) => {
     }
 });
 
+// Static page routes
+app.get('/', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Homepage not found' });
+    }
+});
+
+app.get('/docs', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'docs.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Documentation page not found' });
+    }
+});
+
+app.get('/docs.html', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'docs.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Documentation page not found' });
+    }
+});
+
+app.get('/api', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'api.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'API reference page not found' });
+    }
+});
+
+app.get('/api.html', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'api.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'API reference page not found' });
+    }
+});
+
+app.get('/demo', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Demo page not found' });
+    }
+});
+
+app.get('/demo.html', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Demo page not found' });
+    }
+});
+
+app.get('/pricing', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Pricing page not found' });
+    }
+});
+
+app.get('/pricing.html', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Pricing page not found' });
+    }
+});
+
+app.get('/auth', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Auth page not found' });
+    }
+});
+
+app.get('/auth.html', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Auth page not found' });
+    }
+});
+
+app.get('/status', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'status.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Status page not found' });
+    }
+});
+
+app.get('/status.html', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'status.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Status page not found' });
+    }
+});
+
+app.get('/security', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'security.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Security page not found' });
+    }
+});
+
+app.get('/security.html', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'security.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Security page not found' });
+    }
+});
+
 // Catch-all for 404s
 app.use('*', (req, res) => {
     res.status(404).json({
         error: 'Endpoint not found',
-        message: 'Available endpoints: /health, /test, /api/status, /api/auth/*, /api/keys, /api/v1/authorize',
+        message: 'Available pages: /, /docs, /api, /demo, /pricing, /auth, /status, /security | API endpoints: /health, /test, /api/status, /api/auth/*, /api/keys, /api/v1/authorize',
         timestamp: new Date().toISOString()
     });
 });
