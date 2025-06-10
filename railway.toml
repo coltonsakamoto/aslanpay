@@ -5,11 +5,10 @@ builder = "nixpacks"
 startCommand = "npm start"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
-restartPolicyType = "always"
+restartPolicyType = "never"
 
-[env]
-NODE_ENV = "production"
-PORT = "$PORT"
+[environments.production]
+variables = { NODE_ENV = "production" }
 
 # Required for Stripe (add in Railway dashboard):
 # STRIPE_SECRET_KEY = "sk_live_your_stripe_secret_key"
