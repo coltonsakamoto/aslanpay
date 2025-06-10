@@ -35,6 +35,16 @@ process.on('unhandledRejection', (reason, promise) => {
 // Basic middleware
 app.use(express.json({ limit: '10mb' }));
 
+// Serve static files FIRST - so index.html can be served
+try {
+    if (fs.existsSync('public')) {
+        app.use(express.static('public'));
+        console.log('✅ Static files enabled - rich homepage active');
+    }
+} catch (error) {
+    console.log('⚠️  Static files disabled:', error.message);
+}
+
 // BULLETPROOF health check - FIRST priority
 app.get('/health', (req, res) => {
     res.status(200).json({ 
@@ -73,74 +83,7 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-// Main page
-app.get('/', (req, res) => {
-    res.send(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>🦁 Aslan - Payment Infrastructure for AI Agents</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 2rem; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; }
-        .status { color: #10b981; font-weight: bold; }
-        .lion { font-size: 2rem; }
-        pre { background: #f3f4f6; padding: 1rem; border-radius: 4px; overflow-x: auto; }
-        .nav { margin-bottom: 2rem; }
-        .nav a { margin-right: 1rem; color: #3b82f6; text-decoration: none; }
-        .nav a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🦁 Aslan Payment Infrastructure</h1>
-        <p class="status">✅ Server is running successfully!</p>
-        
-        <div class="nav">
-            <a href="/comparison">🆚 vs Stripe Comparison</a>
-            <a href="/health">❤️ Health Check</a>
-            <a href="/api/status">📊 API Status</a>
-        </div>
-        
-        <h2>Status</h2>
-        <ul>
-            <li>Environment: <strong>${process.env.NODE_ENV || 'development'}</strong></li>
-            <li>Port: <strong>${port}</strong></li>
-            <li>Uptime: <strong>${Math.floor(process.uptime())} seconds</strong></li>
-            <li>Version: <strong>1.0.0-minimal</strong></li>
-        </ul>
-        
-        <h2>🆚 Stripe vs Aslan</h2>
-        <p><strong>While Stripe helps you charge FOR AI, Aslan helps AI spend money safely.</strong></p>
-        <p>👉 <a href="/comparison">View detailed comparison</a></p>
-        
-        <h2>Available Endpoints</h2>
-        <ul>
-            <li><code>GET /health</code> - Health check</li>
-            <li><code>GET /test</code> - Simple test</li>
-            <li><code>GET /api/status</code> - API status</li>
-            <li><code>GET /comparison</code> - Stripe vs Aslan comparison</li>
-        </ul>
-        
-        <h2>Test the API</h2>
-        <pre>curl https://aslanpay-production.up.railway.app/health</pre>
-        
-        <p><em>"Like the great lion of Narnia, Aslan guides AI agents to accomplish their missions"</em> 🦁</p>
-    </div>
-</body>
-</html>
-    `);
-});
-
-// Serve static files
-try {
-    if (fs.existsSync('public')) {
-        app.use(express.static('public'));
-        console.log('✅ Static files enabled');
-    }
-} catch (error) {
-    console.log('⚠️  Static files disabled:', error.message);
-}
+// NOTE: No manual homepage route - let static files serve public/index.html
 
 // Comparison page route
 app.get('/comparison', (req, res) => {
