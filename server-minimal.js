@@ -75,7 +75,14 @@ app.get('/api/status', (req, res) => {
 
 // Main page
 app.get('/', (req, res) => {
-    res.send(`
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    
+    // Check if rich index.html exists
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        // Fallback to basic page if index.html not found
+        res.send(`
 <!DOCTYPE html>
 <html>
 <head>
@@ -115,7 +122,8 @@ app.get('/', (req, res) => {
     </div>
 </body>
 </html>
-    `);
+        `);
+    }
 });
 
 // Serve static files
