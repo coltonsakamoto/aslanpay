@@ -507,6 +507,22 @@ app.get('/security.html', (req, res) => {
     }
 });
 
+app.get('/comparison', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Comparison page not found' });
+    }
+});
+
+app.get('/vs-stripe', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'comparison.html'));
+    } catch (error) {
+        res.status(404).json({ error: 'Comparison page not found' });
+    }
+});
+
 // Catch-all for 404s
 app.use('*', (req, res) => {
     res.status(404).json({
