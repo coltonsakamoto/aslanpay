@@ -93,8 +93,8 @@ class EmailService {
     async sendEmail(options) {
         const { to, subject, text, html } = options;
         
-        const fromEmail = process.env.FROM_EMAIL || 'noreply@autonomypay.xyz';
-        const fromName = process.env.FROM_NAME || 'Autonomy';
+        const fromEmail = process.env.FROM_EMAIL || 'noreply@aslanpay.xyz';
+        const fromName = process.env.FROM_NAME || 'Aslan';
 
         const mailOptions = {
             from: `${fromName} <${fromEmail}>`,
@@ -144,7 +144,7 @@ class EmailService {
      * Send email verification
      */
     async sendVerificationEmail(email, token) {
-        const subject = 'Verify your Autonomy account';
+        const subject = 'Verify your Aslan account';
         const verificationUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/verify-email?token=${token}`;
         
         const html = this.getVerificationEmailTemplate(verificationUrl);
@@ -162,7 +162,7 @@ class EmailService {
      * Send password reset email
      */
     async sendPasswordResetEmail(email, token) {
-        const subject = 'Reset your Autonomy password';
+        const subject = 'Reset your Aslan password';
         const resetUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
         
         const html = this.getPasswordResetTemplate(resetUrl);
@@ -180,7 +180,7 @@ class EmailService {
      * Send welcome email
      */
     async sendWelcomeEmail(email, name) {
-        const subject = 'Welcome to Autonomy!';
+        const subject = 'Welcome to Aslan!';
         
         const html = this.getWelcomeEmailTemplate(name);
         const text = this.getWelcomeEmailText(name);
@@ -215,11 +215,11 @@ class EmailService {
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🚀 Autonomy</div>
+                    <div class="logo">🦁 Aslan</div>
                 </div>
                 <div class="content">
                     <h2>Verify Your Email Address</h2>
-                    <p>Thanks for signing up for Autonomy! Please verify your email address to complete your account setup.</p>
+                    <p>Thanks for signing up for Aslan! Please verify your email address to complete your account setup.</p>
                     <p>Click the button below to verify your email:</p>
                     <a href="${verificationUrl}" class="button">Verify Email Address</a>
                     <p>Or copy and paste this link into your browser:</p>
@@ -227,7 +227,7 @@ class EmailService {
                     <p>This link will expire in 24 hours.</p>
                 </div>
                 <div class="footer">
-                    <p>© 2024 Autonomy Technologies. All rights reserved.</p>
+                    <p>© 2024 Aslan Technologies. All rights reserved.</p>
                 </div>
             </div>
         </body>
@@ -239,14 +239,14 @@ class EmailService {
         return `
 Verify Your Email Address
 
-Thanks for signing up for Autonomy! Please verify your email address to complete your account setup.
+Thanks for signing up for Aslan! Please verify your email address to complete your account setup.
 
 Visit this link to verify your email:
 ${verificationUrl}
 
 This link will expire in 24 hours.
 
-© 2024 Autonomy Technologies. All rights reserved.
+© 2024 Aslan Technologies. All rights reserved.
         `.trim();
     }
 
@@ -270,11 +270,11 @@ This link will expire in 24 hours.
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🚀 Autonomy</div>
+                    <div class="logo">🦁 Aslan</div>
                 </div>
                 <div class="content">
                     <h2>Reset Your Password</h2>
-                    <p>We received a request to reset your password for your Autonomy account.</p>
+                    <p>We received a request to reset your password for your Aslan account.</p>
                     <p>Click the button below to reset your password:</p>
                     <a href="${resetUrl}" class="button">Reset Password</a>
                     <p>Or copy and paste this link into your browser:</p>
@@ -283,7 +283,7 @@ This link will expire in 24 hours.
                     <p>If you didn't request a password reset, you can safely ignore this email.</p>
                 </div>
                 <div class="footer">
-                    <p>© 2024 Autonomy Technologies. All rights reserved.</p>
+                    <p>© 2024 Aslan Technologies. All rights reserved.</p>
                 </div>
             </div>
         </body>
@@ -295,7 +295,7 @@ This link will expire in 24 hours.
         return `
 Reset Your Password
 
-We received a request to reset your password for your Autonomy account.
+We received a request to reset your password for your Aslan account.
 
 Visit this link to reset your password:
 ${resetUrl}
@@ -304,7 +304,7 @@ This link will expire in 1 hour.
 
 If you didn't request a password reset, you can safely ignore this email.
 
-© 2024 Autonomy Technologies. All rights reserved.
+© 2024 Aslan Technologies. All rights reserved.
         `.trim();
     }
 
@@ -314,7 +314,7 @@ If you didn't request a password reset, you can safely ignore this email.
         <html>
         <head>
             <meta charset="utf-8">
-            <title>Welcome to Autonomy</title>
+            <title>Welcome to Aslan</title>
             <style>
                 body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -329,12 +329,12 @@ If you didn't request a password reset, you can safely ignore this email.
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🚀 Autonomy</div>
-                    <h1>Welcome to Autonomy!</h1>
+                    <div class="logo">🦁 Aslan</div>
+                    <h1>Welcome to Aslan!</h1>
                 </div>
                 <div class="content">
                     <h2>Hi ${name || 'there'}!</h2>
-                    <p>Welcome to Autonomy, the payment infrastructure for AI agents. You're now ready to enable autonomous transactions for your AI systems.</p>
+                    <p>Welcome to Aslan, the payment infrastructure for AI agents. You're now ready to enable autonomous transactions for your AI systems.</p>
                     
                     <h3>🚀 What you can do now:</h3>
                     <div class="feature">
@@ -351,13 +351,13 @@ If you didn't request a password reset, you can safely ignore this email.
                     </div>
                     
                     <p>Ready to get started?</p>
-                    <a href="https://autonomypay.xyz/demo" class="button">Try the Demo</a>
-                    <a href="https://autonomypay.xyz/docs" class="button">View Documentation</a>
+                    <a href="https://aslanpay.xyz/demo" class="button">Try the Demo</a>
+                    <a href="https://aslanpay.xyz/docs" class="button">View Documentation</a>
                     
-                    <p>If you have any questions, our team is here to help at support@autonomypay.xyz</p>
+                    <p>If you have any questions, our team is here to help at support@aslanpay.xyz</p>
                 </div>
                 <div class="footer">
-                    <p>© 2024 Autonomy Technologies. All rights reserved.</p>
+                    <p>© 2024 Aslan Technologies. All rights reserved.</p>
                 </div>
             </div>
         </body>
@@ -367,11 +367,11 @@ If you didn't request a password reset, you can safely ignore this email.
 
     getWelcomeEmailText(name) {
         return `
-Welcome to Autonomy!
+Welcome to Aslan!
 
 Hi ${name || 'there'}!
 
-Welcome to Autonomy, the payment infrastructure for AI agents. You're now ready to enable autonomous transactions for your AI systems.
+Welcome to Aslan, the payment infrastructure for AI agents. You're now ready to enable autonomous transactions for your AI systems.
 
 What you can do now:
 - Set up your first AI agent with spending limits and payment controls
@@ -379,12 +379,12 @@ What you can do now:
 - Monitor transactions with real-time analytics and spending insights
 
 Get started:
-Demo: https://autonomypay.xyz/demo
-Documentation: https://autonomypay.xyz/docs
+Demo: https://aslanpay.xyz/demo
+Documentation: https://aslanpay.xyz/docs
 
-If you have any questions, our team is here to help at support@autonomypay.xyz
+If you have any questions, our team is here to help at support@aslanpay.xyz
 
-© 2024 Autonomy Technologies. All rights reserved.
+© 2024 Aslan Technologies. All rights reserved.
         `.trim();
     }
 
@@ -398,9 +398,9 @@ If you have any questions, our team is here to help at support@autonomypay.xyz
         try {
             const result = await this.sendEmail({
                 to: 'test@example.com',
-                subject: 'Autonomy Email Service Test',
-                text: 'This is a test email from Autonomy email service.',
-                html: '<h1>Test Email</h1><p>This is a test email from Autonomy email service.</p>'
+                subject: 'Aslan Email Service Test',
+                text: 'This is a test email from Aslan email service.',
+                html: '<h1>Test Email</h1><p>This is a test email from Aslan email service.</p>'
             });
             
             console.log('✅ Email configuration test successful!');
