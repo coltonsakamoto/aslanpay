@@ -56,7 +56,7 @@ const database = {
             provider: userData.provider || 'email',
             emailVerified: false,
             createdAt: new Date().toISOString(),
-            subscription: { status: 'active', plan: 'sandbox' }
+            subscription: { status: 'active', plan: userData.plan || 'sandbox' }
         };
         this.users.set(id, user);
         return { ...user, password: undefined }; // Don't return password

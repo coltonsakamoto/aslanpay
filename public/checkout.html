@@ -201,20 +201,20 @@
                 price: 0,
                 priceId: null, // Free plan
                 features: [
-                    '50 successful authorizations/month',
-                    '$0.25 per auth after quota',
+                    '500 successful authorizations/month',
+                    '$0.05 per auth after quota',
                     'Test environment',
                     'Community support',
                     'Basic spending controls'
                 ]
             },
-            builder: {
-                name: 'Builder',
-                price: 99,
-                priceId: 'price_builder_monthly', // You'll need to create this in Stripe
+            starter: {
+                name: 'Starter',
+                price: 19,
+                priceId: 'price_starter_monthly', // You'll need to create this in Stripe
                 features: [
-                    '5,000 successful authorizations/month',
-                    '$0.20 per auth after quota',
+                    '2,000 successful authorizations/month',
+                    '$0.03 per auth after quota',
                     'Production environment',
                     'Email support',
                     'Advanced spending controls',
@@ -222,16 +222,16 @@
                 ],
                 trial: true
             },
-            team: {
-                name: 'Team',
-                price: 499,
-                priceId: 'price_team_monthly', // You'll need to create this in Stripe
+            builder: {
+                name: 'Builder',
+                price: 79,
+                priceId: 'price_builder_monthly', // You'll need to create this in Stripe
                 features: [
-                    '50,000 successful authorizations/month',
-                    '$0.15 per auth after quota',
+                    '10,000 successful authorizations/month',
+                    '$0.02 per auth after quota',
                     'Multiple environments',
                     'Priority support',
-                    'Team management',
+                    'Multi-agent management',
                     'Advanced analytics'
                 ],
                 trial: true
