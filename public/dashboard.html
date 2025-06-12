@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Autonomy</title>
+    <title>Dashboard - Aslan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'autonomy-blue': '#0066FF',
-                        'autonomy-dark': '#1a1a1a',
-                        'autonomy-gray': '#6B7280'
+                        'aslan-orange': '#FF6B35',
+                        'aslan-red': '#EE5A24',
+                        'aslan-dark': '#1a1a1a',
+                        'aslan-gray': '#6B7280'
                     }
                 }
             }
@@ -25,14 +26,14 @@
         <div class="max-w-7xl mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-autonomy-blue rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold text-sm">A</span>
+                    <div class="w-8 h-8 bg-gradient-to-br from-aslan-orange to-aslan-red rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">🦁</span>
                     </div>
-                    <span class="text-xl font-semibold text-autonomy-dark">Autonomy</span>
+                    <span class="text-xl font-semibold text-aslan-dark">Aslan</span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span id="user-name" class="text-autonomy-gray">Loading...</span>
-                    <button id="logout-btn" class="text-autonomy-gray hover:text-autonomy-dark transition-colors">
+                    <span id="user-name" class="text-aslan-gray">Loading...</span>
+                    <button id="logout-btn" class="text-aslan-gray hover:text-aslan-dark transition-colors">
                         Logout
                     </button>
                 </div>
@@ -53,19 +54,19 @@
 
         <!-- User Info -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h2 class="text-2xl font-bold text-autonomy-dark mb-4">Account Overview</h2>
+            <h2 class="text-2xl font-bold text-aslan-dark mb-4">Account Overview</h2>
             <div class="grid md:grid-cols-3 gap-6">
                 <div>
-                    <h3 class="text-sm font-medium text-autonomy-gray mb-1">Name</h3>
-                    <p id="user-display-name" class="text-autonomy-dark">Loading...</p>
+                    <h3 class="text-sm font-medium text-aslan-gray mb-1">Name</h3>
+                    <p id="user-display-name" class="text-aslan-dark">Loading...</p>
                 </div>
                 <div>
-                    <h3 class="text-sm font-medium text-autonomy-gray mb-1">Email</h3>
-                    <p id="user-email" class="text-autonomy-dark">Loading...</p>
+                    <h3 class="text-sm font-medium text-aslan-gray mb-1">Email</h3>
+                    <p id="user-email" class="text-aslan-dark">Loading...</p>
                 </div>
                 <div>
-                    <h3 class="text-sm font-medium text-autonomy-gray mb-1">Plan</h3>
-                    <p id="user-plan" class="text-autonomy-dark">Loading...</p>
+                    <h3 class="text-sm font-medium text-aslan-gray mb-1">Plan</h3>
+                    <p id="user-plan" class="text-aslan-dark">Loading...</p>
                 </div>
             </div>
         </div>
@@ -73,26 +74,26 @@
         <!-- API Keys Section -->
         <div class="bg-white rounded-xl shadow-lg p-6">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-autonomy-dark">API Keys</h2>
-                <button id="create-key-btn" class="bg-autonomy-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <h2 class="text-2xl font-bold text-aslan-dark">API Keys</h2>
+                <button id="create-key-btn" class="bg-gradient-to-r from-aslan-orange to-aslan-red text-white px-4 py-2 rounded-lg hover:from-aslan-red hover:to-aslan-orange transition-all duration-200">
                     Create New Key
                 </button>
             </div>
 
             <div id="api-keys-list" class="space-y-4">
                 <div class="text-center py-8">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-autonomy-blue mx-auto mb-4"></div>
-                    <p class="text-autonomy-gray">Loading API keys...</p>
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-aslan-orange mx-auto mb-4"></div>
+                    <p class="text-aslan-gray">Loading API keys...</p>
                 </div>
             </div>
         </div>
 
         <!-- Quick Start -->
         <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
-            <h2 class="text-2xl font-bold text-autonomy-dark mb-4">Quick Start</h2>
-            <p class="text-autonomy-gray mb-4">Use your API key to start making authorization requests:</p>
+            <h2 class="text-2xl font-bold text-aslan-dark mb-4">Quick Start</h2>
+            <p class="text-aslan-gray mb-4">Use your API key to start making authorization requests:</p>
             
-            <div class="bg-autonomy-dark rounded-lg p-4 mb-4">
+            <div class="bg-aslan-dark rounded-lg p-4 mb-4">
                 <pre class="text-green-400 text-sm overflow-x-auto"><code id="example-code">curl -X POST http://localhost:3000/api/v1/authorize \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -100,10 +101,10 @@
             </div>
             
             <div class="flex space-x-4">
-                <a href="/demo.html" class="bg-autonomy-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <a href="/demo.html" class="bg-gradient-to-r from-aslan-orange to-aslan-red text-white px-4 py-2 rounded-lg hover:from-aslan-red hover:to-aslan-orange transition-all duration-200">
                     Try Interactive Demo
                 </a>
-                <a href="/pricing.html" class="border border-gray-300 text-autonomy-dark px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                <a href="/pricing.html" class="border border-gray-300 text-aslan-dark px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                     Upgrade Plan
                 </a>
             </div>
@@ -113,19 +114,19 @@
     <!-- Create API Key Modal -->
     <div id="create-key-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
-            <h3 class="text-xl font-semibold text-autonomy-dark mb-4">Create API Key</h3>
+            <h3 class="text-xl font-semibold text-aslan-dark mb-4">Create API Key</h3>
             
             <form id="create-key-form">
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-autonomy-dark mb-2">Key Name</label>
-                    <input type="text" id="key-name" required placeholder="e.g., My AI Agent" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-autonomy-blue">
+                    <label class="block text-sm font-medium text-aslan-dark mb-2">Key Name</label>
+                    <input type="text" id="key-name" required placeholder="e.g., My AI Agent" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
                 </div>
                 
                 <div class="flex space-x-3">
-                    <button type="button" id="cancel-create" class="flex-1 border border-gray-300 text-autonomy-dark py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">
+                    <button type="button" id="cancel-create" class="flex-1 border border-gray-300 text-aslan-dark py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">
                         Cancel
                     </button>
-                    <button type="submit" class="flex-1 bg-autonomy-blue text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-aslan-orange to-aslan-red text-white py-2 px-4 rounded-lg hover:from-aslan-red hover:to-aslan-orange transition-all duration-200">
                         Create Key
                     </button>
                 </div>
@@ -203,7 +204,7 @@
             if (apiKeys.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-8">
-                        <p class="text-autonomy-gray mb-4">No API keys yet. Create your first key to get started!</p>
+                        <p class="text-aslan-gray mb-4">No API keys yet. Create your first key to get started!</p>
                     </div>
                 `;
                 return;
@@ -213,12 +214,12 @@
                 <div class="border border-gray-200 rounded-lg p-4">
                     <div class="flex justify-between items-start">
                         <div>
-                            <h3 class="font-semibold text-autonomy-dark">${key.name}</h3>
-                            <p class="text-sm text-autonomy-gray mt-1">Created ${new Date(key.createdAt).toLocaleDateString()}</p>
-                            <p class="text-xs text-autonomy-gray mt-1">Last used: ${key.lastUsed ? new Date(key.lastUsed).toLocaleDateString() : 'Never'}</p>
+                            <h3 class="font-semibold text-aslan-dark">${key.name}</h3>
+                            <p class="text-sm text-aslan-gray mt-1">Created ${new Date(key.createdAt).toLocaleDateString()}</p>
+                            <p class="text-xs text-aslan-gray mt-1">Last used: ${key.lastUsed ? new Date(key.lastUsed).toLocaleDateString() : 'Never'}</p>
                         </div>
                         <div class="flex space-x-2">
-                            <button onclick="rotateKey('${key.id}')" class="text-autonomy-blue hover:underline text-sm">
+                            <button onclick="rotateKey('${key.id}')" class="text-aslan-orange hover:underline text-sm">
                                 Rotate
                             </button>
                             <button onclick="revokeKey('${key.id}')" class="text-red-600 hover:underline text-sm">
@@ -227,7 +228,7 @@
                         </div>
                     </div>
                     <div class="mt-3">
-                        <p class="text-xs text-autonomy-gray mb-1">API Key:</p>
+                        <p class="text-xs text-aslan-gray mb-1">API Key:</p>
                         <code class="bg-gray-100 px-2 py-1 rounded text-sm">${key.key}</code>
                     </div>
                 </div>
