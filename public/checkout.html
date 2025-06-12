@@ -281,12 +281,8 @@
         });
 
         function handleFreePlan() {
-            document.getElementById('loading-state').classList.add('hidden');
-            document.getElementById('success-state').classList.remove('hidden');
-            
-            // Update success message for free plan
-            document.querySelector('#success-state h2').textContent = 'Welcome to Aslan!';
-            document.querySelector('#success-state p').textContent = 'Your free Sandbox account is ready. Start building with 50 free authorizations per month.';
+            // Redirect to registration for free sandbox plan
+            window.location.href = 'auth.html?plan=sandbox&redirect=dashboard';
         }
 
         function setupCheckout() {

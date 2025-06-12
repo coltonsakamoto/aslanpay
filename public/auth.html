@@ -231,6 +231,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const error = urlParams.get('error');
+            const plan = urlParams.get('plan');
             
             if (error === 'oauth_failed') {
                 showMessage('OAuth authentication failed. Please try again.', true);
@@ -238,8 +239,17 @@
                 showMessage('OAuth is not configured. Please set up your OAuth credentials or use email registration.', true);
             }
             
-            // Clear the error from URL
-            if (error) {
+            // Handle plan-specific messaging
+            if (plan === 'sandbox') {
+                document.querySelector('h2').textContent = 'Start Your Free Sandbox Account';
+                document.querySelector('p').textContent = 'Create your account to get API keys and start testing with 50 free authorizations per month';
+                
+                // Switch to signup tab by default
+                signupTab.click();
+            }
+            
+            // Clear parameters from URL after processing
+            if (error || plan) {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         });
