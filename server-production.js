@@ -39,118 +39,29 @@ process.on('unhandledRejection', (reason, promise) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
-// In-memory database for production reliability
-const database = {
-    users: new Map(),
-    sessions: new Map(),
-    apiKeys: new Map(),
-    
-    createUser: function(userData) {
-        const id = require('crypto').randomBytes(16).toString('hex');
-        const hashedPassword = bcrypt.hashSync(userData.password, 10);
-        const user = {
-            id,
-            email: userData.email,
-            name: userData.name,
-            password: hashedPassword,
-            provider: userData.provider || 'email',
-            emailVerified: false,
-            createdAt: new Date().toISOString(),
-            subscription: { status: 'active', plan: userData.plan || 'sandbox' }
-        };
-        this.users.set(id, user);
-        return { ...user, password: undefined }; // Don't return password
-    },
-    
-    getUserByEmail: function(email) {
-        for (const user of this.users.values()) {
-            if (user.email === email) {
-                return { ...user, password: undefined };
-            }
+// Production database with persistent storage
+const database = require('./database-production.js');
+
+// Initialize database on startup
+(async () => {
+    try {
+        console.log('🔄 Initializing persistent database...');
+        await database.healthCheck();
+        console.log('✅ Persistent database initialized successfully');
+    } catch (error) {
+        console.error('❌ Failed to initialize persistent database:', error.message);
+        console.log('⚠️  This will affect user account persistence');
+        
+        // For development, we could fall back to in-memory, but for production
+        // we should ensure DATABASE_URL is properly configured
+        if (!process.env.DATABASE_URL) {
+            console.log('💡 Please set DATABASE_URL environment variable');
+            console.log('   Example: DATABASE_URL="file:./dev.db"');
         }
-        return null;
-    },
-    
-    verifyPassword: function(email, password) {
-        for (const user of this.users.values()) {
-            if (user.email === email && bcrypt.compareSync(password, user.password)) {
-                return { ...user, password: undefined };
-            }
-        }
-        return null;
-    },
-    
-    createSession: function(userId) {
-        const sessionId = require('crypto').randomBytes(16).toString('hex');
-        const session = {
-            id: sessionId,
-            userId,
-            createdAt: new Date().toISOString(),
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-        };
-        this.sessions.set(sessionId, session);
-        return sessionId;
-    },
-    
-    getSession: function(sessionId) {
-        return this.sessions.get(sessionId);
-    },
-    
-    revokeSession: function(sessionId) {
-        this.sessions.delete(sessionId);
-    },
-    
-    getUserById: function(id) {
-        const user = this.users.get(id);
-        return user ? { ...user, password: undefined } : null;
-    },
-    
-    createApiKey: function(userId, name) {
-        const keyId = require('crypto').randomBytes(16).toString('hex');
-        const keyValue = `ak_live_${require('crypto').randomBytes(24).toString('hex')}`;
-        const apiKey = {
-            id: keyId,
-            userId,
-            name,
-            key: keyValue,
-            createdAt: new Date().toISOString(),
-            isActive: true,
-            usageCount: 0,
-            permissions: ['authorize', 'confirm', 'refund']
-        };
-        this.apiKeys.set(keyId, apiKey);
-        return apiKey;
-    },
-    
-    getApiKeysByUserId: function(userId) {
-        const keys = [];
-        for (const key of this.apiKeys.values()) {
-            if (key.userId === userId) {
-                keys.push(key);
-            }
-        }
-        return keys;
-    },
-    
-    getApiKeyByValue: function(keyValue) {
-        for (const key of this.apiKeys.values()) {
-            if (key.key === keyValue && key.isActive) {
-                return key;
-            }
-        }
-        return null;
-    },
-    
-    healthCheck: function() {
-        return Promise.resolve({ 
-            status: 'connected', 
-            type: 'in-memory',
-            users: this.users.size,
-            sessions: this.sessions.size,
-            apiKeys: this.apiKeys.size
-        });
+        console.error('💥 Database initialization failed. Server may not function properly.');
+        process.exit(1);
     }
-};
+})();
 
 // JWT utilities
 function getJWTSecret() {
@@ -161,7 +72,7 @@ function generateToken(sessionId) {
     return jwt.sign({ sessionId }, getJWTSecret(), { expiresIn: '7d' });
 }
 
-function validateSession(req, res, next) {
+async function validateSession(req, res, next) {
     const token = req.cookies?.agentpay_session;
     if (!token) {
         return res.status(401).json({ error: 'No session token', code: 'NO_SESSION' });
@@ -169,12 +80,12 @@ function validateSession(req, res, next) {
     
     try {
         const decoded = jwt.verify(token, getJWTSecret());
-        const session = database.getSession(decoded.sessionId);
+        const session = await database.getSession(decoded.sessionId);
         if (!session) {
             return res.status(401).json({ error: 'Session expired', code: 'SESSION_EXPIRED' });
         }
         
-        const user = database.getUserById(session.userId);
+        const user = await database.getUserById(session.userId);
         if (!user) {
             return res.status(401).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
         }
@@ -279,7 +190,8 @@ app.post('/api/auth/signup', async (req, res) => {
             });
         }
         
-        if (database.getUserByEmail(email.toLowerCase())) {
+        const existingUser = await database.getUserByEmail(email.toLowerCase());
+        if (existingUser) {
             return res.status(409).json({ 
                 error: 'User already exists', 
                 code: 'USER_EXISTS',
@@ -289,7 +201,7 @@ app.post('/api/auth/signup', async (req, res) => {
         
         console.log('🚀 SaaS signup attempt for:', email);
         
-        const user = database.createUser({
+        const user = await database.createUser({
             email: email.toLowerCase(),
             password,
             name,
@@ -297,9 +209,9 @@ app.post('/api/auth/signup', async (req, res) => {
         });
         
         // Create API key automatically for SaaS signup
-        const apiKey = database.createApiKey(user.id, 'Default API Key');
+        const apiKey = await database.createApiKey(user.id, 'Default API Key');
         
-        const sessionId = database.createSession(user.id);
+        const sessionId = await database.createSession(user.id);
         const token = generateToken(sessionId);
         
         res.cookie('agentpay_session', token, {
@@ -349,18 +261,19 @@ app.post('/api/auth/register', async (req, res) => {
             return res.status(400).json({ error: 'Email, password, and name required', code: 'MISSING_FIELDS' });
         }
         
-        if (database.getUserByEmail(email.toLowerCase())) {
+        const existingUser = await database.getUserByEmail(email.toLowerCase());
+        if (existingUser) {
             return res.status(409).json({ error: 'User already exists', code: 'USER_EXISTS' });
         }
         
-        const user = database.createUser({
+        const user = await database.createUser({
             email: email.toLowerCase(),
             password,
             name,
             provider: 'email'
         });
         
-        const sessionId = database.createSession(user.id);
+        const sessionId = await database.createSession(user.id);
         const token = generateToken(sessionId);
         
         res.cookie('agentpay_session', token, {
@@ -389,12 +302,12 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(400).json({ error: 'Email and password required', code: 'MISSING_CREDENTIALS' });
         }
         
-        const user = database.verifyPassword(email.toLowerCase(), password);
+        const user = await database.verifyPassword(email.toLowerCase(), password);
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
         }
         
-        const sessionId = database.createSession(user.id);
+        const sessionId = await database.createSession(user.id);
         const token = generateToken(sessionId);
         
         res.cookie('agentpay_session', token, {
@@ -415,9 +328,9 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-app.post('/api/auth/logout', validateSession, (req, res) => {
+app.post('/api/auth/logout', validateSession, async (req, res) => {
     try {
-        database.revokeSession(req.session.id);
+        await database.revokeSession(req.session.id);
         res.clearCookie('agentpay_session');
         res.json({ message: 'Logout successful' });
     } catch (error) {
@@ -431,7 +344,7 @@ app.get('/api/auth/me', validateSession, (req, res) => {
 });
 
 // API Key authentication middleware
-function validateApiKey(req, res, next) {
+async function validateApiKey(req, res, next) {
     try {
         const authHeader = req.headers.authorization;
         
@@ -454,8 +367,8 @@ function validateApiKey(req, res, next) {
             });
         }
 
-        // Find API key in database
-        const keyData = database.getApiKeyByValue(apiKey);
+        // Validate API key in database (this already updates usage stats)
+        const keyData = await database.validateApiKey(apiKey);
         
         if (!keyData) {
             return res.status(401).json({
@@ -465,22 +378,13 @@ function validateApiKey(req, res, next) {
             });
         }
 
-        // Get user associated with API key
-        const user = database.getUserById(keyData.userId);
-        if (!user) {
-            return res.status(401).json({
-                error: 'User associated with API key not found',
-                code: 'USER_NOT_FOUND'
-            });
-        }
-
         // Attach user and API key data to request
-        req.user = user;
-        req.apiKey = keyData;
-        
-        // Update API key usage
-        keyData.usageCount++;
-        keyData.lastUsed = new Date().toISOString();
+        req.user = keyData.user;
+        req.apiKey = {
+            id: keyData.keyId,
+            userId: keyData.userId,
+            permissions: keyData.permissions
+        };
         
         // Add rate limiting headers for better developer experience
         res.set({
@@ -491,7 +395,7 @@ function validateApiKey(req, res, next) {
             'X-AslanPay-Request-ID': require('crypto').randomBytes(8).toString('hex')
         });
         
-        console.log(`🔑 API request authenticated for user: ${user.email} (${keyData.name})`);
+        console.log(`🔑 API request authenticated for user: ${keyData.user.email}`);
         
         next();
     } catch (error) {
@@ -504,9 +408,9 @@ function validateApiKey(req, res, next) {
 }
 
 // API Key management
-app.get('/api/keys', validateSession, (req, res) => {
+app.get('/api/keys', validateSession, async (req, res) => {
     try {
-        const apiKeys = database.getApiKeysByUserId(req.user.id);
+        const apiKeys = await database.getApiKeysByUserId(req.user.id);
         res.json({
             apiKeys,
             total: apiKeys.length
@@ -517,14 +421,14 @@ app.get('/api/keys', validateSession, (req, res) => {
     }
 });
 
-app.post('/api/keys', validateSession, (req, res) => {
+app.post('/api/keys', validateSession, async (req, res) => {
     try {
         const { name } = req.body;
         if (!name || name.trim() === '') {
             return res.status(400).json({ error: 'API key name required', code: 'MISSING_NAME' });
         }
         
-        const apiKey = database.createApiKey(req.user.id, name.trim());
+        const apiKey = await database.createApiKey(req.user.id, name.trim());
         res.status(201).json({
             apiKey,
             message: 'API key created successfully'
@@ -704,14 +608,14 @@ app.get('/api/v1/test', validateApiKey, (req, res) => {
 });
 
 // Tenant information endpoint
-app.get('/api/v1/tenant', validateApiKey, (req, res) => {
+app.get('/api/v1/tenant', validateApiKey, async (req, res) => {
     try {
-        const userApiKeys = database.getApiKeysByUserId(req.user.id);
+        const userApiKeys = await database.getApiKeysByUserId(req.user.id);
         
         res.json({
             id: req.user.id,
             name: req.user.name + "'s Organization",
-            plan: 'sandbox',
+            plan: req.user.subscriptionPlan || 'sandbox',
             user: {
                 email: req.user.email,
                 name: req.user.name,
@@ -720,18 +624,19 @@ app.get('/api/v1/tenant', validateApiKey, (req, res) => {
             usage: {
                 dailySpent: 2500,
                 monthlySpent: 25000,
-                apiCalls: req.apiKey.usageCount
+                apiCalls: 'N/A'
             },
             stats: {
                 users: 1,
                 api_keys: userApiKeys.length,
                 transactions: 3
             },
-            apiKey: {
-                name: req.apiKey.name,
-                usageCount: req.apiKey.usageCount,
-                lastUsed: req.apiKey.lastUsed
-            }
+            apiKeys: userApiKeys.map(key => ({
+                id: key.id,
+                name: key.name,
+                usageCount: key.usageCount,
+                lastUsed: key.lastUsed
+            }))
         });
     } catch (error) {
         console.error('Tenant error:', error);
@@ -739,132 +644,45 @@ app.get('/api/v1/tenant', validateApiKey, (req, res) => {
     }
 });
 
-// Static page routes
-app.get('/', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Homepage not found' });
+// Clean URL helper function
+function createPageRoute(route, filename) {
+    // Clean URL (preferred)
+    app.get(route, (req, res) => {
+        try {
+            res.sendFile(path.join(__dirname, 'public', filename));
+        } catch (error) {
+            res.status(404).json({ error: `${route} page not found` });
+        }
+    });
+    
+    // .html URL (backward compatibility)
+    if (route !== '/') {
+        app.get(route + '.html', (req, res) => {
+            try {
+                res.sendFile(path.join(__dirname, 'public', filename));
+            } catch (error) {
+                res.status(404).json({ error: `${route} page not found` });
+            }
+        });
     }
-});
+}
 
-app.get('/docs', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'docs.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Documentation page not found' });
-    }
-});
-
-app.get('/docs.html', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'docs.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Documentation page not found' });
-    }
-});
-
-app.get('/api', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'api.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'API reference page not found' });
-    }
-});
-
-app.get('/api.html', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'api.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'API reference page not found' });
-    }
-});
-
-app.get('/demo', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'demo.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Demo page not found' });
-    }
-});
-
-app.get('/demo.html', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'demo.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Demo page not found' });
-    }
-});
-
-app.get('/pricing', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Pricing page not found' });
-    }
-});
-
-app.get('/pricing.html', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Pricing page not found' });
-    }
-});
-
-app.get('/auth', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'auth.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Auth page not found' });
-    }
-});
-
-app.get('/auth.html', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'auth.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Auth page not found' });
-    }
-});
-
-app.get('/status', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'status.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Status page not found' });
-    }
-});
-
-app.get('/status.html', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'status.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Status page not found' });
-    }
-});
-
-app.get('/security', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'security.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Security page not found' });
-    }
-});
-
-app.get('/security.html', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'security.html'));
-    } catch (error) {
-        res.status(404).json({ error: 'Security page not found' });
-    }
-});
+// Static page routes with clean URLs
+createPageRoute('/', 'index.html');
+createPageRoute('/docs', 'docs.html');
+createPageRoute('/api', 'api.html');
+createPageRoute('/demo', 'demo.html');
+createPageRoute('/pricing', 'pricing.html');
+createPageRoute('/auth', 'auth.html');
+createPageRoute('/status', 'status.html');
+createPageRoute('/security', 'security.html');
+createPageRoute('/dashboard', 'dashboard.html');
 
 // Catch-all for 404s
 app.use('*', (req, res) => {
     res.status(404).json({
         error: 'Endpoint not found',
-        message: 'Available pages: /, /docs, /api, /demo, /pricing, /auth, /status, /security, /comparison, /vs-stripe | API endpoints: /health, /test, /api/status, /api/auth/*, /api/keys, /api/v1/authorize',
+        message: 'Available pages: /, /docs, /api, /demo, /pricing, /auth, /status, /security, /comparison, /dashboard | API endpoints: /health, /test, /api/status, /api/auth/*, /api/keys, /api/v1/* | Note: Both /page and /page.html work',
         timestamp: new Date().toISOString()
     });
 });

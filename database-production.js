@@ -158,7 +158,7 @@ class ProductionDatabase {
                 key: apiKey,
                 prefix,
                 secret,
-                permissions: ['authorize', 'confirm', 'refund']
+                permissions: 'authorize,confirm,refund'
             }
         });
         
@@ -170,7 +170,7 @@ class ProductionDatabase {
             lastUsed: keyData.lastUsed,
             usageCount: keyData.usageCount,
             isActive: keyData.isActive,
-            permissions: keyData.permissions
+            permissions: keyData.permissions ? keyData.permissions.split(',') : []
         };
     }
 
@@ -233,7 +233,10 @@ class ProductionDatabase {
             }
         });
         
-        return keys;
+        return keys.map(key => ({
+            ...key,
+            permissions: key.permissions ? key.permissions.split(',') : []
+        }));
     }
 
     async validateApiKey(apiKey) {
@@ -264,7 +267,7 @@ class ProductionDatabase {
             keyId: keyData.id,
             userId: keyData.userId,
             user: this.sanitizeUser(keyData.user),
-            permissions: keyData.permissions
+            permissions: keyData.permissions ? keyData.permissions.split(',') : []
         };
     }
 
@@ -489,7 +492,7 @@ class ProductionDatabase {
                 status: 'connected', 
                 responseTime: `${responseTime}ms`,
                 timestamp: new Date().toISOString(),
-                type: 'postgresql',
+                type: 'sqlite',
                 environment: process.env.NODE_ENV || 'unknown'
             };
         } catch (error) {
@@ -502,7 +505,7 @@ class ProductionDatabase {
                 error: error.message,
                 code: error.code,
                 timestamp: new Date().toISOString(),
-                type: 'postgresql',
+                type: 'sqlite',
                 environment: process.env.NODE_ENV || 'unknown',
                 databaseUrlSet: !!process.env.DATABASE_URL
             };

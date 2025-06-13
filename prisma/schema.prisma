@@ -12,7 +12,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -58,7 +58,7 @@ model ApiKey {
   createdAt    DateTime  @default(now())
   isActive     Boolean   @default(true)
   revokedAt    DateTime?
-  permissions  String[]  @default(["authorize", "confirm", "refund"])
+  permissions  String    @default("authorize,confirm,refund")
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

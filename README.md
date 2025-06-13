@@ -503,7 +503,7 @@ npm install -g @aslanpay/webhook-tester
 aslan-webhooks --port 3001 --endpoint /test-webhook
 
 # Trigger test events
-curl -X POST http://localhost:3000/api/test/trigger-webhook \
+curl -X POST https://aslanpay.xyz/api/test/trigger-webhook \
   -H "Authorization: Bearer ak_test_your_key" \
   -d '{"event": "payment.completed", "webhookUrl": "http://localhost:3001/test-webhook"}'
 ```

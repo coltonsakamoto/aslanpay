@@ -8,7 +8,7 @@ Your AslanPay API keys are now **fully functional** and properly connected to al
 
 ### 1. Get Your API Key
 1. Start server: `npm run dev`
-2. Visit: http://localhost:3000/auth.html
+2. Visit: https://aslanpay.xyz/auth.html
 3. Sign up or log in
 4. Copy your API key from the dashboard
 
@@ -33,13 +33,13 @@ Content-Type: application/json
 
 ### Test API Key
 ```bash
-curl -X GET http://localhost:3000/api/v1/test \
+curl -X GET https://aslanpay.xyz/api/v1/test \
   -H "Authorization: Bearer ak_live_your_key"
 ```
 
 ### Authorize Payment
 ```bash
-curl -X POST http://localhost:3000/api/v1/authorize \
+curl -X POST https://aslanpay.xyz/api/v1/authorize \
   -H "Authorization: Bearer ak_live_your_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -52,7 +52,7 @@ curl -X POST http://localhost:3000/api/v1/authorize \
 
 ### Confirm Payment
 ```bash
-curl -X POST http://localhost:3000/api/v1/confirm \
+curl -X POST https://aslanpay.xyz/api/v1/confirm \
   -H "Authorization: Bearer ak_live_your_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -63,7 +63,7 @@ curl -X POST http://localhost:3000/api/v1/confirm \
 
 ### Process Refund
 ```bash
-curl -X POST http://localhost:3000/api/v1/refund \
+curl -X POST https://aslanpay.xyz/api/v1/refund \
   -H "Authorization: Bearer ak_live_your_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -80,7 +80,7 @@ curl -X POST http://localhost:3000/api/v1/refund \
 import axios from 'axios';
 
 const aslanApi = axios.create({
-  baseURL: 'http://localhost:3000/api/v1',
+  baseURL: 'https://aslanpay.xyz/api/v1',
   headers: {
     'Authorization': `Bearer ${process.env.ASLAN_API_KEY}`,
     'Content-Type': 'application/json'
@@ -116,7 +116,7 @@ import os
 class AslanPayTool:
     def __init__(self):
         self.api_key = os.getenv('ASLAN_API_KEY')
-        self.base_url = 'http://localhost:3000/api/v1'
+        self.base_url = 'https://aslanpay.xyz/api/v1'
         self.headers = {
             'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json'
