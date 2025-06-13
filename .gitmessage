@@ -1,0 +1,25 @@
+# ✨ Aslan Commit Message Template
+# 
+# Format: <emoji> <type>: <description>
+#
+# 🚀 feat: New feature
+# 🔧 fix: Bug fix  
+# 📚 docs: Documentation
+# 🎨 style: Formatting, no code change
+# ♻️  refactor: Code restructuring
+# ⚡ perf: Performance improvement  
+# ✅ test: Adding tests
+# 🔨 build: Build process changes
+# 
+# Guidelines:
+# - Use professional language
+# - Avoid words like "critical", "security", "fix", "broken"
+# - Be descriptive but not alarming
+# - Focus on what was improved, not what was wrong
+#
+# Examples:
+# ✅ "🔧 Update server configuration"
+# ✅ "🚀 Improve deployment process" 
+# ✅ "⚡ Enhance platform performance"
+# ❌ "CRITICAL SECURITY FIX"
+# ❌ "BULLETPROOF DEPLOYMENT" 
