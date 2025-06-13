@@ -3,257 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - Aslan</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'aslan-orange': '#FF6B35',
-                        'aslan-gold': '#F7931E',
-                        'aslan-dark': '#1a1a1a',
-                        'aslan-gray': '#6B7280'
-                    }
-                }
+    <title>🦁 Aslan - Authentication</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 40px 30px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .lion-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .form-container {
+            padding: 30px;
+            background: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .message {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .forgot-link {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .forgot-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .forgot-link a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 30px 20px 20px;
+            }
+            
+            .lion-icon {
+                font-size: 40px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
             }
         }
-    </script>
+    </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="border-b border-gray-200 bg-white">
-        <div class="max-w-7xl mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="index.html" class="text-aslan-gray hover:text-aslan-dark transition-colors">← Back to Home</a>
-                </div>
-            </div>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Home</a>
+            <div class="lion-icon">🦁</div>
+            <h1>Aslan</h1>
+            <p>Payment Infrastructure for AI Agents</p>
         </div>
-    </nav>
 
-    <div class="min-h-screen flex items-center justify-center py-12 px-6">
-        <div class="max-w-md w-full space-y-8">
-            <!-- Header -->
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-aslan-dark">Welcome to Aslan</h2>
-                <p class="mt-2 text-aslan-gray">Sign in to your account or create a new one</p>
-            </div>
+        <div class="tabs">
+            <button class="tab active" id="signin-tab">Sign In</button>
+            <button class="tab" id="signup-tab">Sign Up</button>
+        </div>
 
-            <!-- Tab Navigation -->
-            <div class="flex border-b border-gray-200">
-                <button id="signin-tab" class="flex-1 py-2 px-4 text-center font-medium text-aslan-orange border-b-2 border-aslan-orange">
-                    Sign In
-                </button>
-                <button id="signup-tab" class="flex-1 py-2 px-4 text-center font-medium text-aslan-gray border-b-2 border-transparent hover:text-aslan-dark">
-                    Sign Up
-                </button>
-            </div>
+        <div class="form-container">
+            <div id="message-container"></div>
 
             <!-- Sign In Form -->
-            <div id="signin-form" class="bg-white p-8 rounded-xl shadow-lg">
+            <div id="signin-form">
                 <form id="login-form">
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium text-aslan-dark mb-2">Email Address</label>
-                            <input type="email" id="login-email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-aslan-dark mb-2">Password</label>
-                            <input type="password" id="login-password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="remember-me" class="rounded border-gray-300 text-aslan-orange focus:ring-aslan-orange">
-                                <label for="remember-me" class="ml-2 text-sm text-aslan-gray">Remember me</label>
-                            </div>
-                            <button type="button" id="forgot-password-btn" class="text-sm text-aslan-orange hover:underline">
-                                Forgot password?
-                            </button>
-                        </div>
-
-                        <button type="submit" class="w-full bg-aslan-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-600 transition-colors">
-                            <span id="login-btn-text">Sign In</span>
-                            <div id="login-spinner" class="hidden inline-block ml-2">
-                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            </div>
-                        </button>
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" required>
                     </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+
+                    <button type="submit" class="button" id="login-btn">
+                        <span id="login-text">Sign In</span>
+                        <div id="login-loading" class="loading hidden"></div>
+                    </button>
                 </form>
 
-                <!-- OAuth buttons -->
-                <div class="mt-6">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-white text-aslan-gray">Or continue with</span>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 grid grid-cols-2 gap-3">
-                        <button id="google-signin" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                            <svg class="h-5 w-5" viewBox="0 0 24 24">
-                                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            <span class="ml-2">Google</span>
-                        </button>
-
-                        <button id="github-signin" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="ml-2">GitHub</span>
-                        </button>
-                    </div>
+                <div class="forgot-link">
+                    <a href="#" id="forgot-password-link">Forgot your password?</a>
                 </div>
             </div>
 
             <!-- Sign Up Form -->
-            <div id="signup-form" class="hidden bg-white p-8 rounded-xl shadow-lg">
+            <div id="signup-form" class="hidden">
                 <form id="register-form">
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium text-aslan-dark mb-2">Full Name</label>
-                            <input type="text" id="register-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-aslan-dark mb-2">Email Address</label>
-                            <input type="email" id="register-email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-aslan-dark mb-2">Password</label>
-                            <input type="password" id="register-password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
-                            <p class="mt-1 text-sm text-aslan-gray">Must be at least 8 characters long</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-aslan-dark mb-2">Confirm Password</label>
-                            <input type="password" id="register-confirm-password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
-                        </div>
-
-                        <div class="flex items-center">
-                            <input type="checkbox" id="terms-checkbox" required class="rounded border-gray-300 text-aslan-orange focus:ring-aslan-orange">
-                            <label for="terms-checkbox" class="ml-2 text-sm text-aslan-gray">
-                                I agree to the <a href="#" class="text-aslan-orange hover:underline">Terms of Service</a> and <a href="#" class="text-aslan-orange hover:underline">Privacy Policy</a>
-                            </label>
-                        </div>
-
-                        <button type="submit" class="w-full bg-aslan-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-600 transition-colors">
-                            <span id="register-btn-text">Create Account</span>
-                            <div id="register-spinner" class="hidden inline-block ml-2">
-                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            </div>
-                        </button>
+                    <div class="form-group">
+                        <label for="register-name">Full Name</label>
+                        <input type="text" id="register-name" required>
                     </div>
-                </form>
-            </div>
 
-            <!-- Messages -->
-            <div id="message-container" class="hidden">
-                <div id="success-message" class="hidden bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <p id="success-text" class="text-green-800"></p>
+                    <div class="form-group">
+                        <label for="register-email">Email Address</label>
+                        <input type="email" id="register-email" required>
                     </div>
-                </div>
-
-                <div id="error-message" class="hidden bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <p id="error-text" class="text-red-800"></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Forgot Password Modal -->
-            <div id="forgot-password-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
-                    <h3 class="text-xl font-semibold text-aslan-dark mb-4">Reset Password</h3>
-                    <p class="text-aslan-gray mb-4">Enter your email address and we'll send you a link to reset your password.</p>
                     
-                    <form id="forgot-password-form">
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-aslan-dark mb-2">Email Address</label>
-                            <input type="email" id="forgot-email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
-                        </div>
-                        
-                        <div class="flex space-x-3">
-                            <button type="button" id="cancel-forgot" class="flex-1 border border-gray-300 text-aslan-dark py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">
-                                Cancel
-                            </button>
-                            <button type="submit" class="flex-1 bg-aslan-orange text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors">
-                                Send Reset Link
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input type="password" id="register-password" required minlength="8">
+                        <small style="color: #666; font-size: 12px;">Must be at least 8 characters long</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-organization">Organization Name (Optional)</label>
+                        <input type="text" id="register-organization" placeholder="Your Company">
+                    </div>
+
+                    <button type="submit" class="button" id="register-btn">
+                        <span id="register-text">Create Account</span>
+                        <div id="register-loading" class="loading hidden"></div>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="border-t border-gray-200 py-8 bg-white">
-        <div class="max-w-7xl mx-auto px-6 text-center">
-            <div class="flex items-center justify-center space-x-3 mb-4">
-                <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
-            </div>
-            <p class="text-aslan-gray text-sm mb-4">
-                Payment infrastructure for AI agents
-            </p>
-            <div class="flex justify-center space-x-6 text-sm text-aslan-gray">
-                <a href="index.html" class="hover:text-aslan-dark transition-colors">Home</a>
-                <a href="docs.html" class="hover:text-aslan-dark transition-colors">Documentation</a>
-                <a href="https://github.com/coltonsakamoto/aslanpay" class="hover:text-aslan-dark transition-colors">GitHub</a>
-                <a href="demo.html" class="hover:text-aslan-dark transition-colors">Demo</a>
-                <a href="mailto:support@aslanpay.xyz" class="hover:text-aslan-dark transition-colors">Contact</a>
-            </div>
-        </div>
-    </footer>
-
     <script>
-        // Check for OAuth errors or success on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const error = urlParams.get('error');
-            const plan = urlParams.get('plan');
-            
-            if (error === 'oauth_failed') {
-                showMessage('OAuth authentication failed. Please try again.', true);
-            } else if (error === 'oauth_not_configured') {
-                showMessage('OAuth is not configured. Please set up your OAuth credentials or use email registration.', true);
-            }
-            
-            // Handle plan-specific messaging
-            if (plan === 'sandbox') {
-                document.querySelector('h2').textContent = 'Start Your Free Sandbox Account';
-                document.querySelector('p').textContent = 'Create your account to get API keys and start testing with 50 free authorizations per month';
-                
-                // Switch to signup tab by default
-                signupTab.click();
-            }
-            
-            // Clear parameters from URL after processing
-            if (error || plan) {
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-        });
-
         // Tab switching
         const signinTab = document.getElementById('signin-tab');
         const signupTab = document.getElementById('signup-tab');
@@ -261,44 +309,46 @@
         const signupForm = document.getElementById('signup-form');
 
         signinTab.addEventListener('click', () => {
-            signinTab.classList.add('text-aslan-orange', 'border-aslan-orange');
-            signinTab.classList.remove('text-aslan-gray', 'border-transparent');
-            signupTab.classList.add('text-aslan-gray', 'border-transparent');
-            signupTab.classList.remove('text-aslan-orange', 'border-aslan-orange');
+            signinTab.classList.add('active');
+            signupTab.classList.remove('active');
             signinForm.classList.remove('hidden');
             signupForm.classList.add('hidden');
+            hideMessage();
         });
 
         signupTab.addEventListener('click', () => {
-            signupTab.classList.add('text-aslan-orange', 'border-aslan-orange');
-            signupTab.classList.remove('text-aslan-gray', 'border-transparent');
-            signinTab.classList.add('text-aslan-gray', 'border-transparent');
-            signinTab.classList.remove('text-aslan-orange', 'border-aslan-orange');
+            signupTab.classList.add('active');
+            signinTab.classList.remove('active');
             signupForm.classList.remove('hidden');
             signinForm.classList.add('hidden');
+            hideMessage();
         });
 
         // Message functions
         function showMessage(text, isError = false) {
-            const messageContainer = document.getElementById('message-container');
-            const successMessage = document.getElementById('success-message');
-            const errorMessage = document.getElementById('error-message');
-            
-            messageContainer.classList.remove('hidden');
-            
-            if (isError) {
-                document.getElementById('error-text').textContent = text;
-                errorMessage.classList.remove('hidden');
-                successMessage.classList.add('hidden');
-            } else {
-                document.getElementById('success-text').textContent = text;
-                successMessage.classList.remove('hidden');
-                errorMessage.classList.add('hidden');
-            }
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="message ${isError ? 'error' : 'success'}">${text}</div>`;
         }
 
         function hideMessage() {
-            document.getElementById('message-container').classList.add('hidden');
+            document.getElementById('message-container').innerHTML = '';
+        }
+
+        // Loading states
+        function setLoading(formType, loading) {
+            const text = document.getElementById(`${formType}-text`);
+            const loadingEl = document.getElementById(`${formType}-loading`);
+            const btn = document.getElementById(`${formType}-btn`);
+            
+            if (loading) {
+                text.textContent = 'Processing...';
+                loadingEl.classList.remove('hidden');
+                btn.disabled = true;
+            } else {
+                text.textContent = formType === 'login' ? 'Sign In' : 'Create Account';
+                loadingEl.classList.add('hidden');
+                btn.disabled = false;
+            }
         }
 
         // Login form
@@ -307,11 +357,8 @@
             
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
-            const btnText = document.getElementById('login-btn-text');
-            const spinner = document.getElementById('login-spinner');
             
-            btnText.classList.add('hidden');
-            spinner.classList.remove('hidden');
+            setLoading('login', true);
             hideMessage();
             
             try {
@@ -325,18 +372,17 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showMessage('Login successful! Redirecting to dashboard...');
+                    showMessage('✅ Login successful! Redirecting...');
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        window.location.href = '/dashboard.html';
                     }, 1500);
                 } else {
-                    showMessage(data.error, true);
+                    showMessage(data.error || 'Login failed', true);
                 }
             } catch (error) {
                 showMessage('Network error. Please try again.', true);
             } finally {
-                btnText.classList.remove('hidden');
-                spinner.classList.add('hidden');
+                setLoading('login', false);
             }
         });
 
@@ -347,91 +393,55 @@
             const name = document.getElementById('register-name').value;
             const email = document.getElementById('register-email').value;
             const password = document.getElementById('register-password').value;
-            const confirmPassword = document.getElementById('register-confirm-password').value;
-            const btnText = document.getElementById('register-btn-text');
-            const spinner = document.getElementById('register-spinner');
+            const organizationName = document.getElementById('register-organization').value;
             
-            if (password !== confirmPassword) {
-                showMessage('Passwords do not match', true);
-                return;
-            }
-            
-            btnText.classList.add('hidden');
-            spinner.classList.remove('hidden');
+            setLoading('register', true);
             hideMessage();
             
             try {
-                const response = await fetch('/api/auth/register', {
+                const response = await fetch('/api/auth/signup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ name, email, password })
+                    body: JSON.stringify({ 
+                        name, 
+                        email, 
+                        password,
+                        organizationName: organizationName || `${name}'s Organization`
+                    })
                 });
                 
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showMessage('Account created successfully! Check your email for verification.');
+                    showMessage('🎉 Account created! You now have API keys ready to use.');
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        window.location.href = '/dashboard.html';
                     }, 2000);
                 } else {
-                    showMessage(data.error, true);
+                    showMessage(data.error || 'Registration failed', true);
                 }
             } catch (error) {
                 showMessage('Network error. Please try again.', true);
             } finally {
-                btnText.classList.remove('hidden');
-                spinner.classList.add('hidden');
+                setLoading('register', false);
             }
         });
 
-        // Forgot password modal
-        const forgotPasswordBtn = document.getElementById('forgot-password-btn');
-        const forgotPasswordModal = document.getElementById('forgot-password-modal');
-        const cancelForgot = document.getElementById('cancel-forgot');
-
-        forgotPasswordBtn.addEventListener('click', () => {
-            forgotPasswordModal.classList.remove('hidden');
-        });
-
-        cancelForgot.addEventListener('click', () => {
-            forgotPasswordModal.classList.add('hidden');
-        });
-
-        // Forgot password form
-        document.getElementById('forgot-password-form').addEventListener('submit', async (e) => {
+        // Forgot password (placeholder)
+        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
             e.preventDefault();
+            showMessage('Password reset feature coming soon. Please contact support if needed.');
+        });
+
+        // Check URL parameters for auto-switching
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
             
-            const email = document.getElementById('forgot-email').value;
-            
-            try {
-                const response = await fetch('/api/auth/forgot-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    forgotPasswordModal.classList.add('hidden');
-                    showMessage(data.message);
-                } else {
-                    showMessage(data.error, true);
-                }
-            } catch (error) {
-                showMessage('Network error. Please try again.', true);
+            if (action === 'signup') {
+                signupTab.click();
             }
-        });
-
-        // OAuth buttons (placeholder)
-        document.getElementById('google-signin').addEventListener('click', () => {
-            window.location.href = '/api/auth/google';
-        });
-
-        document.getElementById('github-signin').addEventListener('click', () => {
-            window.location.href = '/api/auth/github';
         });
     </script>
 </body>

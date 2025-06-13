@@ -258,6 +258,80 @@ app.get('/api/status', async (req, res) => {
 });
 
 // Authentication endpoints
+// SaaS Signup endpoint - NEW MAIN ENTRY POINT
+app.post('/api/auth/signup', async (req, res) => {
+    try {
+        const { email, password, name, organizationName } = req.body;
+        
+        if (!email || !password || !name) {
+            return res.status(400).json({ 
+                error: 'Email, password, and name are required', 
+                code: 'MISSING_FIELDS' 
+            });
+        }
+        
+        if (database.getUserByEmail(email.toLowerCase())) {
+            return res.status(409).json({ 
+                error: 'User already exists', 
+                code: 'USER_EXISTS',
+                suggestion: 'Try logging in instead, or use a different email address'
+            });
+        }
+        
+        console.log('🚀 SaaS signup attempt for:', email);
+        
+        const user = database.createUser({
+            email: email.toLowerCase(),
+            password,
+            name,
+            provider: 'email'
+        });
+        
+        // Create API key automatically for SaaS signup
+        const apiKey = database.createApiKey(user.id, 'Default API Key');
+        
+        const sessionId = database.createSession(user.id);
+        const token = generateToken(sessionId);
+        
+        res.cookie('agentpay_session', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            sameSite: 'strict'
+        });
+        
+        console.log('✅ SaaS signup successful for:', email);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Account created successfully! Your API key is ready to use.',
+            user,
+            tenant: {
+                id: user.id, // Using user ID as tenant ID for production server
+                name: organizationName || `${name}'s Organization`,
+                plan: 'sandbox'
+            },
+            apiKey: {
+                id: apiKey.id,
+                name: apiKey.name,
+                key: apiKey.key
+            },
+            nextSteps: {
+                dashboard: `${process.env.BASE_URL || 'http://localhost:3000'}/dashboard.html`,
+                docs: `${process.env.BASE_URL || 'http://localhost:3000'}/docs.html`,
+                demo: `${process.env.BASE_URL || 'http://localhost:3000'}/demo.html`
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ SaaS signup error:', error);
+        res.status(500).json({ 
+            error: 'Failed to create account. Please try again.',
+            code: 'SIGNUP_FAILED' 
+        });
+    }
+});
+
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, password, name } = req.body;
@@ -391,16 +465,112 @@ app.post('/api/v1/authorize', (req, res) => {
         const authId = `auth_${require('crypto').randomBytes(16).toString('hex')}`;
         
         res.json({
-            authorizationId: authId,
+            id: authId,
+            object: 'authorization',
             amount,
             description: description || 'Payment authorization',
             status: 'authorized',
-            timestamp: new Date().toISOString(),
+            created: Math.floor(Date.now() / 1000),
+            expires_at: Math.floor((Date.now() + 10 * 60 * 1000) / 1000),
+            livemode: false,
+            mock: true,
             message: 'Authorization successful'
         });
         
     } catch (error) {
         console.error('Authorization error:', error);
+        res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+    }
+});
+
+// Payment confirmation endpoint
+app.post('/api/v1/confirm', (req, res) => {
+    try {
+        const { authorizationId, finalAmount } = req.body;
+        
+        if (!authorizationId) {
+            return res.status(400).json({ error: 'Authorization ID required', code: 'MISSING_AUTH_ID' });
+        }
+        
+        const paymentId = `pay_${require('crypto').randomBytes(16).toString('hex')}`;
+        
+        res.json({
+            id: paymentId,
+            object: 'payment',
+            amount: finalAmount || 2500,
+            status: 'completed',
+            authorizationId,
+            created: Math.floor(Date.now() / 1000),
+            livemode: false,
+            mock: true,
+            transaction: {
+                id: `txn_${require('crypto').randomBytes(12).toString('hex')}`,
+                amount: finalAmount || 2500,
+                status: 'completed'
+            }
+        });
+        
+    } catch (error) {
+        console.error('Confirmation error:', error);
+        res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+    }
+});
+
+// Payment refund endpoint
+app.post('/api/v1/refund', (req, res) => {
+    try {
+        const { transactionId, amount, reason } = req.body;
+        
+        if (!transactionId) {
+            return res.status(400).json({ error: 'Transaction ID required', code: 'MISSING_TRANSACTION_ID' });
+        }
+        
+        const refundId = `ref_${require('crypto').randomBytes(16).toString('hex')}`;
+        
+        res.json({
+            id: refundId,
+            object: 'refund',
+            amount: amount || 500,
+            reason: reason || 'requested',
+            status: 'succeeded',
+            transactionId,
+            created: Math.floor(Date.now() / 1000),
+            livemode: false,
+            mock: true,
+            transaction: {
+                id: `txn_${require('crypto').randomBytes(12).toString('hex')}`,
+                amount: -(amount || 500),
+                status: 'refunded'
+            }
+        });
+        
+    } catch (error) {
+        console.error('Refund error:', error);
+        res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+    }
+});
+
+// Tenant information endpoint
+app.get('/api/v1/tenant', (req, res) => {
+    try {
+        // Mock tenant data for demo
+        res.json({
+            id: 'tenant_demo_123',
+            name: 'Demo Organization',
+            plan: 'sandbox',
+            usage: {
+                dailySpent: 2500,
+                monthlySpent: 25000,
+                apiCalls: 42
+            },
+            stats: {
+                users: 1,
+                api_keys: 1,
+                transactions: 3
+            }
+        });
+    } catch (error) {
+        console.error('Tenant error:', error);
         res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
     }
 });

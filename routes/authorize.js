@@ -3,6 +3,21 @@ const database = require('../config/database');
 const InputValidation = require('../middleware/input-validation');
 const crypto = require('crypto');
 
+// Initialize Stripe with Aslan's account
+let stripe;
+try {
+    if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('placeholder')) {
+        stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        console.log('✅ Stripe initialized for real payments');
+    } else {
+        console.log('⚠️  No Stripe key found - using mock payments');
+        stripe = null;
+    }
+} catch (error) {
+    console.error('❌ Stripe initialization failed:', error);
+    stripe = null;
+}
+
 const router = express.Router();
 
 // Enhanced error response helper
@@ -310,32 +325,113 @@ router.post('/',
                 }
             });
 
-            // In a real implementation, this would call Stripe
-            // For now, we'll simulate the authorization
-            const authorizationId = `auth_${crypto.randomBytes(12).toString('hex')}`;
+            // REAL STRIPE INTEGRATION - Process actual payments!
+            if (stripe) {
+                try {
+                    // Calculate Aslan's fee: 2.9% + $0.30
+                    const percentageFee = Math.round(amount * 0.029); // 2.9%
+                    const fixedFee = 30; // $0.30 in cents
+                    const aslanFee = percentageFee + fixedFee;
 
-            console.log(`✅ Payment authorized: ${authorizationId} for $${amount/100}`);
+                    // Create PaymentIntent with Aslan as the merchant
+                    const paymentIntent = await stripe.paymentIntents.create({
+                        amount: amount + aslanFee, // Customer pays amount + our fee
+                        currency: 'usd',
+                        description: `${description} (via Aslan)`,
+                        automatic_payment_methods: {
+                            enabled: true
+                        },
+                        metadata: {
+                            tenantId: tenant.id,
+                            userId: user.id,
+                            agentId: agentId || 'unknown',
+                            originalAmount: amount,
+                            aslanFee: aslanFee,
+                            internalTransactionId: transaction.id
+                        }
+                    });
 
-            // Return authorization response
-            res.status(200).json({
-                id: authorizationId,
-                object: 'authorization',
-                amount,
-                description,
-                status: 'authorized',
-                agentId: agentId || null,
-                tenantId: tenant.id,
-                userId: user.id,
-                created: Math.floor(Date.now() / 1000),
-                expires_at: Math.floor((Date.now() + 10 * 60 * 1000) / 1000), // 10 minutes
-                metadata,
-                livemode: process.env.NODE_ENV === 'production',
-                transaction: {
-                    id: transaction.id,
-                    amount: transaction.amount,
-                    status: transaction.status
+                    console.log(`✅ REAL payment created: ${paymentIntent.id} for $${(amount + aslanFee)/100} (includes $${aslanFee/100} Aslan fee)`);
+
+                    // Update transaction with Stripe details
+                    transaction.metadata.stripePaymentIntentId = paymentIntent.id;
+                    transaction.metadata.stripeStatus = paymentIntent.status;
+                    transaction.metadata.aslanFee = aslanFee;
+
+                    // Return real Stripe response
+                    res.status(200).json({
+                        id: paymentIntent.id,
+                        object: 'authorization',
+                        amount,
+                        totalAmount: amount + aslanFee,
+                        aslanFee,
+                        description,
+                        status: paymentIntent.status,
+                        clientSecret: paymentIntent.client_secret, // For frontend integration
+                        agentId: agentId || null,
+                        tenantId: tenant.id,
+                        userId: user.id,
+                        created: paymentIntent.created,
+                        expires_at: Math.floor((Date.now() + 10 * 60 * 1000) / 1000), // 10 minutes
+                        metadata,
+                        livemode: paymentIntent.livemode,
+                        stripePaymentIntentId: paymentIntent.id,
+                        transaction: {
+                            id: transaction.id,
+                            amount: transaction.amount,
+                            status: transaction.status
+                        }
+                    });
+
+                } catch (stripeError) {
+                    console.error('❌ Stripe payment failed:', stripeError);
+                    
+                    // Return helpful Stripe error
+                    return res.status(400).json(createErrorResponse(
+                        'STRIPE_ERROR',
+                        stripeError.message || 'Payment processing failed',
+                        {
+                            stripeCode: stripeError.code,
+                            stripeType: stripeError.type
+                        },
+                        {
+                            message: 'There was an issue processing your payment',
+                            troubleshooting: [
+                                'Verify your payment details are correct',
+                                'Check that your card has sufficient funds',
+                                'Try again with a different payment method'
+                            ]
+                        }
+                    ));
                 }
-            });
+
+            } else {
+                // Fallback to mock for development
+                const authorizationId = `auth_mock_${crypto.randomBytes(12).toString('hex')}`;
+                
+                console.log(`⚠️  MOCK payment authorized: ${authorizationId} for $${amount/100} (Stripe not configured)`);
+
+                res.status(200).json({
+                    id: authorizationId,
+                    object: 'authorization',
+                    amount,
+                    description,
+                    status: 'authorized',
+                    agentId: agentId || null,
+                    tenantId: tenant.id,
+                    userId: user.id,
+                    created: Math.floor(Date.now() / 1000),
+                    expires_at: Math.floor((Date.now() + 10 * 60 * 1000) / 1000),
+                    metadata,
+                    livemode: false,
+                    mock: true,
+                    transaction: {
+                        id: transaction.id,
+                        amount: transaction.amount,
+                        status: transaction.status
+                    }
+                });
+            }
 
         } catch (error) {
             console.error('Authorization error:', error);
@@ -402,41 +498,110 @@ router.post('/confirm',
 
             console.log(`🔒 Confirming authorization: ${authorizationId} for tenant ${tenant.name}`);
 
-            // In real implementation, would confirm with Stripe
-            // For now, simulate successful confirmation
-            const paymentId = `pay_${crypto.randomBytes(12).toString('hex')}`;
+            // REAL STRIPE CONFIRMATION - Actually capture the payment!
+            if (stripe && authorizationId.startsWith('pi_')) {
+                try {
+                    // Confirm the PaymentIntent with Stripe
+                    const paymentIntent = await stripe.paymentIntents.confirm(authorizationId);
+                    
+                    console.log(`✅ REAL payment confirmed: ${paymentIntent.id} status: ${paymentIntent.status}`);
 
-            // Create confirmed transaction record
-            const transaction = await database.createTransaction({
-                amount: finalAmount || req.body.amount,
-                description: `Confirmed payment ${authorizationId}`,
-                tenantId: tenant.id,
-                userId: req.user.id,
-                status: 'completed',
-                metadata: {
+                    // Create confirmed transaction record
+                    const transaction = await database.createTransaction({
+                        amount: finalAmount || paymentIntent.amount,
+                        description: `Confirmed payment ${authorizationId}`,
+                        tenantId: tenant.id,
+                        userId: req.user.id,
+                        status: paymentIntent.status === 'succeeded' ? 'completed' : 'pending',
+                        metadata: {
+                            authorizationId,
+                            stripePaymentIntentId: paymentIntent.id,
+                            stripeStatus: paymentIntent.status,
+                            apiKeyId: req.apiKey.keyId
+                        }
+                    });
+
+                    // Update tenant billing usage for completed payments
+                    if (paymentIntent.status === 'succeeded') {
+                        await database.updateTenantUsage(tenant.id, paymentIntent.amount);
+                    }
+
+                    res.status(200).json({
+                        id: paymentIntent.id,
+                        object: 'payment',
+                        amount: paymentIntent.amount,
+                        status: paymentIntent.status,
+                        authorizationId,
+                        tenantId: tenant.id,
+                        created: paymentIntent.created,
+                        livemode: paymentIntent.livemode,
+                        stripePaymentIntentId: paymentIntent.id,
+                        charges: paymentIntent.charges.data.length > 0 ? paymentIntent.charges.data[0].id : null,
+                        transaction: {
+                            id: transaction.id,
+                            amount: transaction.amount,
+                            status: transaction.status
+                        }
+                    });
+
+                } catch (stripeError) {
+                    console.error('❌ Stripe confirmation failed:', stripeError);
+                    
+                    return res.status(400).json(createErrorResponse(
+                        'STRIPE_CONFIRMATION_ERROR',
+                        stripeError.message || 'Payment confirmation failed',
+                        {
+                            stripeCode: stripeError.code,
+                            authorizationId
+                        },
+                        {
+                            message: 'Unable to confirm the payment',
+                            troubleshooting: [
+                                'Verify the authorization ID is correct',
+                                'Check that the payment hasn\'t already been confirmed',
+                                'Ensure the authorization hasn\'t expired'
+                            ]
+                        }
+                    ));
+                }
+
+            } else {
+                // Fallback for mock payments or non-Stripe IDs
+                const paymentId = `pay_mock_${crypto.randomBytes(12).toString('hex')}`;
+
+                const transaction = await database.createTransaction({
+                    amount: finalAmount || req.body.amount,
+                    description: `Confirmed payment ${authorizationId}`,
+                    tenantId: tenant.id,
+                    userId: req.user.id,
+                    status: 'completed',
+                    metadata: {
+                        authorizationId,
+                        paymentId,
+                        apiKeyId: req.apiKey.keyId,
+                        mock: true
+                    }
+                });
+
+                console.log(`⚠️  MOCK payment confirmed: ${paymentId} (Stripe not configured or mock payment)`);
+
+                res.status(200).json({
+                    id: paymentId,
+                    object: 'payment',
+                    amount: finalAmount || req.body.amount,
+                    status: 'completed',
                     authorizationId,
-                    paymentId,
-                    apiKeyId: req.apiKey.keyId
-                }
-            });
-
-            console.log(`✅ Payment confirmed: ${paymentId}`);
-
-            res.status(200).json({
-                id: paymentId,
-                object: 'payment',
-                amount: finalAmount || req.body.amount,
-                status: 'completed',
-                authorizationId,
-                tenantId: tenant.id,
-                created: Math.floor(Date.now() / 1000),
-                livemode: process.env.NODE_ENV === 'production',
-                transaction: {
-                    id: transaction.id,
-                    amount: transaction.amount,
-                    status: transaction.status
-                }
-            });
+                    tenantId: tenant.id,
+                    created: Math.floor(Date.now() / 1000),
+                    livemode: false,
+                    mock: true,
+                    transaction: {
+                        id: transaction.id,
+                        amount: transaction.amount,
+                        status: transaction.status
+                    }
+                });
+            }
 
         } catch (error) {
             console.error('Confirmation error:', error);
@@ -467,42 +632,147 @@ router.post('/refund',
 
             console.log(`💸 Refund request: ${transactionId} for tenant ${tenant.name}`);
 
-            // In real implementation, would process refund with Stripe
-            const refundId = `ref_${crypto.randomBytes(12).toString('hex')}`;
+            // Find the original transaction to get Stripe PaymentIntent ID
+            const originalTransaction = database.getTransactionsByTenant(tenant.id)
+                .find(t => t.id === transactionId);
 
-            // Create refund transaction record
-            const refundTransaction = await database.createTransaction({
-                amount: -(amount || 0), // Negative amount for refund
-                description: `Refund for ${transactionId}`,
-                tenantId: tenant.id,
-                userId: req.user.id,
-                status: 'refunded',
-                metadata: {
-                    originalTransactionId: transactionId,
-                    refundId,
+            if (!originalTransaction) {
+                return res.status(404).json(createErrorResponse(
+                    'TRANSACTION_NOT_FOUND',
+                    'Transaction not found or not accessible',
+                    { transactionId },
+                    {
+                        troubleshooting: [
+                            'Verify the transaction ID is correct',
+                            'Ensure the transaction belongs to your tenant',
+                            'Check that the transaction was successfully completed'
+                        ]
+                    }
+                ));
+            }
+
+            // REAL STRIPE REFUND - Process actual refunds!
+            if (stripe && originalTransaction.metadata?.stripePaymentIntentId) {
+                try {
+                    const stripePaymentIntentId = originalTransaction.metadata.stripePaymentIntentId;
+                    
+                    // Get the PaymentIntent to find the charge
+                    const paymentIntent = await stripe.paymentIntents.retrieve(stripePaymentIntentId);
+                    
+                    if (!paymentIntent.charges?.data?.[0]?.id) {
+                        throw new Error('No charge found for this payment');
+                    }
+
+                    // Create refund in Stripe
+                    const refund = await stripe.refunds.create({
+                        charge: paymentIntent.charges.data[0].id,
+                        amount: amount || paymentIntent.amount,
+                        reason: reason || 'requested_by_customer',
+                        metadata: {
+                            tenantId: tenant.id,
+                            originalTransactionId: transactionId,
+                            refundRequestedBy: req.user.id
+                        }
+                    });
+
+                    console.log(`✅ REAL refund processed: ${refund.id} for $${refund.amount/100}`);
+
+                    // Create refund transaction record
+                    const refundTransaction = await database.createTransaction({
+                        amount: -(refund.amount),
+                        description: `Refund for ${transactionId}`,
+                        tenantId: tenant.id,
+                        userId: req.user.id,
+                        status: refund.status,
+                        metadata: {
+                            originalTransactionId: transactionId,
+                            stripeRefundId: refund.id,
+                            stripeChargeId: refund.charge,
+                            stripeStatus: refund.status,
+                            reason: refund.reason,
+                            apiKeyId: req.apiKey.keyId
+                        }
+                    });
+
+                    res.status(200).json({
+                        id: refund.id,
+                        object: 'refund',
+                        amount: refund.amount,
+                        reason: refund.reason,
+                        status: refund.status,
+                        transactionId,
+                        tenantId: tenant.id,
+                        created: refund.created,
+                        livemode: refund.livemode,
+                        stripeRefundId: refund.id,
+                        stripeChargeId: refund.charge,
+                        transaction: {
+                            id: refundTransaction.id,
+                            amount: refundTransaction.amount,
+                            status: refundTransaction.status
+                        }
+                    });
+
+                } catch (stripeError) {
+                    console.error('❌ Stripe refund failed:', stripeError);
+                    
+                    return res.status(400).json(createErrorResponse(
+                        'STRIPE_REFUND_ERROR',
+                        stripeError.message || 'Refund processing failed',
+                        {
+                            stripeCode: stripeError.code,
+                            transactionId
+                        },
+                        {
+                            message: 'Unable to process the refund',
+                            troubleshooting: [
+                                'Verify the transaction was successfully completed',
+                                'Check that the refund amount doesn\'t exceed the original payment',
+                                'Ensure the transaction hasn\'t already been fully refunded'
+                            ]
+                        }
+                    ));
+                }
+
+            } else {
+                // Fallback for mock transactions or when Stripe isn't configured
+                const refundId = `ref_mock_${crypto.randomBytes(12).toString('hex')}`;
+
+                const refundTransaction = await database.createTransaction({
+                    amount: -(amount || originalTransaction.amount),
+                    description: `Refund for ${transactionId}`,
+                    tenantId: tenant.id,
+                    userId: req.user.id,
+                    status: 'refunded',
+                    metadata: {
+                        originalTransactionId: transactionId,
+                        refundId,
+                        reason: reason || 'requested',
+                        apiKeyId: req.apiKey.keyId,
+                        mock: true
+                    }
+                });
+
+                console.log(`⚠️  MOCK refund processed: ${refundId} (Stripe not configured or mock transaction)`);
+
+                res.status(200).json({
+                    id: refundId,
+                    object: 'refund',
+                    amount: amount || originalTransaction.amount,
                     reason: reason || 'requested',
-                    apiKeyId: req.apiKey.keyId
-                }
-            });
-
-            console.log(`✅ Refund processed: ${refundId}`);
-
-            res.status(200).json({
-                id: refundId,
-                object: 'refund',
-                amount: amount || 0,
-                reason: reason || 'requested',
-                status: 'succeeded',
-                transactionId,
-                tenantId: tenant.id,
-                created: Math.floor(Date.now() / 1000),
-                livemode: process.env.NODE_ENV === 'production',
-                transaction: {
-                    id: refundTransaction.id,
-                    amount: refundTransaction.amount,
-                    status: refundTransaction.status
-                }
-            });
+                    status: 'succeeded',
+                    transactionId,
+                    tenantId: tenant.id,
+                    created: Math.floor(Date.now() / 1000),
+                    livemode: false,
+                    mock: true,
+                    transaction: {
+                        id: refundTransaction.id,
+                        amount: refundTransaction.amount,
+                        status: refundTransaction.status
+                    }
+                });
+            }
 
         } catch (error) {
             console.error('Refund error:', error);
