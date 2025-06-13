@@ -836,7 +836,7 @@ function createPageRoute(route, filename) {
                 let html = fs.readFileSync(path.join(__dirname, 'public', filename), 'utf8');
                 const stripeKey = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
                 html = html.replace(
-                    "window.STRIPE_PUBLISHABLE_KEY = 'pk_test_51PmGsxBGmqHSe3k3e8nLMh6oPcB'; // Will be replaced dynamically",
+                    "window.STRIPE_PUBLISHABLE_KEY = 'pk_test_placeholder_key'; // Will be replaced dynamically",
                     `window.STRIPE_PUBLISHABLE_KEY = '${stripeKey}';`
                 );
                 res.setHeader('Content-Type', 'text/html');
@@ -858,7 +858,7 @@ function createPageRoute(route, filename) {
                     let html = fs.readFileSync(path.join(__dirname, 'public', filename), 'utf8');
                     const stripeKey = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
                     html = html.replace(
-                        "window.STRIPE_PUBLISHABLE_KEY = 'pk_test_51PmGsxBGmqHSe3k3e8nLMh6oPcB'; // Will be replaced dynamically",
+                        "window.STRIPE_PUBLISHABLE_KEY = 'pk_test_placeholder_key'; // Will be replaced dynamically",
                         `window.STRIPE_PUBLISHABLE_KEY = '${stripeKey}';`
                     );
                     res.setHeader('Content-Type', 'text/html');
