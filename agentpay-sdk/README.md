@@ -1,3 +1,6 @@
+# AgentPay SDK - Production Ready Payment Infrastructure
+*Last updated: Aslan v1.0 production release*
+
 # AgentPay Python SDK
 
 > **Give any AI agent purchasing power in 5 lines of code**

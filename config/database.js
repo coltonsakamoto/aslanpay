@@ -1,3 +1,6 @@
+// Database Configuration - Aslan v1.0 Production
+// Enterprise-grade multi-tenant architecture
+
 // Database configuration switcher
 // Uses in-memory database for development, PostgreSQL for production
 

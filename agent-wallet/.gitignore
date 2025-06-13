@@ -1,3 +1,6 @@
+# Agent Wallet - Virtual cards and payment processing
+# Updated for Aslan v1.0 production deployment
+
 # Environment variables
 .env
 .env.*
