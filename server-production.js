@@ -482,6 +482,15 @@ function validateApiKey(req, res, next) {
         keyData.usageCount++;
         keyData.lastUsed = new Date().toISOString();
         
+        // Add rate limiting headers for better developer experience
+        res.set({
+            'X-RateLimit-Limit': '100',
+            'X-RateLimit-Remaining': '99', 
+            'X-RateLimit-Reset': Math.floor(Date.now() / 1000) + 3600,
+            'X-API-Version': '1.0',
+            'X-AslanPay-Request-ID': require('crypto').randomBytes(8).toString('hex')
+        });
+        
         console.log(`🔑 API request authenticated for user: ${user.email} (${keyData.name})`);
         
         next();
