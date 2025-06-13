@@ -5,38 +5,118 @@ const crypto = require('crypto');
 
 const router = express.Router();
 
+// Enhanced error response helper
+function createErrorResponse(code, message, details = {}, docsSnippet = null) {
+    const error = {
+        error: message,
+        code,
+        timestamp: new Date().toISOString(),
+        details,
+        documentation: `${process.env.BASE_URL || 'http://localhost:3000'}/docs.html#error-${code.toLowerCase()}`
+    };
+    
+    if (docsSnippet) {
+        error.help = docsSnippet;
+    }
+    
+    return error;
+}
+
+// Common error responses with helpful snippets
+const ERROR_RESPONSES = {
+    MISSING_API_KEY: {
+        message: 'Missing or invalid Authorization header',
+        help: {
+            example: 'Authorization: Bearer ak_live_your_api_key_here',
+            note: 'Get your API key from the dashboard at /dashboard.html'
+        }
+    },
+    INVALID_API_KEY_FORMAT: {
+        message: 'API key must start with ak_live_ or ak_test_',
+        help: {
+            correct: 'ak_live_1234567890abcdef...',
+            incorrect: 'your_api_key_here',
+            note: 'Copy the full key from your welcome email or dashboard'
+        }
+    },
+    INVALID_API_KEY: {
+        message: 'The provided API key is invalid or has been revoked',
+        help: {
+            troubleshooting: [
+                'Check that you copied the full API key',
+                'Verify the key hasn\'t been revoked in your dashboard',
+                'Make sure you\'re using the right environment (live vs test)'
+            ]
+        }
+    },
+    SPENDING_LIMIT_EXCEEDED: {
+        message: 'Transaction exceeds your account spending limits',
+        help: {
+            solutions: [
+                'Verify your email to increase limits',
+                'Upgrade to Production plan for unlimited spending',
+                'Contact support if you need higher limits'
+            ]
+        }
+    },
+    VALIDATION_ERROR: {
+        message: 'Request validation failed',
+        help: {
+            example: {
+                amount: 2500,
+                description: 'Payment description',
+                agentId: 'optional-agent-id'
+            },
+            note: 'Amount must be in cents (2500 = $25.00)'
+        }
+    },
+    RATE_LIMIT_EXCEEDED: {
+        message: 'Too many requests',
+        help: {
+            solutions: [
+                'Implement exponential backoff in your retry logic',
+                'Reduce request frequency',
+                'Contact support for higher rate limits'
+            ]
+        }
+    }
+};
+
 // API Key Authentication Middleware for SaaS
 const authenticateApiKey = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({
-                error: 'Missing or invalid Authorization header',
-                code: 'MISSING_API_KEY',
-                message: 'Include your API key as: Authorization: Bearer ak_live_your_key'
-            });
+            return res.status(401).json(createErrorResponse(
+                'MISSING_API_KEY',
+                ERROR_RESPONSES.MISSING_API_KEY.message,
+                {},
+                ERROR_RESPONSES.MISSING_API_KEY.help
+            ));
         }
 
         const apiKey = authHeader.replace('Bearer ', '');
         
         if (!apiKey.startsWith('ak_live_') && !apiKey.startsWith('ak_test_')) {
-            return res.status(401).json({
-                error: 'Invalid API key format',
-                code: 'INVALID_API_KEY_FORMAT',
-                message: 'API keys must start with ak_live_ or ak_test_'
-            });
+            return res.status(401).json(createErrorResponse(
+                'INVALID_API_KEY_FORMAT',
+                ERROR_RESPONSES.INVALID_API_KEY_FORMAT.message,
+                { providedKey: apiKey.substring(0, 10) + '...' },
+                ERROR_RESPONSES.INVALID_API_KEY_FORMAT.help
+            ));
         }
 
         // Validate API key and get tenant context
         const keyValidation = await database.validateApiKey(apiKey);
         
         if (!keyValidation) {
-            return res.status(401).json({
-                error: 'Invalid API key',
-                code: 'INVALID_API_KEY',
-                message: 'The provided API key is invalid or has been revoked'
-            });
+            return res.status(401).json(createErrorResponse(
+                'INVALID_API_KEY',
+                ERROR_RESPONSES.INVALID_API_KEY.message,
+                { keyPrefix: apiKey.substring(0, 15) + '...' },
+                ERROR_RESPONSES.INVALID_API_KEY.help
+            ));
         }
 
         // Attach tenant and user context to request
@@ -49,54 +129,116 @@ const authenticateApiKey = async (req, res, next) => {
         next();
     } catch (error) {
         console.error('API key authentication error:', error);
-        res.status(500).json({
-            error: 'Authentication error',
-            code: 'AUTH_ERROR'
-        });
+        res.status(500).json(createErrorResponse(
+            'AUTHENTICATION_ERROR',
+            'Authentication service temporarily unavailable',
+            {},
+            {
+                message: 'Please try again in a few moments',
+                status: 'Check https://status.aslanpay.com for service status'
+            }
+        ));
     }
 };
 
-// Check spending limits middleware
+// Enhanced spending limits middleware
 const checkSpendingLimits = async (req, res, next) => {
     try {
         const { amount } = req.body;
         const tenant = req.tenant;
 
+        // Validate amount format
+        if (!amount || typeof amount !== 'number' || amount <= 0) {
+            return res.status(400).json(createErrorResponse(
+                'INVALID_AMOUNT',
+                'Amount must be a positive integer in cents',
+                { 
+                    provided: amount,
+                    expectedType: 'number (cents)'
+                },
+                {
+                    examples: {
+                        '$25.00': 2500,
+                        '$100.50': 10050,
+                        '$1.99': 199
+                    }
+                }
+            ));
+        }
+
         // Check transaction limit
         if (amount > tenant.settings.transactionLimit) {
-            return res.status(402).json({
-                error: 'Transaction amount exceeds limit',
-                code: 'TRANSACTION_LIMIT_EXCEEDED',
-                details: {
-                    requestedAmount: amount,
-                    transactionLimit: tenant.settings.transactionLimit,
-                    maxAllowed: tenant.settings.transactionLimit
+            return res.status(402).json(createErrorResponse(
+                'TRANSACTION_LIMIT_EXCEEDED',
+                `Transaction amount exceeds limit of $${tenant.settings.transactionLimit / 100}`,
+                {
+                    requestedAmount: `$${amount / 100}`,
+                    transactionLimit: `$${tenant.settings.transactionLimit / 100}`,
+                    plan: tenant.plan
+                },
+                {
+                    solutions: tenant.plan === 'sandbox' ? [
+                        'Verify your email to unlock higher limits',
+                        'Upgrade to Production plan for $1,000 per transaction',
+                        'Contact support for custom limits'
+                    ] : [
+                        'Contact support to increase transaction limits',
+                        'Consider splitting large payments into smaller amounts'
+                    ]
                 }
-            });
+            ));
         }
 
         // Check daily limit
         const dailyTotal = tenant.usage.dailySpent + amount;
         if (dailyTotal > tenant.settings.dailyLimit) {
-            return res.status(402).json({
-                error: 'Daily spending limit exceeded',
-                code: 'DAILY_LIMIT_EXCEEDED',
-                details: {
-                    requestedAmount: amount,
-                    dailySpent: tenant.usage.dailySpent,
-                    dailyLimit: tenant.settings.dailyLimit,
-                    remainingDaily: tenant.settings.dailyLimit - tenant.usage.dailySpent
+            return res.status(402).json(createErrorResponse(
+                'DAILY_LIMIT_EXCEEDED',
+                `Daily spending limit exceeded`,
+                {
+                    requestedAmount: `$${amount / 100}`,
+                    dailySpent: `$${tenant.usage.dailySpent / 100}`,
+                    dailyLimit: `$${tenant.settings.dailyLimit / 100}`,
+                    remainingDaily: `$${Math.max(0, tenant.settings.dailyLimit - tenant.usage.dailySpent) / 100}`,
+                    resetTime: new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString()
+                },
+                ERROR_RESPONSES.SPENDING_LIMIT_EXCEEDED.help
+            ));
+        }
+
+        // Check velocity limits for new accounts
+        if (tenant.settings.riskLevel === 'new' && tenant.usage.dailyAuthCount >= tenant.settings.velocityCap) {
+            return res.status(429).json(createErrorResponse(
+                'VELOCITY_LIMIT_EXCEEDED',
+                'Daily authorization limit exceeded for new accounts',
+                {
+                    dailyAuthCount: tenant.usage.dailyAuthCount,
+                    velocityCap: tenant.settings.velocityCap,
+                    accountAge: Math.floor((Date.now() - tenant.createdAt.getTime()) / (1000 * 60 * 60 * 24)) + ' days'
+                },
+                {
+                    solutions: [
+                        'Verify your email address to increase limits',
+                        'Wait 24 hours for limits to reset',
+                        'Contact support if you need higher limits immediately'
+                    ],
+                    verifyEmailUrl: `${process.env.BASE_URL || 'http://localhost:3000'}/dashboard.html`
                 }
-            });
+            ));
         }
 
         next();
     } catch (error) {
         console.error('Spending limits check error:', error);
-        res.status(500).json({
-            error: 'Failed to check spending limits',
-            code: 'LIMIT_CHECK_ERROR'
-        });
+        res.status(500).json(createErrorResponse(
+            'LIMIT_CHECK_ERROR',
+            'Unable to verify spending limits',
+            {},
+            {
+                message: 'Please try again in a few moments',
+                contact: 'If this persists, contact support with your request ID'
+            }
+        ));
     }
 };
 
@@ -108,7 +250,7 @@ router.post('/',
         properties: {
             amount: { 
                 type: 'integer',
-                minimum: 1,
+                minimum: 50,      // Minimum $0.50
                 maximum: 10000000  // $100,000 max
             },
             description: { 
@@ -135,7 +277,23 @@ router.post('/',
 
             console.log(`💳 Authorization request: $${amount/100} for "${description}" by ${tenant.name}`);
 
-            // Create transaction record
+            // Enhanced input validation with helpful errors
+            if (description.trim().length === 0) {
+                return res.status(400).json(createErrorResponse(
+                    'EMPTY_DESCRIPTION',
+                    'Description cannot be empty',
+                    {},
+                    {
+                        examples: [
+                            'AI Assistant Service',
+                            'ChatGPT API Usage',
+                            'Custom Model Inference'
+                        ]
+                    }
+                ));
+            }
+
+            // Create transaction record with fraud detection
             const transaction = await database.createTransaction({
                 amount,
                 description,
@@ -143,20 +301,18 @@ router.post('/',
                 userId: user.id,
                 agentId: agentId || 'unknown',
                 status: 'authorized',
+                apiKeyId: req.apiKey.keyId,
                 metadata: {
                     ...metadata,
-                    apiKeyId: req.apiKey.keyId,
                     userAgent: req.headers['user-agent'],
-                    ip: req.ip
+                    ip: req.ip,
+                    requestId: req.headers['x-request-id'] || 'unknown'
                 }
             });
 
             // In a real implementation, this would call Stripe
             // For now, we'll simulate the authorization
             const authorizationId = `auth_${crypto.randomBytes(12).toString('hex')}`;
-
-            // Update tenant usage
-            await database.updateTenantUsage(tenant.id, amount);
 
             console.log(`✅ Payment authorized: ${authorizationId} for $${amount/100}`);
 
@@ -184,18 +340,46 @@ router.post('/',
         } catch (error) {
             console.error('Authorization error:', error);
             
+            // Handle specific error types with helpful messages
+            if (error.message.includes('Daily authorization limit exceeded')) {
+                return res.status(429).json(createErrorResponse(
+                    'VELOCITY_LIMIT_EXCEEDED',
+                    error.message,
+                    {},
+                    {
+                        solutions: [
+                            'Verify your email address to increase limits',
+                            'Wait 24 hours for limits to reset',
+                            'Contact support for immediate assistance'
+                        ]
+                    }
+                ));
+            }
+            
             if (error.message.includes('limit')) {
-                return res.status(402).json({
-                    error: error.message,
-                    code: 'SPENDING_LIMIT_ERROR'
-                });
+                return res.status(402).json(createErrorResponse(
+                    'SPENDING_LIMIT_ERROR',
+                    error.message,
+                    {},
+                    ERROR_RESPONSES.SPENDING_LIMIT_EXCEEDED.help
+                ));
             }
 
-            res.status(500).json({
-                error: 'Failed to process authorization',
-                code: 'AUTHORIZATION_ERROR',
-                message: 'An error occurred while processing your payment authorization'
-            });
+            // Generic server error
+            res.status(500).json(createErrorResponse(
+                'AUTHORIZATION_ERROR',
+                'Failed to process authorization',
+                {},
+                {
+                    message: 'An unexpected error occurred while processing your payment authorization',
+                    troubleshooting: [
+                        'Verify your request format matches the API documentation',
+                        'Check that all required fields are provided',
+                        'Ensure your API key has sufficient permissions'
+                    ],
+                    contact: 'If this error persists, contact support with your request details'
+                }
+            ));
         }
     }
 );
@@ -566,5 +750,49 @@ if (process.env.NODE_ENV !== 'production') {
         }
     );
 }
+
+// Enhanced error handling for all routes
+router.use((error, req, res, next) => {
+    console.error('API Error:', error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+        return res.status(400).json(createErrorResponse(
+            'VALIDATION_ERROR',
+            'Request validation failed',
+            {
+                field: error.field,
+                providedValue: error.value,
+                expectedType: error.expectedType
+            },
+            ERROR_RESPONSES.VALIDATION_ERROR.help
+        ));
+    }
+    
+    // Handle rate limiting errors
+    if (error.status === 429) {
+        return res.status(429).json(createErrorResponse(
+            'RATE_LIMIT_EXCEEDED',
+            ERROR_RESPONSES.RATE_LIMIT_EXCEEDED.message,
+            {
+                retryAfter: error.retryAfter || '60 seconds',
+                limit: error.limit,
+                remaining: error.remaining
+            },
+            ERROR_RESPONSES.RATE_LIMIT_EXCEEDED.help
+        ));
+    }
+    
+    // Generic server error
+    res.status(500).json(createErrorResponse(
+        'INTERNAL_SERVER_ERROR',
+        'An unexpected error occurred',
+        {},
+        {
+            message: 'Our team has been notified and is investigating',
+            contact: 'If urgent, contact support with your request ID'
+        }
+    ));
+});
 
 module.exports = router; 

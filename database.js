@@ -168,30 +168,56 @@ class Database {
     }
 
     // API Key Management (Tenant-scoped)
-    async createApiKey(userId, tenantId, name) {
+    async createApiKey(userId, tenantId, name, keyType = 'sandbox') {
         const user = database.users.get(userId);
+        const tenant = database.tenants.get(tenantId);
+        
         if (!user || user.tenantId !== tenantId) {
             throw new Error('User not found in tenant');
         }
 
+        // FRAUD PROTECTION: Check if live key is allowed
+        if (keyType === 'live') {
+            if (!tenant.verification.emailVerified) {
+                throw new Error('Email verification required for live API keys');
+            }
+            
+            // For high-risk accounts, require manual review
+            if (tenant.settings.manualReviewRequired) {
+                throw new Error('Account requires manual review before live key issuance');
+            }
+            
+            // Check if business verification needed (for high limits)
+            if (tenant.settings.dailyLimit > 100000 && !tenant.verification.businessVerified) { // >$1000/day
+                throw new Error('Business verification required for high-limit live keys');
+            }
+        }
+
         const keyId = uuidv4();
-        const prefix = 'ak_live_';
+        const prefix = keyType === 'live' ? 'ak_live_' : 'ak_test_';
         const secret = crypto.randomBytes(32).toString('hex');
         const apiKey = `${prefix}${secret}`;
         
         const keyData = {
             id: keyId,
             userId,
-            tenantId,  // CRITICAL: API keys are tenant-scoped
+            tenantId,
             name,
             key: apiKey,
             prefix,
             secret,
+            keyType, // 'sandbox' or 'live'
             lastUsed: null,
             usageCount: 0,
             createdAt: new Date(),
             isActive: true,
-            permissions: ['authorize', 'confirm', 'refund'],
+            permissions: keyType === 'live' ? 
+                ['authorize', 'confirm', 'refund', 'webhooks'] : 
+                ['authorize'], // Sandbox has limited permissions
+            // FRAUD PROTECTION
+            dailyUsageCount: 0,
+            suspiciousActivityFlags: [],
+            riskScore: 0
         };
 
         database.apiKeys.set(keyId, keyData);
@@ -200,6 +226,7 @@ class Database {
             id: keyId,
             name,
             key: apiKey,
+            keyType,
             tenantId,
             createdAt: keyData.createdAt,
             lastUsed: keyData.lastUsed,
@@ -253,27 +280,82 @@ class Database {
 
     // Transaction Management
     async createTransaction(transactionData) {
-        const { amount, description, tenantId, userId, agentId, status = 'pending' } = transactionData;
+        const { amount, description, tenantId, userId, agentId, status = 'pending', apiKeyId } = transactionData;
         
+        const tenant = database.tenants.get(tenantId);
+        if (!tenant) throw new Error('Tenant not found');
+
+        // FRAUD PROTECTION: Velocity checks
+        const today = new Date().toDateString();
+        const lastReset = tenant.usage.lastReset.toDateString();
+        
+        // Reset daily counters if new day
+        if (today !== lastReset) {
+            tenant.usage.dailySpent = 0;
+            tenant.usage.dailyAuthCount = 0;
+            tenant.usage.lastReset = new Date();
+        }
+
+        // Check velocity cap for new accounts
+        if (tenant.settings.riskLevel === 'new' && tenant.usage.dailyAuthCount >= tenant.settings.velocityCap) {
+            throw new Error('Daily authorization limit exceeded for new accounts. Please verify your email to increase limits.');
+        }
+
+        // FRAUD DETECTION: Flag suspicious patterns
+        const suspiciousFlags = [];
+        
+        // High frequency from single IP (would need request IP)
+        if (tenant.usage.dailyAuthCount > 50) {
+            suspiciousFlags.push('high_frequency');
+        }
+        
+        // Round amounts (possible testing)
+        if (amount % 1000 === 0 && amount >= 10000) {
+            suspiciousFlags.push('round_amounts');
+        }
+        
+        // Very high amounts for new accounts
+        if (tenant.settings.riskLevel === 'new' && amount > 50000) { // >$500
+            suspiciousFlags.push('high_amount_new_account');
+        }
+
         const transactionId = uuidv4();
         const transaction = {
             id: transactionId,
-            tenantId,  // CRITICAL: Transactions are tenant-scoped
+            tenantId,
             userId,
             agentId,
             amount,
             description,
             status,
             createdAt: new Date(),
-            metadata: transactionData.metadata || {}
+            metadata: {
+                ...transactionData.metadata,
+                apiKeyId,
+                suspiciousFlags,
+                riskScore: suspiciousFlags.length
+            }
         };
 
         database.transactions.set(transactionId, transaction);
         
-        // Update tenant usage
-        if (status === 'completed') {
-            await this.updateTenantUsage(tenantId, amount);
+        // Update usage counters
+        if (status === 'completed' || status === 'authorized') {
+            tenant.usage.dailySpent += amount;
+            tenant.usage.dailyAuthCount += 1;
+            
+            // Store suspicious activity
+            if (suspiciousFlags.length > 0) {
+                tenant.usage.suspiciousActivity.push({
+                    transactionId,
+                    flags: suspiciousFlags,
+                    timestamp: new Date(),
+                    amount
+                });
+            }
         }
+        
+        await this.updateTenantUsage(tenantId, amount);
         
         return transaction;
     }
@@ -317,15 +399,32 @@ class Database {
                 dailyLimit: 10000,     // $100 sandbox limit
                 transactionLimit: 5000, // $50 per transaction
                 apiCallLimit: 1000,
+                // FRAUD PROTECTION SETTINGS
+                velocityCap: 100,      // Max 100 auth/day for new accounts
+                requireEmailVerification: true, // Must verify email for live keys
+                riskLevel: 'new',      // new, verified, trusted
+                manualReviewRequired: false
             },
             usage: {
                 dailySpent: 0,
                 monthlySpent: 0,
                 apiCalls: 0,
-                lastReset: new Date()
+                lastReset: new Date(),
+                // FRAUD TRACKING
+                dailyAuthCount: 0,
+                suspiciousActivity: [],
+                lastRiskAssessment: new Date()
             },
             stripeAccountId: null,
-            webhookUrls: []
+            webhookUrls: [],
+            // VERIFICATION STATUS
+            verification: {
+                emailVerified: false,
+                identityVerified: false,
+                businessVerified: false,
+                verifiedAt: null,
+                verificationMethod: null
+            }
         };
 
         database.tenants.set(tenantId, tenant);
@@ -343,8 +442,8 @@ class Database {
         tenant.ownerId = user.id;
         database.tenants.set(tenantId, tenant);
 
-        // Create default API key
-        const apiKey = await this.createApiKey(user.id, tenantId, 'Default API Key');
+        // Create SANDBOX API key only (no live keys until verified)
+        const apiKey = await this.createApiKey(user.id, tenantId, 'Sandbox API Key', 'sandbox');
 
         return {
             user,
@@ -502,6 +601,95 @@ class Database {
             transactions: Array.from(database.transactions.values()),
             passwordResets: Array.from(database.passwordResets.values()),
             emailVerifications: Array.from(database.emailVerifications.values())
+        };
+    }
+
+    // Email verification for fraud protection
+    async verifyEmailForTenant(token) {
+        const verification = database.emailVerifications.get(token);
+        if (!verification || verification.expiresAt < new Date()) {
+            return false;
+        }
+
+        const user = database.users.get(verification.userId);
+        if (user) {
+            user.emailVerified = true;
+            user.updatedAt = new Date();
+            database.users.set(verification.userId, user);
+            
+            // Update tenant verification status
+            const tenant = database.tenants.get(user.tenantId);
+            if (tenant) {
+                tenant.verification.emailVerified = true;
+                tenant.verification.verifiedAt = new Date();
+                tenant.verification.verificationMethod = 'email';
+                tenant.settings.riskLevel = 'verified'; // Upgrade from 'new'
+                tenant.settings.velocityCap = 500; // Increase limit for verified accounts
+                database.tenants.set(user.tenantId, tenant);
+            }
+        }
+
+        database.emailVerifications.delete(token);
+        return true;
+    }
+
+    // Risk assessment for accounts
+    async assessAccountRisk(tenantId) {
+        const tenant = database.tenants.get(tenantId);
+        if (!tenant) throw new Error('Tenant not found');
+
+        let riskScore = 0;
+        const riskFactors = [];
+
+        // Account age risk
+        const accountAge = Date.now() - tenant.createdAt.getTime();
+        const daysSinceCreation = accountAge / (1000 * 60 * 60 * 24);
+        
+        if (daysSinceCreation < 1) {
+            riskScore += 3;
+            riskFactors.push('very_new_account');
+        } else if (daysSinceCreation < 7) {
+            riskScore += 1;
+            riskFactors.push('new_account');
+        }
+
+        // Email verification risk
+        if (!tenant.verification.emailVerified) {
+            riskScore += 2;
+            riskFactors.push('unverified_email');
+        }
+
+        // Suspicious activity risk
+        const recentSuspiciousActivity = tenant.usage.suspiciousActivity.filter(
+            activity => Date.now() - activity.timestamp.getTime() < 24 * 60 * 60 * 1000
+        );
+        
+        if (recentSuspiciousActivity.length > 5) {
+            riskScore += 4;
+            riskFactors.push('high_suspicious_activity');
+        } else if (recentSuspiciousActivity.length > 2) {
+            riskScore += 2;
+            riskFactors.push('moderate_suspicious_activity');
+        }
+
+        // Update tenant risk assessment
+        tenant.usage.lastRiskAssessment = new Date();
+        
+        // Auto-trigger manual review for high risk
+        if (riskScore >= 5) {
+            tenant.settings.manualReviewRequired = true;
+            tenant.settings.riskLevel = 'high_risk';
+        } else if (riskScore >= 3) {
+            tenant.settings.riskLevel = 'medium_risk';
+        }
+
+        database.tenants.set(tenantId, tenant);
+
+        return {
+            riskScore,
+            riskFactors,
+            riskLevel: tenant.settings.riskLevel,
+            manualReviewRequired: tenant.settings.manualReviewRequired
         };
     }
 }
