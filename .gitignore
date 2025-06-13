@@ -304,11 +304,17 @@ local.properties
 # Built Visual Studio Code Extensions
 *.vsix
 
-# Security Fixes and Quarantine
-security-fixes/quarantine/
-security-fixes/patches/
-security-fixes/test-results/
-security-fixes/*.log
+# Security Fixes and Quarantine - KEEP PRIVATE
+security-fixes/
+security-fixes/**
+quarantine/
+patches/
+vulnerability-reports/
+security-audit/
+penetration-tests/
+*.security
+*.vuln
+*-security-*
 
 # Test files (additional security)
 test-*.js
