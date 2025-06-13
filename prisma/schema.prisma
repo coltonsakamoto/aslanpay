@@ -152,7 +152,7 @@ model Transaction {
   description     String?
   status          String   // pending, completed, failed, cancelled
   stripePaymentId String?
-  metadata        Json?    // Store additional data as JSON
+  metadata        String?  // Store additional data as JSON string
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -166,7 +166,7 @@ model AuditLog {
   apiKeyId  String?
   action    String   // login, api_key_created, payment_authorized, etc.
   resource  String?  // Resource affected
-  metadata  Json?    // Additional context
+  metadata  String?  // Additional context as JSON string
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
