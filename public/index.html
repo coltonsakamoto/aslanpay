@@ -131,149 +131,133 @@
         </div>
     </section>
 
-    <!-- Stripe vs Aslan Comparison Section -->
+    <!-- AslanPay vs Traditional Payment Systems Comparison -->
     <section class="py-12 sm:py-16 bg-gradient-to-r from-blue-50 to-indigo-100">
         <div class="max-w-6xl mx-auto px-4 sm:px-6">
             <div class="text-center mb-8 sm:mb-12">
                 <h2 class="text-2xl sm:text-3xl font-bold text-aslan-dark mb-4">
-                    🤔 "Why not just use Stripe Issuing + Order Intents?"
+                    🏆 Why AslanPay's Controls Beat Traditional Payment Systems
                 </h2>
                 <p class="text-lg text-aslan-gray max-w-3xl mx-auto">
-                    Stripe's approach: Create virtual cards → Add to agents → Monitor transactions. <br>
-                    <strong>Aslan's approach:</strong> Direct authorization APIs designed for AI from day one.
+                    Traditional payment processors weren't designed for AI agents. AslanPay was built from the ground up for autonomous commerce.
                 </p>
             </div>
             
             <div class="grid md:grid-cols-2 gap-6 sm:gap-8">
-                <!-- Stripe Column -->
+                <!-- Traditional Payment Systems Column -->
                 <div class="bg-white p-6 sm:p-8 rounded-xl border-2 border-gray-200 shadow-sm">
                     <div class="flex items-center mb-6">
-                        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-white text-sm font-bold">S</span>
+                        <div class="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center mr-3">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                            </svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-aslan-dark">Stripe Issuing + Order Intents</h3>
+                        <h3 class="text-xl font-semibold text-aslan-dark">Traditional Payment Systems</h3>
                     </div>
-                    <p class="text-aslan-gray mb-6 font-medium">Traditional card infrastructure adapted for AI</p>
+                    <p class="text-aslan-gray mb-6 font-medium">Stripe, Square, PayPal and others</p>
                     
-                    <div class="space-y-3 mb-6">
+                    <div class="space-y-4">
                         <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                                <span class="text-green-600 text-xs">✓</span>
+                            <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                                <span class="text-red-600 text-sm font-bold">❌</span>
                             </div>
-                            <span class="text-sm text-aslan-dark">Create virtual cards for agents</span>
+                            <div>
+                                <span class="text-sm font-semibold text-aslan-dark block">Post-transaction controls</span>
+                                <span class="text-xs text-gray-600">Block after money is spent</span>
+                            </div>
                         </div>
                         <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                                <span class="text-green-600 text-xs">✓</span>
+                            <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                                <span class="text-red-600 text-sm font-bold">❌</span>
                             </div>
-                            <span class="text-sm text-aslan-dark">Order lifecycle management (private preview)</span>
+                            <div>
+                                <span class="text-sm font-semibold text-aslan-dark block">Manual rule setup</span>
+                                <span class="text-xs text-gray-600">Complex configuration required</span>
+                            </div>
                         </div>
                         <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-yellow-100 flex items-center justify-center mt-0.5">
-                                <span class="text-yellow-600 text-xs">⚠</span>
+                            <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                                <span class="text-red-600 text-sm font-bold">❌</span>
                             </div>
-                            <span class="text-sm text-gray-600">Requires PCI compliance & card networks</span>
+                            <div>
+                                <span class="text-sm font-semibold text-aslan-dark block">No AI context</span>
+                                <span class="text-xs text-gray-600">Don't understand agent behavior</span>
+                            </div>
                         </div>
                         <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
-                                <span class="text-red-600 text-xs">✗</span>
+                            <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                                <span class="text-red-600 text-sm font-bold">❌</span>
                             </div>
-                            <span class="text-sm text-gray-500">Complex multi-step integration</span>
-                        </div>
-                        <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
-                                <span class="text-red-600 text-xs">✗</span>
+                            <div>
+                                <span class="text-sm font-semibold text-aslan-dark block">Basic limits</span>
+                                <span class="text-xs text-gray-600">Just daily/monthly caps</span>
                             </div>
-                            <span class="text-sm text-gray-500">Card data security risks</span>
                         </div>
-                        <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
-                                <span class="text-red-600 text-xs">✗</span>
-                            </div>
-                            <span class="text-sm text-gray-500">Limited agent-specific controls</span>
-                        </div>
-                    </div>
-                    
-                    <div class="p-4 bg-blue-50 rounded-lg">
-                        <div class="font-semibold text-blue-900 text-sm mb-1">Perfect for:</div>
-                        <div class="text-blue-800 text-sm">"Existing card-based spending workflows"</div>
                     </div>
                 </div>
 
-                <!-- Aslan Column -->
+                <!-- AslanPay AI-First Approach Column -->
                 <div class="bg-gradient-to-br from-orange-50 to-red-50 p-6 sm:p-8 rounded-xl border-2 border-aslan-orange shadow-lg">
                     <div class="flex items-center mb-6">
                         <span class="text-2xl mr-3">🦁</span>
-                        <h3 class="text-xl font-semibold text-aslan-dark">Aslan Payment Infrastructure</h3>
+                        <h3 class="text-xl font-semibold text-aslan-dark">AslanPay's AI-First Approach</h3>
                     </div>
-                    <p class="text-aslan-gray mb-6 font-medium">For enterprises deploying autonomous AI agents</p>
+                    <p class="text-aslan-gray mb-6 font-medium">Built specifically for autonomous AI agents</p>
                     
-                    <div class="space-y-3 mb-6">
+                    <div class="space-y-4">
                         <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                                <span class="text-green-600 text-xs">✓</span>
+                            <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-sm font-bold">✅</span>
                             </div>
-                            <span class="text-sm text-aslan-dark">Complete payment authorization platform</span>
+                            <div>
+                                <span class="text-sm font-semibold text-aslan-dark block">Pre-transaction validation</span>
+                                <span class="text-xs text-gray-600">Prevent before spending</span>
+                            </div>
                         </div>
                         <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                                <span class="text-green-600 text-xs">✓</span>
+                            <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-sm font-bold">✅</span>
                             </div>
-                            <span class="text-sm text-aslan-dark">Multi-agent spending controls</span>
+                            <div>
+                                <span class="text-sm font-semibold text-aslan-dark block">Context-aware rules</span>
+                                <span class="text-xs text-gray-600">Understand agent purposes</span>
+                            </div>
                         </div>
                         <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                                <span class="text-green-600 text-xs">✓</span>
+                            <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-sm font-bold">✅</span>
                             </div>
-                            <span class="text-sm text-aslan-dark">Real-world purchase capabilities</span>
+                            <div>
+                                <span class="text-sm font-semibold text-aslan-dark block">Learning controls</span>
+                                <span class="text-xs text-gray-600">Adapt based on behavior</span>
+                            </div>
                         </div>
                         <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                                <span class="text-green-600 text-xs">✓</span>
+                            <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                                <span class="text-green-600 text-sm font-bold">✅</span>
                             </div>
-                            <span class="text-sm text-aslan-dark">Enterprise security & compliance</span>
-                        </div>
-                        <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                                <span class="text-green-600 text-xs">✓</span>
+                            <div>
+                                <span class="text-sm font-semibold text-aslan-dark block">Multi-agent coordination</span>
+                                <span class="text-xs text-gray-600">Shared budget management</span>
                             </div>
-                            <span class="text-sm text-aslan-dark">Production-ready infrastructure</span>
                         </div>
-                        <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                                <span class="text-green-600 text-xs">✓</span>
-                            </div>
-                            <span class="text-sm text-aslan-dark">Custom business logic & controls</span>
-                        </div>
-                    </div>
-                    
-                    <div class="p-4 bg-orange-100 rounded-lg">
-                        <div class="font-semibold text-orange-900 text-sm mb-1">Perfect for:</div>
-                        <div class="text-orange-800 text-sm">"Let my AI agents buy AWS credits autonomously"</div>
                     </div>
                 </div>
             </div>
             
-            <!-- Both Together Section -->
-            <div class="mt-8 sm:mt-12 p-6 sm:p-8 bg-white rounded-xl border-2 border-green-200 shadow-sm">
-                <div class="text-center">
-                    <div class="flex items-center justify-center space-x-4 mb-4">
-                        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                            <span class="text-white text-sm font-bold">S</span>
-                        </div>
-                        <span class="text-2xl">+</span>
-                        <span class="text-2xl">🦁</span>
-                        <span class="text-2xl">=</span>
-                        <span class="text-2xl">🚀</span>
-                    </div>
-                    <h3 class="text-xl font-semibold text-aslan-dark mb-3">Best of Both Worlds</h3>
+            <!-- CTA Section -->
+            <div class="mt-8 sm:mt-12 text-center">
+                <div class="p-6 sm:p-8 bg-white rounded-xl border-2 border-aslan-orange shadow-sm">
+                    <h3 class="text-xl font-semibold text-aslan-dark mb-3">Ready to see the difference?</h3>
                     <p class="text-aslan-gray mb-6 max-w-2xl mx-auto">
-                        Use Stripe's toolkit to charge customers for AI services, and Aslan to let those same AI agents make autonomous purchases. Complete the economic loop!
+                        Compare AslanPay's AI-native payment controls with traditional processors side-by-side
                     </p>
-                    <div class="inline-flex items-center space-x-2 text-sm font-medium text-green-700 bg-green-100 px-4 py-2 rounded-lg">
-                        <span>💡</span>
-                        <span>They work together, not against each other</span>
-                    </div>
+                    <a href="/comparison" class="bg-aslan-orange text-white px-6 sm:px-8 py-3 rounded-lg text-lg font-medium hover:bg-orange-600 transition-colors inline-flex items-center space-x-2">
+                        <span>See detailed comparison vs. Stripe</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
+                    </a>
                 </div>
             </div>
         </div>
