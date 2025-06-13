@@ -132,6 +132,15 @@ const database = {
         return keys;
     },
     
+    getApiKeyByValue: function(keyValue) {
+        for (const key of this.apiKeys.values()) {
+            if (key.key === keyValue && key.isActive) {
+                return key;
+            }
+        }
+        return null;
+    },
+    
     healthCheck: function() {
         return Promise.resolve({ 
             status: 'connected', 
@@ -421,6 +430,70 @@ app.get('/api/auth/me', validateSession, (req, res) => {
     res.json({ user: req.user });
 });
 
+// API Key authentication middleware
+function validateApiKey(req, res, next) {
+    try {
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 'Missing or invalid authorization header. Include: Authorization: Bearer ak_live_your_key',
+                code: 'MISSING_API_KEY',
+                documentation: 'https://docs.aslanpay.xyz/authentication'
+            });
+        }
+
+        const apiKey = authHeader.substring(7); // Remove 'Bearer ' prefix
+        
+        // Validate API key format
+        if (!apiKey.startsWith('ak_live_') && !apiKey.startsWith('ak_test_')) {
+            return res.status(401).json({
+                error: 'Invalid API key format. Expected format: ak_live_... or ak_test_...',
+                code: 'INVALID_API_KEY_FORMAT',
+                documentation: 'https://docs.aslanpay.xyz/authentication'
+            });
+        }
+
+        // Find API key in database
+        const keyData = database.getApiKeyByValue(apiKey);
+        
+        if (!keyData) {
+            return res.status(401).json({
+                error: 'Invalid or revoked API key',
+                code: 'INVALID_API_KEY',
+                documentation: 'https://docs.aslanpay.xyz/authentication'
+            });
+        }
+
+        // Get user associated with API key
+        const user = database.getUserById(keyData.userId);
+        if (!user) {
+            return res.status(401).json({
+                error: 'User associated with API key not found',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+
+        // Attach user and API key data to request
+        req.user = user;
+        req.apiKey = keyData;
+        
+        // Update API key usage
+        keyData.usageCount++;
+        keyData.lastUsed = new Date().toISOString();
+        
+        console.log(`🔑 API request authenticated for user: ${user.email} (${keyData.name})`);
+        
+        next();
+    } catch (error) {
+        console.error('API key validation error:', error);
+        res.status(500).json({ 
+            error: 'Authentication service error', 
+            code: 'AUTH_SERVICE_ERROR' 
+        });
+    }
+}
+
 // API Key management
 app.get('/api/keys', validateSession, (req, res) => {
     try {
@@ -453,28 +526,54 @@ app.post('/api/keys', validateSession, (req, res) => {
     }
 });
 
-// Payment authorization endpoint (basic version)
-app.post('/api/v1/authorize', (req, res) => {
+// Payment authorization endpoint (with API key authentication)
+app.post('/api/v1/authorize', validateApiKey, (req, res) => {
     try {
-        const { amount, description } = req.body;
+        const { amount, description, agentId, metadata } = req.body;
         
+        // Enhanced validation
         if (!amount || typeof amount !== 'number' || amount <= 0) {
-            return res.status(400).json({ error: 'Valid amount required', code: 'INVALID_AMOUNT' });
+            return res.status(400).json({ 
+                error: 'Valid amount required (positive integer in cents, e.g., 2500 = $25.00)', 
+                code: 'INVALID_AMOUNT',
+                example: { amount: 2500, description: "AWS credits for AI agent" }
+            });
+        }
+        
+        if (!description || typeof description !== 'string' || description.trim().length === 0) {
+            return res.status(400).json({ 
+                error: 'Description is required', 
+                code: 'MISSING_DESCRIPTION',
+                example: { amount: 2500, description: "AWS credits for AI agent" }
+            });
+        }
+        
+        if (amount > 10000000) { // $100,000 limit
+            return res.status(400).json({ 
+                error: 'Amount exceeds maximum limit of $100,000', 
+                code: 'AMOUNT_TOO_LARGE' 
+            });
         }
         
         const authId = `auth_${require('crypto').randomBytes(16).toString('hex')}`;
+        
+        console.log(`💳 Payment authorization: $${amount/100} for "${description}" by ${req.user.email} using ${req.apiKey.name}`);
         
         res.json({
             id: authId,
             object: 'authorization',
             amount,
-            description: description || 'Payment authorization',
+            description: description.trim(),
+            agentId: agentId || 'unknown',
+            userId: req.user.id,
+            apiKeyId: req.apiKey.id,
             status: 'authorized',
             created: Math.floor(Date.now() / 1000),
             expires_at: Math.floor((Date.now() + 10 * 60 * 1000) / 1000),
             livemode: false,
             mock: true,
-            message: 'Authorization successful'
+            metadata: metadata || {},
+            message: 'Authorization successful - payment authorized for AI agent'
         });
         
     } catch (error) {
@@ -483,16 +582,22 @@ app.post('/api/v1/authorize', (req, res) => {
     }
 });
 
-// Payment confirmation endpoint
-app.post('/api/v1/confirm', (req, res) => {
+// Payment confirmation endpoint (with API key authentication)
+app.post('/api/v1/confirm', validateApiKey, (req, res) => {
     try {
         const { authorizationId, finalAmount } = req.body;
         
         if (!authorizationId) {
-            return res.status(400).json({ error: 'Authorization ID required', code: 'MISSING_AUTH_ID' });
+            return res.status(400).json({ 
+                error: 'Authorization ID required', 
+                code: 'MISSING_AUTH_ID',
+                example: { authorizationId: "auth_1234567890abcdef", finalAmount: 2500 }
+            });
         }
         
         const paymentId = `pay_${require('crypto').randomBytes(16).toString('hex')}`;
+        
+        console.log(`✅ Payment confirmation: ${authorizationId} confirmed by ${req.user.email} using ${req.apiKey.name}`);
         
         res.json({
             id: paymentId,
@@ -500,6 +605,8 @@ app.post('/api/v1/confirm', (req, res) => {
             amount: finalAmount || 2500,
             status: 'completed',
             authorizationId,
+            userId: req.user.id,
+            apiKeyId: req.apiKey.id,
             created: Math.floor(Date.now() / 1000),
             livemode: false,
             mock: true,
@@ -507,7 +614,8 @@ app.post('/api/v1/confirm', (req, res) => {
                 id: `txn_${require('crypto').randomBytes(12).toString('hex')}`,
                 amount: finalAmount || 2500,
                 status: 'completed'
-            }
+            },
+            message: 'Payment confirmed successfully'
         });
         
     } catch (error) {
@@ -516,16 +624,22 @@ app.post('/api/v1/confirm', (req, res) => {
     }
 });
 
-// Payment refund endpoint
-app.post('/api/v1/refund', (req, res) => {
+// Payment refund endpoint (with API key authentication)
+app.post('/api/v1/refund', validateApiKey, (req, res) => {
     try {
         const { transactionId, amount, reason } = req.body;
         
         if (!transactionId) {
-            return res.status(400).json({ error: 'Transaction ID required', code: 'MISSING_TRANSACTION_ID' });
+            return res.status(400).json({ 
+                error: 'Transaction ID required', 
+                code: 'MISSING_TRANSACTION_ID',
+                example: { transactionId: "txn_1234567890", amount: 1000, reason: "customer_request" }
+            });
         }
         
         const refundId = `ref_${require('crypto').randomBytes(16).toString('hex')}`;
+        
+        console.log(`💰 Refund processed: ${transactionId} refunded by ${req.user.email} using ${req.apiKey.name}`);
         
         res.json({
             id: refundId,
@@ -534,6 +648,8 @@ app.post('/api/v1/refund', (req, res) => {
             reason: reason || 'requested',
             status: 'succeeded',
             transactionId,
+            userId: req.user.id,
+            apiKeyId: req.apiKey.id,
             created: Math.floor(Date.now() / 1000),
             livemode: false,
             mock: true,
@@ -541,7 +657,8 @@ app.post('/api/v1/refund', (req, res) => {
                 id: `txn_${require('crypto').randomBytes(12).toString('hex')}`,
                 amount: -(amount || 500),
                 status: 'refunded'
-            }
+            },
+            message: 'Refund processed successfully'
         });
         
     } catch (error) {
@@ -550,23 +667,61 @@ app.post('/api/v1/refund', (req, res) => {
     }
 });
 
+// API Key test endpoint
+app.get('/api/v1/test', validateApiKey, (req, res) => {
+    res.json({
+        message: '🎉 API Key is working correctly!',
+        user: {
+            id: req.user.id,
+            email: req.user.email,
+            name: req.user.name
+        },
+        apiKey: {
+            id: req.apiKey.id,
+            name: req.apiKey.name,
+            usageCount: req.apiKey.usageCount,
+            lastUsed: req.apiKey.lastUsed
+        },
+        timestamp: new Date().toISOString(),
+        instructions: {
+            usage: 'Include in header: Authorization: Bearer ' + req.apiKey.key.substring(0, 20) + '...',
+            endpoints: [
+                'POST /api/v1/authorize - Authorize payments',
+                'POST /api/v1/confirm - Confirm payments', 
+                'POST /api/v1/refund - Process refunds'
+            ]
+        }
+    });
+});
+
 // Tenant information endpoint
-app.get('/api/v1/tenant', (req, res) => {
+app.get('/api/v1/tenant', validateApiKey, (req, res) => {
     try {
-        // Mock tenant data for demo
+        const userApiKeys = database.getApiKeysByUserId(req.user.id);
+        
         res.json({
-            id: 'tenant_demo_123',
-            name: 'Demo Organization',
+            id: req.user.id,
+            name: req.user.name + "'s Organization",
             plan: 'sandbox',
+            user: {
+                email: req.user.email,
+                name: req.user.name,
+                created: req.user.createdAt
+            },
             usage: {
                 dailySpent: 2500,
                 monthlySpent: 25000,
-                apiCalls: 42
+                apiCalls: req.apiKey.usageCount
             },
             stats: {
                 users: 1,
-                api_keys: 1,
+                api_keys: userApiKeys.length,
                 transactions: 3
+            },
+            apiKey: {
+                name: req.apiKey.name,
+                usageCount: req.apiKey.usageCount,
+                lastUsed: req.apiKey.lastUsed
             }
         });
     } catch (error) {
@@ -717,8 +872,17 @@ app.listen(port, () => {
     console.log('   • Health: /health, /test, /api/status');
     console.log('   • Authentication: /api/auth/register, /api/auth/login, /api/auth/logout, /api/auth/me');
     console.log('   • API Keys: /api/keys (GET/POST)');
-    console.log('   • Payments: /api/v1/authorize');
+    console.log('   • 🔑 Payment API (REQUIRES API KEY):');
+    console.log('     - GET  /api/v1/test       (Test API key)');
+    console.log('     - POST /api/v1/authorize  (Authorize payments)');
+    console.log('     - POST /api/v1/confirm    (Confirm payments)');
+    console.log('     - POST /api/v1/refund     (Process refunds)');
+    console.log('     - GET  /api/v1/tenant     (Tenant info)');
+    console.log('');
+    console.log('🔐 API Key Authentication: ENABLED ✅');
+    console.log('💡 To test: node test-api-keys.js');
+    console.log('📖 Include header: Authorization: Bearer ak_live_your_key');
     console.log('');
     console.log('🦁 Like the great lion of Narnia, Aslan guides AI agents to accomplish their missions');
-    console.log('✅ PRODUCTION DEPLOYMENT SUCCESSFUL - All systems operational!');
+    console.log('✅ PRODUCTION DEPLOYMENT SUCCESSFUL - API key authentication operational!');
 }); 
