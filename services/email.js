@@ -177,13 +177,14 @@ class EmailService {
     }
 
     /**
-     * Send welcome email
+     * Send welcome email (SaaS version with API key)
      */
-    async sendWelcomeEmail(email, name) {
-        const subject = 'Welcome to Aslan!';
+    async sendWelcomeEmail(email, name, options = {}) {
+        const { apiKey, organizationName, dashboardUrl } = options;
+        const subject = apiKey ? '🦁 Welcome to Aslan! Your API key is ready' : 'Welcome to Aslan!';
         
-        const html = this.getWelcomeEmailTemplate(name);
-        const text = this.getWelcomeEmailText(name);
+        const html = this.getWelcomeEmailTemplate(name, options);
+        const text = this.getWelcomeEmailText(name, options);
 
         return this.sendEmail({
             to: email,
@@ -308,7 +309,10 @@ If you didn't request a password reset, you can safely ignore this email.
         `.trim();
     }
 
-    getWelcomeEmailTemplate(name) {
+    getWelcomeEmailTemplate(name, options = {}) {
+        const { apiKey, organizationName, dashboardUrl } = options;
+        const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+        
         return `
         <!DOCTYPE html>
         <html>
@@ -320,10 +324,14 @@ If you didn't request a password reset, you can safely ignore this email.
                 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
                 .header { background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
                 .content { background: #f9f9f9; padding: 30px 20px; border-radius: 0 0 8px 8px; }
-                .button { display: inline-block; background: #FF6B35; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+                .button { display: inline-block; background: #FF6B35; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
+                .button-secondary { display: inline-block; background: white; color: #333; border: 2px solid #ddd; padding: 10px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
                 .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
                 .logo { font-size: 24px; font-weight: bold; }
                 .feature { margin: 15px 0; padding: 10px; background: white; border-radius: 4px; }
+                .api-key-box { background: #e8f4fd; border-left: 4px solid #2196F3; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                .code-block { background: #1a1a1a; color: #e2e8f0; padding: 15px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 12px; word-break: break-all; margin: 15px 0; }
+                .warning-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
             </style>
         </head>
         <body>
@@ -333,28 +341,62 @@ If you didn't request a password reset, you can safely ignore this email.
                     <h1>Welcome to Aslan!</h1>
                 </div>
                 <div class="content">
-                    <h2>Hi ${name || 'there'}!</h2>
-                    <p>Welcome to Aslan, the payment infrastructure for AI agents. You're now ready to enable autonomous transactions for your AI systems.</p>
+                    <h2>Hi ${name || 'there'}! 👋</h2>
+                    <p>Welcome to Aslan! Your account for <strong>${organizationName || 'your organization'}</strong> is ready to process payments. 🎉</p>
+                    
+                    ${apiKey ? `
+                    <div class="api-key-box">
+                        <h3 style="color: #1976D2; margin: 0 0 10px 0; font-size: 16px;">🔑 Your API Key</h3>
+                        <p style="margin: 0 0 10px 0; font-size: 14px;">Here's your production-ready API key. Keep it secure!</p>
+                        <div class="code-block">${apiKey}</div>
+                        <p style="color: #666; font-size: 12px; margin: 0;">⚠️ This is the only time you'll see this key. Save it somewhere safe!</p>
+                    </div>
+                    
+                    <p>You can start processing payments immediately:</p>
+                    <div class="code-block">curl -X POST https://api.aslanpay.com/v1/authorize \\
+  -H "Authorization: Bearer ${apiKey}" \\
+  -d '{
+    "amount": 2500,
+    "description": "My first payment"
+  }'</div>
+                    ` : ''}
                     
                     <h3>🚀 What you can do now:</h3>
                     <div class="feature">
-                        <strong>🔧 Set up your first AI agent</strong><br>
-                        Configure spending limits and payment controls
+                        <strong>⚡ Start Processing Payments</strong><br>
+                        Use your API key to authorize payments instantly
                     </div>
                     <div class="feature">
-                        <strong>💳 Add payment methods</strong><br>
-                        Securely store cards for autonomous transactions
+                        <strong>📊 Monitor Your Dashboard</strong><br>
+                        Track transactions, usage, and analytics in real-time
                     </div>
                     <div class="feature">
-                        <strong>📊 Monitor transactions</strong><br>
-                        Real-time analytics and spending insights
+                        <strong>🛡️ Enterprise Security</strong><br>
+                        Bank-grade security with PCI compliance built-in
                     </div>
                     
-                    <p>Ready to get started?</p>
-                    <a href="https://aslanpay.xyz/demo" class="button">Try the Demo</a>
-                    <a href="https://aslanpay.xyz/docs" class="button">View Documentation</a>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${dashboardUrl || baseUrl + '/dashboard.html'}" class="button">Go to Dashboard 🚀</a>
+                        <a href="${baseUrl}/docs.html" class="button-secondary">View Docs 📚</a>
+                    </div>
                     
-                    <p>If you have any questions, our team is here to help at support@aslanpay.xyz</p>
+                    ${apiKey ? `
+                    <div class="warning-box">
+                        <h4 style="color: #856404; margin: 0 0 8px 0; font-size: 14px;">🎁 Free Sandbox Account</h4>
+                        <p style="color: #856404; font-size: 13px; margin: 0;">
+                            Your account starts with $100/day spending limit for testing. 
+                            <a href="${baseUrl}/#pricing" style="color: #856404;">Upgrade to Production</a> for unlimited processing.
+                        </p>
+                    </div>
+                    ` : ''}
+                    
+                    <p>Need help? Check out our <a href="${baseUrl}/docs.html">documentation</a>, try our <a href="${baseUrl}/demo.html">live demo</a>, or reply to this email.</p>
+                    
+                    <p style="margin-top: 30px;">
+                        Best regards,<br>
+                        The Aslan Team 🦁<br>
+                        <em>Built for the AI-first future</em>
+                    </p>
                 </div>
                 <div class="footer">
                     <p>© 2024 Aslan Technologies. All rights reserved.</p>
@@ -365,24 +407,47 @@ If you didn't request a password reset, you can safely ignore this email.
         `;
     }
 
-    getWelcomeEmailText(name) {
+    getWelcomeEmailText(name, options = {}) {
+        const { apiKey, organizationName, dashboardUrl } = options;
+        const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+        
         return `
-Welcome to Aslan!
+Welcome to Aslan! 🦁
 
 Hi ${name || 'there'}!
 
-Welcome to Aslan, the payment infrastructure for AI agents. You're now ready to enable autonomous transactions for your AI systems.
+Welcome to Aslan! Your account for ${organizationName || 'your organization'} is ready to process payments.
 
-What you can do now:
-- Set up your first AI agent with spending limits and payment controls
-- Add payment methods securely for autonomous transactions  
-- Monitor transactions with real-time analytics and spending insights
+${apiKey ? `
+🔑 Your API Key: ${apiKey}
+⚠️  This is the only time you'll see this key. Save it somewhere safe!
+
+Start processing payments immediately:
+curl -X POST https://api.aslanpay.com/v1/authorize \\
+  -H "Authorization: Bearer ${apiKey}" \\
+  -d '{"amount": 2500, "description": "My first payment"}'
+` : ''}
+
+🚀 What you can do now:
+- Start processing payments with your API key
+- Monitor your dashboard for real-time analytics
+- Enjoy enterprise-grade security with PCI compliance
 
 Get started:
-Demo: https://aslanpay.xyz/demo
-Documentation: https://aslanpay.xyz/docs
+Dashboard: ${dashboardUrl || baseUrl + '/dashboard.html'}
+Documentation: ${baseUrl}/docs.html
+Demo: ${baseUrl}/demo.html
 
-If you have any questions, our team is here to help at support@aslanpay.xyz
+${apiKey ? `
+🎁 Your account starts with $100/day spending limit for testing.
+Upgrade to Production for unlimited processing: ${baseUrl}/#pricing
+` : ''}
+
+Need help? Check out our documentation or reply to this email.
+
+Best regards,
+The Aslan Team 🦁
+Built for the AI-first future
 
 © 2024 Aslan Technologies. All rights reserved.
         `.trim();

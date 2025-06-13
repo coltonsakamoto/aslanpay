@@ -15,16 +15,146 @@ const {
 
 const router = express.Router();
 
-// Register new user
+// PUBLIC SAAS SIGNUP - New main entry point
+router.post('/signup', 
+    InputValidation.validateBody({
+        type: 'object',
+        properties: {
+            email: { type: 'string', format: 'email' },
+            password: { type: 'string', minLength: 8 },
+            name: { type: 'string', minLength: 1 },
+            organizationName: { type: 'string' }
+        },
+        required: ['email', 'password', 'name']
+    }),
+    async (req, res) => {
+    try {
+        const { email, password, name, organizationName } = req.body;
+        
+        console.log('🚀 Public SaaS signup attempt for:', email);
+        
+        // Create tenant + owner + API key in one transaction
+        const result = await database.createTenantWithOwner({
+            email: email.toLowerCase(),
+            password,
+            name,
+            organizationName
+        });
+        
+        console.log('✅ Tenant created:', result.tenant.id);
+        console.log('✅ User created:', result.user.id);
+        console.log('✅ API key created:', result.apiKey.id);
+        
+        // Create email verification token
+        const verificationToken = database.createEmailVerification(result.user.id, result.user.email);
+        
+        // Send welcome email with API key
+        try {
+            await emailService.sendWelcomeEmail(result.user.email, result.user.name, {
+                apiKey: result.apiKey.key,
+                organizationName: result.tenant.name,
+                dashboardUrl: `${process.env.BASE_URL || 'http://localhost:3000'}/dashboard.html`
+            });
+            console.log('✅ Welcome email sent with API key');
+        } catch (emailError) {
+            console.warn('⚠️ Failed to send welcome email:', emailError.message);
+            // Continue anyway
+        }
+        
+        // Create session for immediate login
+        const sessionId = database.createSession(result.user.id);
+        const token = generateToken(sessionId);
+        
+        // Set HTTP-only cookie
+        res.cookie('agentpay_session', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            sameSite: 'strict'
+        });
+        
+        console.log('✅ SaaS signup successful for:', email);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Account created successfully! Check your email for your API key.',
+            user: result.user,
+            tenant: {
+                id: result.tenant.id,
+                name: result.tenant.name,
+                plan: result.tenant.plan
+            },
+            apiKey: {
+                id: result.apiKey.id,
+                name: result.apiKey.name,
+                key: result.apiKey.key  // Return API key immediately
+            },
+            nextSteps: {
+                dashboard: `${process.env.BASE_URL || 'http://localhost:3000'}/dashboard.html`,
+                docs: `${process.env.BASE_URL || 'http://localhost:3000'}/docs.html`,
+                demo: `${process.env.BASE_URL || 'http://localhost:3000'}/demo.html`
+            }
+        });
+        
+    } catch (error) {
+        if (error.message === 'User already exists') {
+            return res.status(409).json({
+                error: 'An account with this email already exists',
+                code: 'USER_EXISTS',
+                suggestion: 'Try logging in instead, or use a different email address'
+            });
+        }
+        
+        console.error('❌ SaaS signup error:', error);
+        console.error('Stack trace:', error.stack);
+        res.status(500).json({
+            error: 'Failed to create account. Please try again.',
+            code: 'SIGNUP_FAILED'
+        });
+    }
+});
+
+// Get tenant info for current user
+router.get('/tenant', validateSessionSimple, async (req, res) => {
+    try {
+        const session = database.getSession(req.session.id);
+        const tenant = database.getTenant(session.tenantId);
+        
+        if (!tenant) {
+            return res.status(404).json({
+                error: 'Tenant not found',
+                code: 'TENANT_NOT_FOUND'
+            });
+        }
+        
+        res.json({
+            tenant: {
+                id: tenant.id,
+                name: tenant.name,
+                plan: tenant.plan,
+                settings: tenant.settings,
+                usage: tenant.usage
+            }
+        });
+    } catch (error) {
+        console.error('Get tenant error:', error);
+        res.status(500).json({
+            error: 'Failed to retrieve tenant information',
+            code: 'TENANT_ERROR'
+        });
+    }
+});
+
+// Register new user (LEGACY - for existing single-tenant setups)
 router.post('/register', 
     InputValidation.validateBody(InputValidation.authSchemas.register),
     async (req, res) => {
     try {
         const { email, password, name } = req.body;
         
-        console.log('📝 Registration attempt for:', email);
+        console.log('📝 Legacy registration attempt for:', email);
         
-        // Create user (validation already done by middleware)
+        // For backward compatibility, create user without explicit tenant
         let user;
         try {
             user = await database.createUser({
@@ -46,39 +176,21 @@ router.post('/register',
             console.log('✅ Verification token created');
         } catch (tokenError) {
             console.error('⚠️ Verification token creation failed:', tokenError);
-            // Continue anyway
         }
         
-        // Send verification email (wrapped in try-catch to not fail registration)
+        // Send verification email
         if (verificationToken) {
             try {
                 await emailService.sendVerificationEmail(user.email, verificationToken);
                 console.log('✅ Verification email sent');
             } catch (emailError) {
                 console.warn('⚠️ Failed to send verification email:', emailError.message);
-                // Continue with registration even if email fails
             }
         }
         
         // Create session
-        let sessionId;
-        try {
-            sessionId = database.createSession(user.id);
-            console.log('✅ Session created:', sessionId);
-        } catch (sessionError) {
-            console.error('❌ Session creation failed:', sessionError);
-            throw sessionError;
-        }
-        
-        // Generate JWT token
-        let token;
-        try {
-            token = generateToken(sessionId);
-            console.log('✅ JWT token generated');
-        } catch (tokenError) {
-            console.error('❌ JWT generation failed:', tokenError);
-            throw tokenError;
-        }
+        const sessionId = database.createSession(user.id);
+        const token = generateToken(sessionId);
         
         // Set HTTP-only cookie
         res.cookie('agentpay_session', token, {
@@ -105,7 +217,6 @@ router.post('/register',
         }
         
         console.error('❌ Registration error:', error);
-        console.error('Stack trace:', error.stack);
         res.status(500).json({
             error: 'Internal server error',
             code: 'INTERNAL_ERROR'
@@ -113,14 +224,14 @@ router.post('/register',
     }
 });
 
-// Login user
+// Login user (Updated for multi-tenant)
 router.post('/login', 
     InputValidation.validateBody(InputValidation.authSchemas.login),
     rateLimitLogin, 
     AccountLockout.checkLockout(), 
     async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, tenantId } = req.body;
         
         if (!email || !password) {
             return res.status(400).json({
@@ -129,8 +240,8 @@ router.post('/login',
             });
         }
         
-        // Verify credentials
-        const user = await database.verifyPassword(email.toLowerCase(), password);
+        // Verify credentials (optionally scoped to tenant)
+        const user = await database.verifyPassword(email.toLowerCase(), password, tenantId);
         
         if (!user) {
             // Record failed attempt
@@ -141,7 +252,6 @@ router.post('/login',
                 code: 'INVALID_CREDENTIALS'
             };
             
-            // Add lockout information if applicable
             if (lockoutResult.isLocked) {
                 errorResponse.lockout = {
                     isLocked: true,
@@ -149,7 +259,6 @@ router.post('/login',
                     message: 'Account locked due to too many failed attempts'
                 };
             } else if (lockoutResult.attempts > 2) {
-                // Warn about approaching lockout
                 errorResponse.warning = `${5 - lockoutResult.attempts} attempts remaining before account lockout`;
             }
             
@@ -171,8 +280,16 @@ router.post('/login',
             sameSite: 'strict'
         });
         
+        // Get tenant info
+        const tenant = database.getTenant(user.tenantId);
+        
         res.json({
             user,
+            tenant: tenant ? {
+                id: tenant.id,
+                name: tenant.name,
+                plan: tenant.plan
+            } : null,
             message: 'Login successful'
         });
         
@@ -205,9 +322,28 @@ router.post('/logout', validateSession, (req, res) => {
     }
 });
 
-// Get current user
+// Get current user (Updated with tenant info)
 router.get('/me', validateSessionSimple, (req, res) => {
-    res.json({ user: req.user });
+    try {
+        const session = database.getSession(req.session.id);
+        const tenant = database.getTenant(session.tenantId);
+        
+        res.json({ 
+            user: req.user,
+            tenant: tenant ? {
+                id: tenant.id,
+                name: tenant.name,
+                plan: tenant.plan,
+                usage: tenant.usage
+            } : null
+        });
+    } catch (error) {
+        console.error('Get current user error:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            code: 'INTERNAL_ERROR'
+        });
+    }
 });
 
 // Request password reset
@@ -368,16 +504,19 @@ router.post('/oauth/callback', async (req, res) => {
         let user = database.getUserByEmail(email.toLowerCase());
         
         if (!user) {
-            // Create new user from OAuth
-            user = await database.createUser({
+            // Create new tenant + user for OAuth signup
+            const result = await database.createTenantWithOwner({
                 email: email.toLowerCase(),
                 name,
-                provider,
-                providerId
+                organizationName: `${name}'s Organization`
             });
+            user = result.user;
             
             // Send welcome email
-            await emailService.sendWelcomeEmail(user.email, user.name);
+            await emailService.sendWelcomeEmail(user.email, user.name, {
+                apiKey: result.apiKey.key,
+                organizationName: result.tenant.name
+            });
         }
         
         // Create session
@@ -406,7 +545,7 @@ router.post('/oauth/callback', async (req, res) => {
     }
 });
 
-// Google OAuth routes
+// Google OAuth routes (Updated for SaaS)
 router.get('/google', (req, res, next) => {
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
         return res.status(503).json({
@@ -453,7 +592,7 @@ router.get('/google/callback', (req, res, next) => {
     })(req, res, next);
 });
 
-// GitHub OAuth routes
+// GitHub OAuth routes (Updated for SaaS)
 router.get('/github', (req, res, next) => {
     if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
         return res.status(503).json({

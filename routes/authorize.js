@@ -1,371 +1,570 @@
 const express = require('express');
-const router = express.Router();
-const crypto = require('crypto');
-const { validateApiKey, requirePermission } = require('../middleware/auth');
-const RequestSigning = require('../middleware/request-signing');
+const database = require('../config/database');
 const InputValidation = require('../middleware/input-validation');
-const SecurityAudit = require('../middleware/security-audit');
-const Joi = require('joi');
+const crypto = require('crypto');
 
-// Mock authorization database (in production, this would be a real database)
-const authorizations = new Map();
+const router = express.Router();
 
-// Generate cryptographically secure authorization ID
-function generateSecureAuthId() {
-    // Use crypto.randomBytes for unpredictable IDs
-    const timestamp = Date.now().toString(36);
-    const randomBytes = crypto.randomBytes(16).toString('base64url');
-    return `auth_${timestamp}_${randomBytes}`;
-}
-
-// Create a new authorization with request signing
-router.post('/', 
-    RequestSigning.requireSignature(), // Add request signing
-    InputValidation.validateBody(InputValidation.paymentSchemas.authorize),
-    requirePermission('create_authorization'), 
-    async (req, res) => {
+// API Key Authentication Middleware for SaaS
+const authenticateApiKey = async (req, res, next) => {
     try {
-        const { amount, description, merchant, metadata } = req.body;
+        const authHeader = req.headers.authorization;
         
-        // Generate secure authorization ID
-        const authId = generateSecureAuthId();
-        
-        // Create authorization record
-        const authorization = {
-            id: authId,
-            amount,
-            description,
-            merchant: merchant || 'Default Merchant',
-            metadata: metadata || {},
-            status: 'pending',
-            createdAt: new Date().toISOString(),
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
-            apiKeyId: req.apiKey.id,
-            userId: req.apiKey.userId
-        };
-        
-        // Store authorization
-        authorizations.set(authId, authorization);
-        
-        // Update ownership index for IDOR prevention
-        authorizationIndex.set(authId, {
-            userId: req.apiKey.userId,
-            createdAt: authorization.createdAt
-        });
-        
-        // Log successful authorization
-        await SecurityAudit.log(
-            SecurityAudit.EVENT_TYPES.AUTHORIZATION_SUCCESS,
-            SecurityAudit.LOG_LEVELS.INFO,
-            {
-                authId,
-                amount,
-                apiKeyId: req.apiKey.id,
-                userId: req.apiKey.userId,
-                ...req.auditContext
-            }
-        );
-        
-        res.status(201).json({
-            authorization: {
-                id: authorization.id,
-                amount: authorization.amount,
-                description: authorization.description,
-                status: authorization.status,
-                expiresAt: authorization.expiresAt
-            }
-        });
-        
-    } catch (error) {
-        console.error('Authorization creation error:', error);
-        
-        await SecurityAudit.log(
-            SecurityAudit.EVENT_TYPES.SYSTEM_ERROR,
-            SecurityAudit.LOG_LEVELS.CRITICAL,
-            {
-                error: error.message,
-                endpoint: 'POST /authorize',
-                ...req.auditContext
-            }
-        );
-        
-        res.status(500).json({
-            error: 'Failed to create authorization',
-            code: 'AUTHORIZATION_ERROR'
-        });
-    }
-});
-
-// Get authorization status with request signing
-router.get('/:authId', 
-    RequestSigning.requireSignature(), // Add request signing
-    InputValidation.validateParams(Joi.object({
-        authId: Joi.string().pattern(/^auth_[a-zA-Z0-9_-]+$/).required()
-    })),
-    async (req, res) => {
-    try {
-        const { authId } = req.params;
-        
-        // SECURITY: Check ownership BEFORE fetching data
-        // This prevents information disclosure through IDOR
-        const authIndex = await getAuthorizationIndex();
-        const authOwnership = authIndex.get(authId);
-        
-        if (!authOwnership || authOwnership.userId !== req.user.id) {
-            // Return generic error to prevent enumeration
-            return res.status(404).json({
-                error: 'Authorization not found',
-                code: 'AUTH_NOT_FOUND'
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 'Missing or invalid Authorization header',
+                code: 'MISSING_API_KEY',
+                message: 'Include your API key as: Authorization: Bearer ak_live_your_key'
             });
         }
+
+        const apiKey = authHeader.replace('Bearer ', '');
         
-        // Now safe to fetch the full authorization
-        const authorization = authorizations.get(authId);
-        
-        if (!authorization) {
-            // This shouldn't happen if index is correct
-            console.error(`Authorization index mismatch for ${authId}`);
-            return res.status(404).json({
-                error: 'Authorization not found',
-                code: 'AUTH_NOT_FOUND'
+        if (!apiKey.startsWith('ak_live_') && !apiKey.startsWith('ak_test_')) {
+            return res.status(401).json({
+                error: 'Invalid API key format',
+                code: 'INVALID_API_KEY_FORMAT',
+                message: 'API keys must start with ak_live_ or ak_test_'
             });
         }
+
+        // Validate API key and get tenant context
+        const keyValidation = await database.validateApiKey(apiKey);
         
-        res.json({
-            authorization: {
-                id: authorization.id,
-                amount: authorization.amount,
-                description: authorization.description,
-                merchant: authorization.merchant,
-                status: authorization.status,
-                confirmed: authorization.confirmed,
-                createdAt: authorization.createdAt,
-                expiresAt: authorization.expiresAt,
-                confirmedAt: authorization.confirmedAt
-            }
-        });
+        if (!keyValidation) {
+            return res.status(401).json({
+                error: 'Invalid API key',
+                code: 'INVALID_API_KEY',
+                message: 'The provided API key is invalid or has been revoked'
+            });
+        }
+
+        // Attach tenant and user context to request
+        req.apiKey = keyValidation;
+        req.tenant = keyValidation.tenant;
+        req.user = keyValidation.user;
         
+        console.log(`🔑 API request from tenant: ${req.tenant.name} (${req.tenant.id})`);
+        
+        next();
     } catch (error) {
-        console.error('Get authorization error:', error);
+        console.error('API key authentication error:', error);
         res.status(500).json({
-            error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
+            error: 'Authentication error',
+            code: 'AUTH_ERROR'
         });
     }
-});
+};
 
-// Confirm authorization with request signing
-router.post('/:authId/confirm', 
-    RequestSigning.requireSignature(), // Add request signing
-    InputValidation.validateBody(InputValidation.paymentSchemas.confirm),
-    requirePermission('confirm_authorization'), 
-    async (req, res) => {
+// Check spending limits middleware
+const checkSpendingLimits = async (req, res, next) => {
     try {
-        const { authId } = req.params;
-        const { paymentMethodId, receiptEmail } = req.body;
-        
-        // SECURITY: Check ownership BEFORE fetching data
-        const authIndex = await getAuthorizationIndex();
-        const authOwnership = authIndex.get(authId);
-        
-        if (!authOwnership || authOwnership.userId !== req.user.id) {
-            await SecurityAudit.log(
-                SecurityAudit.EVENT_TYPES.AUTHORIZATION_FAILED,
-                SecurityAudit.LOG_LEVELS.WARNING,
-                {
-                    reason: 'Unauthorized access attempt',
-                    authId,
-                    attemptedBy: req.user.id,
-                    ...req.auditContext
+        const { amount } = req.body;
+        const tenant = req.tenant;
+
+        // Check transaction limit
+        if (amount > tenant.settings.transactionLimit) {
+            return res.status(402).json({
+                error: 'Transaction amount exceeds limit',
+                code: 'TRANSACTION_LIMIT_EXCEEDED',
+                details: {
+                    requestedAmount: amount,
+                    transactionLimit: tenant.settings.transactionLimit,
+                    maxAllowed: tenant.settings.transactionLimit
                 }
-            );
-            
-            return res.status(404).json({
-                error: 'Authorization not found',
-                code: 'AUTH_NOT_FOUND'
             });
         }
-        
-        // Now safe to fetch and process
-        const authorization = authorizations.get(authId);
-        
-        if (!authorization) {
-            return res.status(404).json({
-                error: 'Authorization not found',
-                code: 'AUTH_NOT_FOUND'
+
+        // Check daily limit
+        const dailyTotal = tenant.usage.dailySpent + amount;
+        if (dailyTotal > tenant.settings.dailyLimit) {
+            return res.status(402).json({
+                error: 'Daily spending limit exceeded',
+                code: 'DAILY_LIMIT_EXCEEDED',
+                details: {
+                    requestedAmount: amount,
+                    dailySpent: tenant.usage.dailySpent,
+                    dailyLimit: tenant.settings.dailyLimit,
+                    remainingDaily: tenant.settings.dailyLimit - tenant.usage.dailySpent
+                }
             });
         }
-        
-        if (authorization.expiresAt < new Date()) {
-            return res.status(400).json({
-                error: 'Authorization has expired',
-                code: 'AUTH_EXPIRED'
-            });
-        }
-        
-        if (authorization.confirmed) {
-            return res.status(400).json({
-                error: 'Authorization already confirmed',
-                code: 'ALREADY_CONFIRMED'
-            });
-        }
-        
-        // Mark as confirmed
-        authorization.confirmed = true;
-        authorization.confirmedAt = new Date();
-        authorization.paymentMethodId = paymentMethodId;
-        authorization.receiptEmail = receiptEmail;
-        authorizations.set(authId, authorization);
-        
-        // Generate secure transaction ID
-        const transactionId = `txn_${Date.now().toString(36)}_${crypto.randomBytes(12).toString('base64url')}`;
-        
-        // Log successful confirmation
-        await SecurityAudit.log(
-            SecurityAudit.EVENT_TYPES.PAYMENT_SUCCESS,
-            SecurityAudit.LOG_LEVELS.INFO,
-            {
-                authId,
-                transactionId,
-                amount: authorization.amount,
-                ...req.auditContext
-            }
-        );
-        
-        res.json({
-            transaction: {
-                id: transactionId,
-                authorizationId: authId,
-                amount: authorization.amount,
-                description: authorization.description,
-                merchant: authorization.merchant,
-                status: 'completed',
-                confirmedAt: authorization.confirmedAt
-            },
-            message: 'Payment confirmed and processed successfully'
-        });
-        
+
+        next();
     } catch (error) {
-        console.error('Confirmation error:', error);
+        console.error('Spending limits check error:', error);
         res.status(500).json({
-            error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
+            error: 'Failed to check spending limits',
+            code: 'LIMIT_CHECK_ERROR'
         });
     }
-});
+};
 
-// Cancel authorization with request signing
-router.post('/:authId/cancel', 
-    RequestSigning.requireSignature(), // Add request signing
-    requirePermission('cancel_authorization'), 
+// POST /api/v1/authorize - Main payment authorization endpoint
+router.post('/', 
+    authenticateApiKey,
+    InputValidation.validateBody({
+        type: 'object',
+        properties: {
+            amount: { 
+                type: 'integer',
+                minimum: 1,
+                maximum: 10000000  // $100,000 max
+            },
+            description: { 
+                type: 'string',
+                minLength: 1,
+                maxLength: 500
+            },
+            agentId: { 
+                type: 'string',
+                maxLength: 100
+            },
+            metadata: {
+                type: 'object'
+            }
+        },
+        required: ['amount', 'description']
+    }),
+    checkSpendingLimits,
     async (req, res) => {
-    // ... existing code with added audit logging ...
-});
+        try {
+            const { amount, description, agentId, metadata = {} } = req.body;
+            const tenant = req.tenant;
+            const user = req.user;
 
-// List authorizations for the user
-router.get('/', validateApiKey, async (req, res) => {
-    try {
-        const { limit = 50, offset = 0 } = req.query;
-        
-        // Get user's authorizations
-        const userAuthorizations = Array.from(authorizations.values())
-            .filter(auth => auth.userId === req.user.id)
-            .sort((a, b) => b.createdAt - a.createdAt)
-            .slice(Number(offset), Number(offset) + Number(limit))
-            .map(auth => ({
-                id: auth.id,
-                amount: auth.amount,
-                description: auth.description,
-                merchant: auth.merchant,
-                status: auth.status,
-                confirmed: auth.confirmed,
-                createdAt: auth.createdAt,
-                expiresAt: auth.expiresAt
-            }));
-        
-        res.json({
-            authorizations: userAuthorizations,
-            pagination: {
-                limit: Number(limit),
-                offset: Number(offset),
-                total: Array.from(authorizations.values()).filter(auth => auth.userId === req.user.id).length
+            console.log(`💳 Authorization request: $${amount/100} for "${description}" by ${tenant.name}`);
+
+            // Create transaction record
+            const transaction = await database.createTransaction({
+                amount,
+                description,
+                tenantId: tenant.id,
+                userId: user.id,
+                agentId: agentId || 'unknown',
+                status: 'authorized',
+                metadata: {
+                    ...metadata,
+                    apiKeyId: req.apiKey.keyId,
+                    userAgent: req.headers['user-agent'],
+                    ip: req.ip
+                }
+            });
+
+            // In a real implementation, this would call Stripe
+            // For now, we'll simulate the authorization
+            const authorizationId = `auth_${crypto.randomBytes(12).toString('hex')}`;
+
+            // Update tenant usage
+            await database.updateTenantUsage(tenant.id, amount);
+
+            console.log(`✅ Payment authorized: ${authorizationId} for $${amount/100}`);
+
+            // Return authorization response
+            res.status(200).json({
+                id: authorizationId,
+                object: 'authorization',
+                amount,
+                description,
+                status: 'authorized',
+                agentId: agentId || null,
+                tenantId: tenant.id,
+                userId: user.id,
+                created: Math.floor(Date.now() / 1000),
+                expires_at: Math.floor((Date.now() + 10 * 60 * 1000) / 1000), // 10 minutes
+                metadata,
+                livemode: process.env.NODE_ENV === 'production',
+                transaction: {
+                    id: transaction.id,
+                    amount: transaction.amount,
+                    status: transaction.status
+                }
+            });
+
+        } catch (error) {
+            console.error('Authorization error:', error);
+            
+            if (error.message.includes('limit')) {
+                return res.status(402).json({
+                    error: error.message,
+                    code: 'SPENDING_LIMIT_ERROR'
+                });
             }
-        });
-        
-    } catch (error) {
-        console.error('List authorizations error:', error);
-        res.status(500).json({
-            error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
-        });
-    }
-});
 
-// Refund an authorization (if it has the refund permission)
-router.post('/:authId/refund', validateApiKey, requirePermission('refund'), async (req, res) => {
-    try {
-        const { authId } = req.params;
-        const { reason, amount: refundAmount } = req.body;
-        
-        const authorization = authorizations.get(authId);
-        
-        if (!authorization) {
-            return res.status(404).json({
-                error: 'Authorization not found',
-                code: 'AUTH_NOT_FOUND'
+            res.status(500).json({
+                error: 'Failed to process authorization',
+                code: 'AUTHORIZATION_ERROR',
+                message: 'An error occurred while processing your payment authorization'
             });
         }
-        
-        if (authorization.userId !== req.user.id) {
-            return res.status(403).json({
-                error: 'Unauthorized access to authorization',
-                code: 'UNAUTHORIZED_AUTH'
-            });
-        }
-        
-        if (!authorization.confirmed) {
-            return res.status(400).json({
-                error: 'Cannot refund unconfirmed authorization',
-                code: 'NOT_CONFIRMED'
-            });
-        }
-        
-        const refundId = `refund_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const finalRefundAmount = refundAmount || authorization.amount;
-        
-        // Mark authorization as refunded
-        authorization.refunded = true;
-        authorization.refundedAt = new Date();
-        authorization.refundAmount = finalRefundAmount;
-        authorization.refundReason = reason;
-        authorizations.set(authId, authorization);
-        
-        res.json({
-            refund: {
-                id: refundId,
-                authorizationId: authId,
-                amount: finalRefundAmount,
-                reason: reason || 'No reason provided',
+    }
+);
+
+// POST /api/v1/confirm - Confirm and capture an authorization
+router.post('/confirm',
+    authenticateApiKey,
+    InputValidation.validateBody({
+        type: 'object',
+        properties: {
+            authorizationId: { type: 'string' },
+            finalAmount: { type: 'integer', minimum: 1 }
+        },
+        required: ['authorizationId']
+    }),
+    async (req, res) => {
+        try {
+            const { authorizationId, finalAmount } = req.body;
+            const tenant = req.tenant;
+
+            console.log(`🔒 Confirming authorization: ${authorizationId} for tenant ${tenant.name}`);
+
+            // In real implementation, would confirm with Stripe
+            // For now, simulate successful confirmation
+            const paymentId = `pay_${crypto.randomBytes(12).toString('hex')}`;
+
+            // Create confirmed transaction record
+            const transaction = await database.createTransaction({
+                amount: finalAmount || req.body.amount,
+                description: `Confirmed payment ${authorizationId}`,
+                tenantId: tenant.id,
+                userId: req.user.id,
                 status: 'completed',
-                refundedAt: authorization.refundedAt
-            },
-            message: 'Refund processed successfully'
-        });
-        
-    } catch (error) {
-        console.error('Refund error:', error);
-        res.status(500).json({
-            error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
-        });
+                metadata: {
+                    authorizationId,
+                    paymentId,
+                    apiKeyId: req.apiKey.keyId
+                }
+            });
+
+            console.log(`✅ Payment confirmed: ${paymentId}`);
+
+            res.status(200).json({
+                id: paymentId,
+                object: 'payment',
+                amount: finalAmount || req.body.amount,
+                status: 'completed',
+                authorizationId,
+                tenantId: tenant.id,
+                created: Math.floor(Date.now() / 1000),
+                livemode: process.env.NODE_ENV === 'production',
+                transaction: {
+                    id: transaction.id,
+                    amount: transaction.amount,
+                    status: transaction.status
+                }
+            });
+
+        } catch (error) {
+            console.error('Confirmation error:', error);
+            res.status(500).json({
+                error: 'Failed to confirm payment',
+                code: 'CONFIRMATION_ERROR'
+            });
+        }
     }
-});
+);
 
-// Authorization ownership index for fast lookups
-const authorizationIndex = new Map();
+// POST /api/v1/refund - Refund a completed transaction
+router.post('/refund',
+    authenticateApiKey,
+    InputValidation.validateBody({
+        type: 'object',
+        properties: {
+            transactionId: { type: 'string' },
+            amount: { type: 'integer', minimum: 1 },
+            reason: { type: 'string' }
+        },
+        required: ['transactionId']
+    }),
+    async (req, res) => {
+        try {
+            const { transactionId, amount, reason } = req.body;
+            const tenant = req.tenant;
 
-async function getAuthorizationIndex() {
-    return authorizationIndex;
+            console.log(`💸 Refund request: ${transactionId} for tenant ${tenant.name}`);
+
+            // In real implementation, would process refund with Stripe
+            const refundId = `ref_${crypto.randomBytes(12).toString('hex')}`;
+
+            // Create refund transaction record
+            const refundTransaction = await database.createTransaction({
+                amount: -(amount || 0), // Negative amount for refund
+                description: `Refund for ${transactionId}`,
+                tenantId: tenant.id,
+                userId: req.user.id,
+                status: 'refunded',
+                metadata: {
+                    originalTransactionId: transactionId,
+                    refundId,
+                    reason: reason || 'requested',
+                    apiKeyId: req.apiKey.keyId
+                }
+            });
+
+            console.log(`✅ Refund processed: ${refundId}`);
+
+            res.status(200).json({
+                id: refundId,
+                object: 'refund',
+                amount: amount || 0,
+                reason: reason || 'requested',
+                status: 'succeeded',
+                transactionId,
+                tenantId: tenant.id,
+                created: Math.floor(Date.now() / 1000),
+                livemode: process.env.NODE_ENV === 'production',
+                transaction: {
+                    id: refundTransaction.id,
+                    amount: refundTransaction.amount,
+                    status: refundTransaction.status
+                }
+            });
+
+        } catch (error) {
+            console.error('Refund error:', error);
+            res.status(500).json({
+                error: 'Failed to process refund',
+                code: 'REFUND_ERROR'
+            });
+        }
+    }
+);
+
+// GET /api/v1/transactions - List transactions for tenant
+router.get('/transactions',
+    authenticateApiKey,
+    async (req, res) => {
+        try {
+            const tenant = req.tenant;
+            const { 
+                limit = 50, 
+                offset = 0, 
+                status, 
+                agentId,
+                from,
+                to 
+            } = req.query;
+
+            const filters = {};
+            if (status) filters.status = status;
+            if (agentId) filters.agentId = agentId;
+            if (from) filters.from = from;
+            if (to) filters.to = to;
+
+            const transactions = database.getTransactionsByTenant(tenant.id, filters);
+            
+            // Apply pagination
+            const paginatedTransactions = transactions
+                .slice(offset, offset + parseInt(limit))
+                .map(t => ({
+                    id: t.id,
+                    amount: t.amount,
+                    description: t.description,
+                    status: t.status,
+                    agentId: t.agentId,
+                    created: Math.floor(t.createdAt.getTime() / 1000),
+                    metadata: t.metadata
+                }));
+
+            res.status(200).json({
+                object: 'list',
+                data: paginatedTransactions,
+                has_more: offset + parseInt(limit) < transactions.length,
+                total_count: transactions.length,
+                tenant: {
+                    id: tenant.id,
+                    name: tenant.name,
+                    usage: tenant.usage
+                }
+            });
+
+        } catch (error) {
+            console.error('List transactions error:', error);
+            res.status(500).json({
+                error: 'Failed to retrieve transactions',
+                code: 'TRANSACTION_LIST_ERROR'
+            });
+        }
+    }
+);
+
+// GET /api/v1/limits - Get current spending limits and usage
+router.get('/limits',
+    authenticateApiKey,
+    async (req, res) => {
+        try {
+            const tenant = req.tenant;
+
+            res.status(200).json({
+                tenant: {
+                    id: tenant.id,
+                    name: tenant.name,
+                    plan: tenant.plan
+                },
+                limits: {
+                    daily: tenant.settings.dailyLimit,
+                    per_transaction: tenant.settings.transactionLimit,
+                    api_calls: tenant.settings.apiCallLimit
+                },
+                usage: {
+                    daily_spent: tenant.usage.dailySpent,
+                    monthly_spent: tenant.usage.monthlySpent,
+                    api_calls: tenant.usage.apiCalls,
+                    last_reset: tenant.usage.lastReset
+                },
+                remaining: {
+                    daily: Math.max(0, tenant.settings.dailyLimit - tenant.usage.dailySpent),
+                    daily_percentage: Math.round((tenant.usage.dailySpent / tenant.settings.dailyLimit) * 100)
+                }
+            });
+
+        } catch (error) {
+            console.error('Get limits error:', error);
+            res.status(500).json({
+                error: 'Failed to retrieve limits',
+                code: 'LIMITS_ERROR'
+            });
+        }
+    }
+);
+
+// GET /api/v1/tenant - Get tenant information
+router.get('/tenant',
+    authenticateApiKey,
+    async (req, res) => {
+        try {
+            const tenant = req.tenant;
+            const users = database.getUsersByTenant(tenant.id);
+            const apiKeys = database.getApiKeysByTenant(tenant.id);
+
+            res.status(200).json({
+                id: tenant.id,
+                name: tenant.name,
+                domain: tenant.domain,
+                plan: tenant.plan,
+                created: Math.floor(tenant.createdAt.getTime() / 1000),
+                owner: {
+                    id: tenant.ownerId,
+                    name: users.find(u => u.id === tenant.ownerId)?.name
+                },
+                settings: tenant.settings,
+                usage: tenant.usage,
+                stats: {
+                    users: users.length,
+                    api_keys: apiKeys.length,
+                    transactions: database.getTransactionsByTenant(tenant.id).length
+                }
+            });
+
+        } catch (error) {
+            console.error('Get tenant error:', error);
+            res.status(500).json({
+                error: 'Failed to retrieve tenant information',
+                code: 'TENANT_ERROR'
+            });
+        }
+    }
+);
+
+// Development/Testing endpoints
+if (process.env.NODE_ENV !== 'production') {
+    // POST /api/v1/test/reset-limits - Reset daily limits for testing
+    router.post('/test/reset-limits',
+        authenticateApiKey,
+        async (req, res) => {
+            try {
+                const tenant = req.tenant;
+                
+                // Reset usage
+                tenant.usage.dailySpent = 0;
+                tenant.usage.lastReset = new Date();
+                
+                console.log(`🧪 Reset limits for tenant: ${tenant.name}`);
+                
+                res.status(200).json({
+                    message: 'Limits reset successfully',
+                    tenant: {
+                        id: tenant.id,
+                        name: tenant.name,
+                        usage: tenant.usage
+                    }
+                });
+
+            } catch (error) {
+                console.error('Reset limits error:', error);
+                res.status(500).json({
+                    error: 'Failed to reset limits',
+                    code: 'RESET_ERROR'
+                });
+            }
+        }
+    );
+
+    // POST /api/v1/test/simulate-payment - Simulate payment without Stripe
+    router.post('/test/simulate-payment',
+        authenticateApiKey,
+        InputValidation.validateBody({
+            type: 'object',
+            properties: {
+                amount: { type: 'integer', minimum: 1 },
+                description: { type: 'string' },
+                shouldFail: { type: 'boolean' }
+            },
+            required: ['amount', 'description']
+        }),
+        async (req, res) => {
+            try {
+                const { amount, description, shouldFail } = req.body;
+                const tenant = req.tenant;
+
+                if (shouldFail) {
+                    return res.status(402).json({
+                        error: 'Simulated payment failure',
+                        code: 'PAYMENT_FAILED',
+                        message: 'This is a test failure'
+                    });
+                }
+
+                // Simulate successful payment
+                const paymentId = `sim_${crypto.randomBytes(8).toString('hex')}`;
+                
+                const transaction = await database.createTransaction({
+                    amount,
+                    description: `[TEST] ${description}`,
+                    tenantId: tenant.id,
+                    userId: req.user.id,
+                    status: 'completed',
+                    metadata: {
+                        simulation: true,
+                        paymentId
+                    }
+                });
+
+                await database.updateTenantUsage(tenant.id, amount);
+
+                res.status(200).json({
+                    id: paymentId,
+                    object: 'payment',
+                    amount,
+                    description,
+                    status: 'completed',
+                    simulation: true,
+                    created: Math.floor(Date.now() / 1000),
+                    transaction: {
+                        id: transaction.id,
+                        status: transaction.status
+                    }
+                });
+
+            } catch (error) {
+                console.error('Simulate payment error:', error);
+                res.status(500).json({
+                    error: 'Failed to simulate payment',
+                    code: 'SIMULATION_ERROR'
+                });
+            }
+        }
+    );
 }
 
 module.exports = router; 

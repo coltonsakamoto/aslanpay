@@ -11,10 +11,18 @@ function maskApiKey(key) {
     return key.substring(0, 8) + '•'.repeat(key.length - 12) + key.substring(key.length - 4);
 }
 
-// Get all API keys for authenticated user (masked)
+// Get all API keys for authenticated user's tenant (masked)
 router.get('/', validateSession, async (req, res) => {
     try {
-        const apiKeys = await database.getApiKeysByUserId(req.user.id);
+        const session = database.getSession(req.session.id);
+        if (!session || !session.tenantId) {
+            return res.status(400).json({
+                error: 'No tenant context found',
+                code: 'NO_TENANT_CONTEXT'
+            });
+        }
+
+        const apiKeys = database.getApiKeysByTenant(session.tenantId);
         
         // Mask the keys before sending
         const maskedKeys = apiKeys.map(key => ({
@@ -23,9 +31,16 @@ router.get('/', validateSession, async (req, res) => {
             key: undefined // Remove the full key
         }));
         
+        const tenant = database.getTenant(session.tenantId);
+        
         res.json({
             apiKeys: maskedKeys,
-            total: maskedKeys.length
+            total: maskedKeys.length,
+            tenant: {
+                id: tenant.id,
+                name: tenant.name,
+                plan: tenant.plan
+            }
         });
         
     } catch (error) {
@@ -41,9 +56,17 @@ router.get('/', validateSession, async (req, res) => {
 router.post('/:keyId/reveal', validateSession, async (req, res) => {
     try {
         const { keyId } = req.params;
+        const session = database.getSession(req.session.id);
         
-        // Get the user's API keys
-        const apiKeys = await database.getApiKeysByUserId(req.user.id);
+        if (!session || !session.tenantId) {
+            return res.status(400).json({
+                error: 'No tenant context found',
+                code: 'NO_TENANT_CONTEXT'
+            });
+        }
+        
+        // Get the tenant's API keys
+        const apiKeys = database.getApiKeysByTenant(session.tenantId);
         const apiKey = apiKeys.find(k => k.id === keyId);
         
         if (!apiKey) {
@@ -54,7 +77,7 @@ router.post('/:keyId/reveal', validateSession, async (req, res) => {
         }
         
         // Log the reveal action for security auditing
-        console.log(`🔓 API key revealed: ${keyId} by user ${req.user.id} at ${new Date().toISOString()}`);
+        console.log(`🔓 API key revealed: ${keyId} by user ${req.user.id} in tenant ${session.tenantId} at ${new Date().toISOString()}`);
         
         // Return the full key (frontend should handle display carefully)
         res.json({
@@ -75,6 +98,14 @@ router.post('/:keyId/reveal', validateSession, async (req, res) => {
 router.post('/', validateSession, async (req, res) => {
     try {
         const { name } = req.body;
+        const session = database.getSession(req.session.id);
+        
+        if (!session || !session.tenantId) {
+            return res.status(400).json({
+                error: 'No tenant context found',
+                code: 'NO_TENANT_CONTEXT'
+            });
+        }
         
         if (!name || name.trim() === '') {
             return res.status(400).json({
@@ -83,25 +114,39 @@ router.post('/', validateSession, async (req, res) => {
             });
         }
         
-        // Check rate limiting for API key creation
-        const userId = req.user.id;
+        // Check rate limiting for API key creation per tenant
+        const tenantId = session.tenantId;
         const dayStart = new Date();
         dayStart.setHours(0, 0, 0, 0);
         
-        // Count keys created today
-        const userKeys = await database.getApiKeysByUserId(userId);
-        const keysCreatedToday = userKeys.filter(key => 
+        // Count keys created today for this tenant
+        const tenantKeys = database.getApiKeysByTenant(tenantId);
+        const keysCreatedToday = tenantKeys.filter(key => 
             new Date(key.createdAt) >= dayStart
         ).length;
         
         if (keysCreatedToday >= 10) {
             return res.status(429).json({
-                error: 'Daily API key creation limit reached (10 per day)',
+                error: 'Daily API key creation limit reached (10 per day per organization)',
                 code: 'RATE_LIMIT_EXCEEDED'
             });
         }
+
+        // Check if name already exists in tenant
+        const existingKey = tenantKeys.find(key => 
+            key.name.toLowerCase() === name.trim().toLowerCase()
+        );
         
-        const apiKey = await database.createApiKey(userId, name.trim());
+        if (existingKey) {
+            return res.status(400).json({
+                error: 'An API key with this name already exists in your organization',
+                code: 'DUPLICATE_NAME'
+            });
+        }
+        
+        const apiKey = await database.createApiKey(req.user.id, tenantId, name.trim());
+        
+        console.log(`🔑 API key created: ${apiKey.id} for tenant ${tenantId} by user ${req.user.id}`);
         
         // Return the full key only on creation
         res.status(201).json({
@@ -126,21 +171,43 @@ router.post('/', validateSession, async (req, res) => {
 router.delete('/:keyId', validateSession, async (req, res) => {
     try {
         const { keyId } = req.params;
+        const session = database.getSession(req.session.id);
         
-        await database.revokeApiKey(req.user.id, keyId);
+        if (!session || !session.tenantId) {
+            return res.status(400).json({
+                error: 'No tenant context found',
+                code: 'NO_TENANT_CONTEXT'
+            });
+        }
+
+        // Verify the key belongs to this tenant
+        const tenantKeys = database.getApiKeysByTenant(session.tenantId);
+        const keyToRevoke = tenantKeys.find(k => k.id === keyId);
+        
+        if (!keyToRevoke) {
+            return res.status(404).json({
+                error: 'API key not found in your organization',
+                code: 'KEY_NOT_FOUND'
+            });
+        }
+
+        // Mark key as inactive (we'll use the existing revokeApiKey method)
+        const allKeys = database.getAllData().apiKeys;
+        const keyData = allKeys.find(k => k.id === keyId);
+        
+        if (keyData) {
+            keyData.isActive = false;
+            keyData.revokedAt = new Date();
+            keyData.revokedBy = req.user.id;
+        }
+        
+        console.log(`🗑️ API key revoked: ${keyId} in tenant ${session.tenantId} by user ${req.user.id}`);
         
         res.json({
             message: 'API key revoked successfully'
         });
         
     } catch (error) {
-        if (error.message === 'API key not found') {
-            return res.status(404).json({
-                error: 'API key not found',
-                code: 'KEY_NOT_FOUND'
-            });
-        }
-        
         console.error('Revoke API key error:', error);
         res.status(500).json({
             error: 'Internal server error',
@@ -153,11 +220,39 @@ router.delete('/:keyId', validateSession, async (req, res) => {
 router.post('/:keyId/rotate', validateSession, async (req, res) => {
     try {
         const { keyId } = req.params;
+        const session = database.getSession(req.session.id);
         
-        const newKey = await database.rotateApiKey(req.user.id, keyId);
+        if (!session || !session.tenantId) {
+            return res.status(400).json({
+                error: 'No tenant context found',
+                code: 'NO_TENANT_CONTEXT'
+            });
+        }
+
+        // Verify the key belongs to this tenant
+        const tenantKeys = database.getApiKeysByTenant(session.tenantId);
+        const keyToRotate = tenantKeys.find(k => k.id === keyId);
         
-        // Log rotation for security auditing
-        console.log(`🔄 API key rotated: ${keyId} by user ${req.user.id} at ${new Date().toISOString()}`);
+        if (!keyToRotate) {
+            return res.status(404).json({
+                error: 'API key not found in your organization',
+                code: 'KEY_NOT_FOUND'
+            });
+        }
+
+        // Create new key with same name
+        const newKey = await database.createApiKey(req.user.id, session.tenantId, keyToRotate.name);
+        
+        // Revoke old key
+        const allKeys = database.getAllData().apiKeys;
+        const oldKeyData = allKeys.find(k => k.id === keyId);
+        if (oldKeyData) {
+            oldKeyData.isActive = false;
+            oldKeyData.revokedAt = new Date();
+            oldKeyData.revokedBy = req.user.id;
+        }
+        
+        console.log(`🔄 API key rotated: ${keyId} -> ${newKey.id} in tenant ${session.tenantId} by user ${req.user.id}`);
         
         res.json({
             apiKey: {
@@ -169,13 +264,6 @@ router.post('/:keyId/rotate', validateSession, async (req, res) => {
         });
         
     } catch (error) {
-        if (error.message === 'API key not found') {
-            return res.status(404).json({
-                error: 'API key not found',
-                code: 'KEY_NOT_FOUND'
-            });
-        }
-        
         console.error('Rotate API key error:', error);
         res.status(500).json({
             error: 'Internal server error',
@@ -185,10 +273,18 @@ router.post('/:keyId/rotate', validateSession, async (req, res) => {
 });
 
 // Update API key name
-router.patch('/:keyId', async (req, res) => {
+router.patch('/:keyId', validateSession, async (req, res) => {
     try {
         const { keyId } = req.params;
         const { name } = req.body;
+        const session = database.getSession(req.session.id);
+        
+        if (!session || !session.tenantId) {
+            return res.status(400).json({
+                error: 'No tenant context found',
+                code: 'NO_TENANT_CONTEXT'
+            });
+        }
         
         if (!keyId) {
             return res.status(400).json({
@@ -211,30 +307,36 @@ router.patch('/:keyId', async (req, res) => {
             });
         }
         
-        // Check for duplicate names (excluding current key)
-        const existingKeys = database.getApiKeysByUserId(req.user.id);
-        const duplicateName = existingKeys.find(key => 
-            key.id !== keyId && key.name.toLowerCase() === name.toLowerCase()
-        );
-        if (duplicateName) {
-            return res.status(400).json({
-                error: 'An API key with this name already exists',
-                code: 'DUPLICATE_NAME'
-            });
-        }
-        
-        // Find and update the key
-        const allKeys = database.getAllData().apiKeys;
-        const keyToUpdate = allKeys.find(key => key.id === keyId && key.userId === req.user.id);
+        // Verify the key belongs to this tenant
+        const tenantKeys = database.getApiKeysByTenant(session.tenantId);
+        const keyToUpdate = tenantKeys.find(k => k.id === keyId);
         
         if (!keyToUpdate) {
             return res.status(404).json({
-                error: 'API key not found',
+                error: 'API key not found in your organization',
                 code: 'KEY_NOT_FOUND'
             });
         }
         
-        keyToUpdate.name = name.trim();
+        // Check for duplicate names within tenant (excluding current key)
+        const duplicateName = tenantKeys.find(key => 
+            key.id !== keyId && key.name.toLowerCase() === name.toLowerCase()
+        );
+        if (duplicateName) {
+            return res.status(400).json({
+                error: 'An API key with this name already exists in your organization',
+                code: 'DUPLICATE_NAME'
+            });
+        }
+        
+        // Update the key in the raw data
+        const allKeys = database.getAllData().apiKeys;
+        const keyData = allKeys.find(key => key.id === keyId);
+        
+        if (keyData) {
+            keyData.name = name.trim();
+            console.log(`📝 API key renamed: ${keyId} to "${name}" in tenant ${session.tenantId}`);
+        }
         
         res.json({
             message: 'API key name updated successfully'
@@ -250,9 +352,17 @@ router.patch('/:keyId', async (req, res) => {
 });
 
 // Get API key usage statistics
-router.get('/:keyId/usage', async (req, res) => {
+router.get('/:keyId/usage', validateSession, async (req, res) => {
     try {
         const { keyId } = req.params;
+        const session = database.getSession(req.session.id);
+        
+        if (!session || !session.tenantId) {
+            return res.status(400).json({
+                error: 'No tenant context found',
+                code: 'NO_TENANT_CONTEXT'
+            });
+        }
         
         if (!keyId) {
             return res.status(400).json({
@@ -261,29 +371,42 @@ router.get('/:keyId/usage', async (req, res) => {
             });
         }
         
-        const allKeys = database.getAllData().apiKeys;
-        const apiKey = allKeys.find(key => key.id === keyId && key.userId === req.user.id);
+        // Verify the key belongs to this tenant
+        const tenantKeys = database.getApiKeysByTenant(session.tenantId);
+        const apiKey = tenantKeys.find(k => k.id === keyId);
         
         if (!apiKey) {
             return res.status(404).json({
-                error: 'API key not found',
+                error: 'API key not found in your organization',
                 code: 'KEY_NOT_FOUND'
             });
         }
         
-        // In a real implementation, you'd query usage logs from a database
+        // Get actual transactions for this API key
+        const transactions = database.getTransactionsByTenant(session.tenantId);
+        const keyTransactions = transactions.filter(t => t.metadata?.apiKeyId === keyId);
+        
+        // Calculate usage statistics
+        const now = new Date();
+        const day24hAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const day7Ago = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const day30Ago = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        
         const usageStats = {
             keyId: apiKey.id,
             name: apiKey.name,
-            totalRequests: apiKey.usageCount,
+            totalRequests: apiKey.usageCount || 0,
             lastUsed: apiKey.lastUsed,
             createdAt: apiKey.createdAt,
-            // Mock data for demo
-            requestsLast24h: Math.floor(Math.random() * 100),
-            requestsLast7d: Math.floor(Math.random() * 700),
-            requestsLast30d: Math.floor(Math.random() * 3000),
-            successRate: 95.5 + Math.random() * 4, // Random between 95.5-99.5%
-            averageResponseTime: 150 + Math.random() * 100, // Random between 150-250ms
+            totalTransactions: keyTransactions.length,
+            totalAmount: keyTransactions.reduce((sum, t) => sum + (t.amount || 0), 0),
+            requestsLast24h: keyTransactions.filter(t => t.createdAt >= day24hAgo).length,
+            requestsLast7d: keyTransactions.filter(t => t.createdAt >= day7Ago).length,
+            requestsLast30d: keyTransactions.filter(t => t.createdAt >= day30Ago).length,
+            successfulTransactions: keyTransactions.filter(t => t.status === 'completed').length,
+            failedTransactions: keyTransactions.filter(t => t.status === 'failed').length,
+            successRate: keyTransactions.length > 0 ? 
+                (keyTransactions.filter(t => t.status === 'completed').length / keyTransactions.length * 100) : 0
         };
         
         res.json(usageStats);
