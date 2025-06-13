@@ -34,7 +34,7 @@ sessions/
 dev.db
 test.db
 
-# Logs
+# Logs - SECURITY CRITICAL
 logs
 *.log
 npm-debug.log*
@@ -47,6 +47,9 @@ debug.log
 error.log
 access.log
 combined.log
+audit.log
+security.log
+test-results.txt
 
 # Log directories
 logs/

@@ -50,7 +50,7 @@ interface SecurityConfig {
 export const securityConfig: SecurityConfig = {
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY || '',
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx',
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder',
   },
   
   lightning: {
