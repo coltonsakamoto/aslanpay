@@ -9,6 +9,9 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Stripe configuration
+const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
+
 // Production-safe environment setup
 if (process.env.NODE_ENV === 'production') {
     process.env.JWT_SECRET = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
@@ -644,12 +647,203 @@ app.get('/api/v1/tenant', validateApiKey, async (req, res) => {
     }
 });
 
+// Stripe Checkout Endpoints
+app.post('/api/create-checkout-session', validateSession, async (req, res) => {
+    try {
+        if (!stripe) {
+            return res.status(503).json({ 
+                error: 'Stripe not configured', 
+                code: 'STRIPE_NOT_CONFIGURED',
+                message: 'Payment processing is not available. Please contact support.'
+            });
+        }
+
+        const { plan, priceId } = req.body;
+        
+        if (!plan || !priceId) {
+            return res.status(400).json({ 
+                error: 'Plan and price ID required', 
+                code: 'MISSING_PLAN_INFO' 
+            });
+        }
+
+        // Define plan configurations
+        const planConfigs = {
+            starter: {
+                priceId: process.env.STRIPE_STARTER_PRICE_ID || 'price_starter_monthly',
+                name: 'AslanPay Starter Plan',
+                description: '3,000 API authorizations per month',
+                amount: 2900 // $29.00 in cents
+            },
+            builder: {
+                priceId: process.env.STRIPE_BUILDER_PRICE_ID || 'price_builder_monthly', 
+                name: 'AslanPay Builder Plan',
+                description: '12,000 API authorizations per month',
+                amount: 12900 // $129.00 in cents
+            }
+        };
+
+        const selectedPlan = planConfigs[plan];
+        if (!selectedPlan) {
+            return res.status(400).json({ 
+                error: 'Invalid plan selected', 
+                code: 'INVALID_PLAN' 
+            });
+        }
+
+        // Create Stripe checkout session
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: selectedPlan.name,
+                        description: selectedPlan.description,
+                    },
+                    unit_amount: selectedPlan.amount,
+                    recurring: {
+                        interval: 'month'
+                    }
+                },
+                quantity: 1,
+            }],
+            mode: 'subscription',
+            success_url: `${process.env.BASE_URL || 'https://aslanpay.xyz'}/pricing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.BASE_URL || 'https://aslanpay.xyz'}/pricing?canceled=true`,
+            customer_email: req.user.email,
+            metadata: {
+                userId: req.user.id,
+                plan: plan,
+                userEmail: req.user.email
+            },
+            subscription_data: {
+                metadata: {
+                    userId: req.user.id,
+                    plan: plan
+                }
+            },
+            // Free trial for 14 days
+            subscription_data: {
+                trial_period_days: 14,
+                metadata: {
+                    userId: req.user.id,
+                    plan: plan
+                }
+            }
+        });
+
+        console.log(`💳 Stripe checkout session created: ${session.id} for ${req.user.email} (${plan} plan)`);
+
+        res.json({
+            sessionId: session.id,
+            url: session.url
+        });
+
+    } catch (error) {
+        console.error('Stripe checkout error:', error);
+        res.status(500).json({ 
+            error: 'Failed to create checkout session', 
+            code: 'STRIPE_ERROR',
+            message: 'Unable to process payment. Please try again or contact support.'
+        });
+    }
+});
+
+// Stripe webhook endpoint for handling subscription events
+app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+    try {
+        if (!stripe) {
+            return res.status(503).send('Stripe not configured');
+        }
+
+        const sig = req.headers['stripe-signature'];
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+        if (!webhookSecret) {
+            console.error('Stripe webhook secret not configured');
+            return res.status(400).send('Webhook secret not configured');
+        }
+
+        let event;
+        try {
+            event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+        } catch (err) {
+            console.error('Webhook signature verification failed:', err.message);
+            return res.status(400).send(`Webhook Error: ${err.message}`);
+        }
+
+        // Handle the event
+        switch (event.type) {
+            case 'checkout.session.completed':
+                const session = event.data.object;
+                console.log(`💰 Payment successful for session: ${session.id}`);
+                
+                // Update user subscription in database
+                if (session.metadata && session.metadata.userId) {
+                    try {
+                        await database.updateUserSubscription(session.metadata.userId, {
+                            plan: session.metadata.plan,
+                            status: 'active',
+                            stripeCustomerId: session.customer,
+                            subscriptionId: session.subscription
+                        });
+                        console.log(`✅ Updated subscription for user: ${session.metadata.userId}`);
+                    } catch (dbError) {
+                        console.error('Failed to update user subscription:', dbError);
+                    }
+                }
+                break;
+
+            case 'customer.subscription.updated':
+            case 'customer.subscription.deleted':
+                const subscription = event.data.object;
+                console.log(`📋 Subscription ${event.type}: ${subscription.id}`);
+                
+                // Update subscription status in database
+                if (subscription.metadata && subscription.metadata.userId) {
+                    try {
+                        await database.updateUserSubscription(subscription.metadata.userId, {
+                            status: subscription.status,
+                            subscriptionId: subscription.id
+                        });
+                        console.log(`✅ Updated subscription status for user: ${subscription.metadata.userId}`);
+                    } catch (dbError) {
+                        console.error('Failed to update subscription status:', dbError);
+                    }
+                }
+                break;
+
+            default:
+                console.log(`Unhandled event type: ${event.type}`);
+        }
+
+        res.json({received: true});
+
+    } catch (error) {
+        console.error('Stripe webhook error:', error);
+        res.status(500).send('Webhook handler failed');
+    }
+});
+
 // Clean URL helper function
 function createPageRoute(route, filename) {
     // Clean URL (preferred)
     app.get(route, (req, res) => {
         try {
-            res.sendFile(path.join(__dirname, 'public', filename));
+            // Special handling for pricing page to inject Stripe key
+            if (filename === 'pricing.html') {
+                let html = fs.readFileSync(path.join(__dirname, 'public', filename), 'utf8');
+                const stripeKey = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
+                html = html.replace(
+                    "window.STRIPE_PUBLISHABLE_KEY = 'pk_test_51PmGsxBGmqHSe3k3e8nLMh6oPcB'; // Will be replaced dynamically",
+                    `window.STRIPE_PUBLISHABLE_KEY = '${stripeKey}';`
+                );
+                res.setHeader('Content-Type', 'text/html');
+                res.send(html);
+            } else {
+                res.sendFile(path.join(__dirname, 'public', filename));
+            }
         } catch (error) {
             res.status(404).json({ error: `${route} page not found` });
         }
@@ -659,7 +853,19 @@ function createPageRoute(route, filename) {
     if (route !== '/') {
         app.get(route + '.html', (req, res) => {
             try {
-                res.sendFile(path.join(__dirname, 'public', filename));
+                // Special handling for pricing page to inject Stripe key
+                if (filename === 'pricing.html') {
+                    let html = fs.readFileSync(path.join(__dirname, 'public', filename), 'utf8');
+                    const stripeKey = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
+                    html = html.replace(
+                        "window.STRIPE_PUBLISHABLE_KEY = 'pk_test_51PmGsxBGmqHSe3k3e8nLMh6oPcB'; // Will be replaced dynamically",
+                        `window.STRIPE_PUBLISHABLE_KEY = '${stripeKey}';`
+                    );
+                    res.setHeader('Content-Type', 'text/html');
+                    res.send(html);
+                } else {
+                    res.sendFile(path.join(__dirname, 'public', filename));
+                }
             } catch (error) {
                 res.status(404).json({ error: `${route} page not found` });
             }

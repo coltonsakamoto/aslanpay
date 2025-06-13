@@ -472,6 +472,141 @@ class ProductionDatabase {
         };
     }
 
+    // Subscription Management
+    async updateUserSubscription(userId, subscriptionData) {
+        const { plan, status, stripeCustomerId, subscriptionId } = subscriptionData;
+        
+        const updateData = {
+            subscriptionPlan: plan,
+            subscriptionStatus: status,
+            updatedAt: new Date()
+        };
+        
+        if (stripeCustomerId) {
+            updateData.stripeCustomerId = stripeCustomerId;
+        }
+        
+        if (subscriptionId) {
+            updateData.stripeSubscriptionId = subscriptionId;
+        }
+        
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: updateData
+        });
+        
+        // Log subscription change
+        await this.logAudit({
+            userId,
+            action: 'subscription_updated',
+            resource: 'subscription',
+            metadata: JSON.stringify({ plan, status, subscriptionId })
+        });
+        
+        console.log(`✅ Updated subscription for user ${userId}: ${plan} (${status})`);
+        
+        return this.sanitizeUser(user);
+    }
+
+    async getUserSubscription(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                email: true,
+                subscriptionPlan: true,
+                subscriptionStatus: true,
+                stripeCustomerId: true,
+                stripeSubscriptionId: true,
+                createdAt: true,
+                updatedAt: true
+            }
+        });
+        
+        return user;
+    }
+
+    async cancelSubscription(userId) {
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                subscriptionStatus: 'canceled',
+                updatedAt: new Date()
+            }
+        });
+        
+        await this.logAudit({
+            userId,
+            action: 'subscription_canceled',
+            resource: 'subscription',
+            metadata: JSON.stringify({ plan: user.subscriptionPlan })
+        });
+        
+        return this.sanitizeUser(user);
+    }
+
+    // Billing and Usage Tracking
+    async trackUsage(userId, apiKeyId, type, count = 1) {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Update or create usage record for today
+        await this.prisma.usage.upsert({
+            where: {
+                userId_date: {
+                    userId,
+                    date: today
+                }
+            },
+            update: {
+                authorizations: type === 'authorization' ? { increment: count } : undefined,
+                apiCalls: { increment: count },
+                updatedAt: new Date()
+            },
+            create: {
+                userId,
+                date: today,
+                authorizations: type === 'authorization' ? count : 0,
+                apiCalls: count
+            }
+        });
+    }
+
+    async getUserUsage(userId, startDate = null, endDate = null) {
+        const where = { userId };
+        
+        if (startDate || endDate) {
+            where.date = {};
+            if (startDate) where.date.gte = startDate;
+            if (endDate) where.date.lte = endDate;
+        }
+        
+        const usage = await this.prisma.usage.findMany({
+            where,
+            orderBy: { date: 'desc' }
+        });
+        
+        return usage;
+    }
+
+    async getMonthlyUsage(userId, year, month) {
+        const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+        const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+        
+        const usage = await this.getUserUsage(userId, startDate, endDate);
+        
+        const totals = usage.reduce((acc, day) => ({
+            authorizations: acc.authorizations + day.authorizations,
+            apiCalls: acc.apiCalls + day.apiCalls
+        }), { authorizations: 0, apiCalls: 0 });
+        
+        return {
+            userId,
+            period: `${year}-${month.toString().padStart(2, '0')}`,
+            dailyUsage: usage,
+            totals
+        };
+    }
+
     // Health check
     async healthCheck() {
         try {
