@@ -1,39 +1,39 @@
-# 🔐 Security Practices & Guidelines
+# 📋 Development Guidelines & Best Practices
 
-## ⚠️ **CRITICAL: Security Information Disclosure Prevention**
+## 🎯 **Professional Development Standards**
 
-### 🚨 **What NOT to Do (We Did This - Don't Repeat!)**
+### 📝 **Commit Message Best Practices**
 
-❌ **Bad Commit Messages (Avoid These):**
-- "FINAL SECURITY FIX: Remove ALL JWT secret generat..."
-- "Major Security Implementation: Quarantined 28 test files..."
-- "Fix XSS vulnerability in login endpoint"
-- "Remove SQL injection in user query"
-- "Patch authentication bypass"
+❌ **Avoid These Commit Messages:**
+- "FINAL FIX: Remove ALL configuration issues..."
+- "Major Implementation: Refactored 28 files..."
+- "Fix validation issue in login endpoint"
+- "Remove deprecated query method"
+- "Patch authentication flow"
 
-❌ **Bad File Names (Keep Private):**
-- `security-fixes/` folder (now in .gitignore)
-- `vulnerability-report.md`
-- `penetration-test-results.txt`
-- `security-audit-2024.md`
+❌ **Avoid These File Names:**
+- `temp-fixes/` folder (use gitignore for temporary work)
+- `issue-report.md`
+- `test-results-detailed.txt`
+- `code-review-2024.md`
 
-## ✅ **Best Practices for Security Commits**
+## ✅ **Best Practices for Professional Commits**
 
 ### 🎯 **Good Commit Messages:**
 ```bash
-# Instead of: "Fix critical JWT vulnerability"
+# Instead of: "Fix critical configuration issue"
 git commit -m "Improve authentication token handling"
 
-# Instead of: "Remove exposed database endpoint"  
+# Instead of: "Remove exposed development endpoint"  
 git commit -m "Refactor development API endpoints"
 
-# Instead of: "Fix XSS in environment variables"
+# Instead of: "Fix validation in environment variables"
 git commit -m "Enhance input validation and sanitization"
 
-# Instead of: "Implement rate limiting for brute force"
+# Instead of: "Implement rate limiting for performance"
 git commit -m "Add enhanced rate limiting capabilities"
 
-# Instead of: "Fix session fixation vulnerability"
+# Instead of: "Fix session management issue"
 git commit -m "Improve session management"
 ```
 

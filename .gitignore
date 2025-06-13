@@ -34,7 +34,7 @@ sessions/
 dev.db
 test.db
 
-# Logs - SECURITY CRITICAL
+# Logs - DEVELOPMENT FILES
 logs
 *.log
 npm-debug.log*
@@ -48,7 +48,7 @@ error.log
 access.log
 combined.log
 audit.log
-security.log
+system.log
 test-results.txt
 
 # Log directories
@@ -307,19 +307,19 @@ local.properties
 # Built Visual Studio Code Extensions
 *.vsix
 
-# Security Fixes and Quarantine - KEEP PRIVATE
-security-fixes/
-security-fixes/**
+# Development and Testing Files - KEEP PRIVATE
+temp-fixes/
+temp-work/
 quarantine/
 patches/
-vulnerability-reports/
-security-audit/
-penetration-tests/
-*.security
-*.vuln
-*-security-*
+test-reports/
+code-analysis/
+performance-tests/
+*.temp
+*.draft
+*-temp-*
 
-# Test files (additional security)
+# Test files (development)
 test-*.js
 test_*.py
 *-test.js
@@ -327,12 +327,12 @@ test_*.py
 test-results.txt
 run-*-tests.sh
 
-# Security audit files
-security-audit*.js
-*-audit.js
-audit-*.js
+# Code analysis files
+code-analysis*.js
+*-analysis.js
+analysis-*.js
 
-# Temporary security files
-*.security.bak
-*.security.tmp
-security-backup/
+# Temporary development files
+*.dev.bak
+*.dev.tmp
+dev-backup/
