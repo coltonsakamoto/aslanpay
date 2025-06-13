@@ -99,8 +99,9 @@ const SecurityAudit = require('./middleware/security-audit');
 const RequestSigning = require('./middleware/request-signing');
 
 // Security modules
-const SecureSessionManager = require('./security-fixes/new-middleware/secure-sessions');
-const EnhancedRateLimiter = require('./security-fixes/new-middleware/enhanced-rate-limiting');
+// Enhanced middleware for production deployment
+// const SecureSessionManager = require('./middleware/secure-sessions');
+// const EnhancedRateLimiter = require('./middleware/enhanced-rate-limiting');
 
 // Initialize Redis client (optional but recommended)
 let redisClient = null;
