@@ -548,7 +548,74 @@ app.post('/api/auth/logout', validateSession, async (req, res) => {
 });
 
 app.get('/api/auth/me', validateSession, (req, res) => {
+    console.log('✅ /api/auth/me - Session validation successful for:', req.user.email);
     res.json({ user: req.user });
+});
+
+// DEBUG: Session validation test endpoint (no middleware)
+app.get('/api/debug/session-test', async (req, res) => {
+    try {
+        console.log('🔍 Debug session test - cookies:', req.cookies);
+        
+        const token = req.cookies?.agentpay_session;
+        if (!token) {
+            return res.json({ 
+                status: 'no_token', 
+                message: 'No session cookie found',
+                cookies: Object.keys(req.cookies || {})
+            });
+        }
+        
+        console.log('🔍 Found session token:', token.substring(0, 20) + '...');
+        
+        const decoded = jwt.verify(token, getJWTSecret());
+        console.log('🔍 Decoded JWT:', decoded);
+        
+        const session = await database.getSession(decoded.sessionId);
+        console.log('🔍 Database session:', session ? 'Found' : 'Not found');
+        
+        if (!session) {
+            return res.json({ 
+                status: 'session_not_found', 
+                message: 'Session not found in database',
+                sessionId: decoded.sessionId
+            });
+        }
+        
+        const user = await database.getUserById(session.userId);
+        console.log('🔍 Database user:', user ? user.email : 'Not found');
+        
+        if (!user) {
+            return res.json({ 
+                status: 'user_not_found', 
+                message: 'User not found in database',
+                userId: session.userId
+            });
+        }
+        
+        res.json({
+            status: 'success',
+            message: 'Session validation successful',
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name
+            },
+            session: {
+                id: session.id,
+                created: session.createdAt,
+                expires: session.expiresAt
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Session test error:', error);
+        res.json({
+            status: 'error',
+            message: error.message,
+            type: error.name
+        });
+    }
 });
 
 // API Key authentication middleware

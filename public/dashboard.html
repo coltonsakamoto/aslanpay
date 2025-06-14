@@ -156,24 +156,37 @@
         // Load user data
         async function loadUserData() {
             try {
+                console.log('🔍 Loading user data...');
                 const response = await fetch('/api/auth/me', {
                     credentials: 'include'
                 });
                 
+                console.log('📊 Auth response status:', response.status);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('✅ User data received:', data);
                     currentUser = data.user;
                     
                     document.getElementById('user-name').textContent = currentUser.name;
                     document.getElementById('user-display-name').textContent = currentUser.name;
                     document.getElementById('user-email').textContent = currentUser.email;
-                    document.getElementById('user-plan').textContent = currentUser.subscription.plan.charAt(0).toUpperCase() + currentUser.subscription.plan.slice(1);
+                    
+                    // Handle missing subscription data gracefully
+                    const plan = currentUser.subscriptionPlan || 'sandbox';
+                    document.getElementById('user-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
                 } else {
-                    // Not authenticated, redirect to login
+                    console.error('❌ Auth failed with status:', response.status);
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Auth error details:', errorData);
+                    
+                    // Show error message before redirecting
+                    alert(`Authentication failed (${response.status}). Please sign in again.`);
                     window.location.href = '/auth.html';
                 }
             } catch (error) {
-                console.error('Error loading user data:', error);
+                console.error('❌ Error loading user data:', error);
+                alert('Network error loading dashboard. Please try again.');
                 window.location.href = '/auth.html';
             }
         }
