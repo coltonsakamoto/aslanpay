@@ -42,6 +42,12 @@ process.on('unhandledRejection', (reason, promise) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
+// Set default DATABASE_URL if not provided
+if (!process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = "file:./prisma/dev.db";
+    console.log('🔧 Setting default DATABASE_URL to: file:./prisma/dev.db');
+}
+
 // Production database with persistent storage
 const database = require('./database-production.js');
 
@@ -49,19 +55,28 @@ const database = require('./database-production.js');
 (async () => {
     try {
         console.log('🔄 Initializing persistent database...');
+        console.log('📂 Database URL:', process.env.DATABASE_URL);
         await database.healthCheck();
         console.log('✅ Persistent database initialized successfully');
     } catch (error) {
         console.error('❌ Failed to initialize persistent database:', error.message);
         console.log('⚠️  This will affect user account persistence');
         
-        // For development, we could fall back to in-memory, but for production
-        // we should ensure DATABASE_URL is properly configured
-        if (!process.env.DATABASE_URL) {
-            console.log('💡 Please set DATABASE_URL environment variable');
-            console.log('   Example: DATABASE_URL="file:./dev.db"');
+        // Try alternative database path
+        if (!process.env.DATABASE_URL.includes('prisma/')) {
+            console.log('🔧 Trying alternative database path: file:./dev.db');
+            process.env.DATABASE_URL = "file:./dev.db";
+            try {
+                await database.healthCheck();
+                console.log('✅ Alternative database path successful');
+                return;
+            } catch (altError) {
+                console.error('❌ Alternative path also failed:', altError.message);
+            }
         }
+        
         console.error('💥 Database initialization failed. Server may not function properly.');
+        console.log('💡 Available database files:', require('fs').readdirSync('.').filter(f => f.endsWith('.db')));
         process.exit(1);
     }
 })();
@@ -371,13 +386,16 @@ async function validateApiKey(req, res, next) {
         }
 
         // Validate API key in database (this already updates usage stats)
+        console.log(`🔍 Validating API key: ${apiKey.substring(0, 20)}...`);
         const keyData = await database.validateApiKey(apiKey);
         
         if (!keyData) {
+            console.log(`❌ API key not found in database: ${apiKey.substring(0, 20)}...`);
             return res.status(401).json({
                 error: 'Invalid or revoked API key',
                 code: 'INVALID_API_KEY',
-                documentation: 'https://docs.aslanpay.xyz/authentication'
+                documentation: 'https://docs.aslanpay.xyz/authentication',
+                hint: 'Create a new API key in your dashboard: /dashboard'
             });
         }
 
@@ -402,10 +420,20 @@ async function validateApiKey(req, res, next) {
         
         next();
     } catch (error) {
-        console.error('API key validation error:', error);
+        console.error('❌ API key validation error:', error);
+        console.error('Database URL:', process.env.DATABASE_URL);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            stack: error.stack?.split('\n').slice(0, 3).join('\n')
+        });
+        
         res.status(500).json({ 
             error: 'Authentication service error', 
-            code: 'AUTH_SERVICE_ERROR' 
+            code: 'AUTH_SERVICE_ERROR',
+            details: process.env.NODE_ENV === 'development' ? error.message : 'Internal authentication error',
+            timestamp: new Date().toISOString()
         });
     }
 }
