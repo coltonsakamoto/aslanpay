@@ -42,10 +42,13 @@ process.on('unhandledRejection', (reason, promise) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
-// Set default DATABASE_URL if not provided
-if (!process.env.DATABASE_URL) {
-    process.env.DATABASE_URL = "file:./prisma/dev.db";
-    console.log('🔧 Setting default DATABASE_URL to: file:./prisma/dev.db');
+// Set default DATABASE_URL if not provided OR force SQLite in production
+if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.startsWith('file:')) {
+    // Railway sets DATABASE_URL to PostgreSQL, but we need SQLite
+    const sqliteUrl = "file:./prisma/dev.db";
+    console.log('🔧 Current DATABASE_URL:', process.env.DATABASE_URL || 'undefined');
+    console.log('🔧 Forcing SQLite DATABASE_URL to:', sqliteUrl);
+    process.env.DATABASE_URL = sqliteUrl;
 }
 
 // Production database with persistent storage
@@ -56,6 +59,33 @@ const database = require('./database-production.js');
     try {
         console.log('🔄 Initializing persistent database...');
         console.log('📂 Database URL:', process.env.DATABASE_URL);
+        
+        // Ensure database directory exists (for Railway)
+        const dbPath = process.env.DATABASE_URL.replace('file:', '');
+        const dbDir = path.dirname(dbPath);
+        if (!fs.existsSync(dbDir)) {
+            console.log('📁 Creating database directory:', dbDir);
+            fs.mkdirSync(dbDir, { recursive: true });
+        }
+        
+        // Try to run Prisma migrations if in production
+        if (process.env.NODE_ENV === 'production') {
+            try {
+                console.log('🔄 Running database migrations for production...');
+                const { execSync } = require('child_process');
+                execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+                console.log('✅ Database migrations completed');
+            } catch (migrationError) {
+                console.warn('⚠️  Migration failed, attempting to push schema:', migrationError.message);
+                try {
+                    execSync('npx prisma db push', { stdio: 'inherit' });
+                    console.log('✅ Database schema pushed successfully');
+                } catch (pushError) {
+                    console.warn('⚠️  Schema push failed, continuing without migrations:', pushError.message);
+                }
+            }
+        }
+        
         await database.healthCheck();
         console.log('✅ Persistent database initialized successfully');
     } catch (error) {
