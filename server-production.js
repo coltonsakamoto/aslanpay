@@ -88,6 +88,33 @@ const database = require('./database-production.js');
         
         await database.healthCheck();
         console.log('✅ Persistent database initialized successfully');
+        
+        // DEBUG: Check if we have any users or API keys
+        try {
+            const userCount = await database.prisma.user.count();
+            const apiKeyCount = await database.prisma.apiKey.count();
+            console.log(`📊 Database contents: ${userCount} users, ${apiKeyCount} API keys`);
+            
+            // If empty database, create a test user and API key for immediate testing
+            if (userCount === 0) {
+                console.log('🔧 Creating test user for immediate API testing...');
+                const testUser = await database.createUser({
+                    email: 'test@aslanpay.xyz',
+                    password: 'TestPassword123!',
+                    name: 'Test User',
+                    provider: 'email'
+                });
+                console.log(`✅ Created test user: ${testUser.email}`);
+                
+                const testApiKeys = await database.getApiKeysByUserId(testUser.id);
+                if (testApiKeys.length > 0) {
+                    console.log(`🔑 Test API Key: ${testApiKeys[0].key}`);
+                    console.log('💡 Use this key to test: Authorization: Bearer ' + testApiKeys[0].key);
+                }
+            }
+        } catch (debugError) {
+            console.error('⚠️  Debug check failed:', debugError.message);
+        }
     } catch (error) {
         console.error('❌ Failed to initialize persistent database:', error.message);
         console.log('⚠️  This will affect user account persistence');
@@ -195,6 +222,42 @@ app.get('/test', (req, res) => {
         environment: process.env.NODE_ENV || 'development',
         port: port
     });
+});
+
+// DEBUGGING: Quick API key creation endpoint (for testing only)
+app.post('/debug/create-test-user', async (req, res) => {
+    try {
+        console.log('🔧 DEBUG: Creating test user and API key...');
+        
+        const testEmail = `test-${Date.now()}@aslanpay.xyz`;
+        const testUser = await database.createUser({
+            email: testEmail,
+            password: 'TestPassword123!',
+            name: 'Debug Test User',
+            provider: 'email'
+        });
+        
+        const apiKeys = await database.getApiKeysByUserId(testUser.id);
+        
+        res.json({
+            success: true,
+            message: 'Test user and API key created',
+            user: testUser,
+            apiKey: apiKeys[0]?.key,
+            instructions: {
+                testEndpoint: '/api/v1/test',
+                authorization: `Bearer ${apiKeys[0]?.key}`,
+                example: `curl -H "Authorization: Bearer ${apiKeys[0]?.key}" https://your-domain/api/v1/test`
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ DEBUG: Failed to create test user:', error);
+        res.status(500).json({
+            error: 'Failed to create test user',
+            details: error.message
+        });
+    }
 });
 
 // API status endpoint
@@ -417,10 +480,35 @@ async function validateApiKey(req, res, next) {
 
         // Validate API key in database (this already updates usage stats)
         console.log(`🔍 Validating API key: ${apiKey.substring(0, 20)}...`);
+        
+        // DEBUGGING: Check database state before validation
+        try {
+            const totalKeys = await database.prisma.apiKey.count();
+            const activeKeys = await database.prisma.apiKey.count({ where: { isActive: true } });
+            console.log(`📊 Database has ${totalKeys} total API keys, ${activeKeys} active`);
+        } catch (countError) {
+            console.error('❌ Failed to count API keys:', countError.message);
+        }
+        
         const keyData = await database.validateApiKey(apiKey);
         
         if (!keyData) {
             console.log(`❌ API key not found in database: ${apiKey.substring(0, 20)}...`);
+            
+            // DEBUGGING: Show some sample keys for comparison
+            try {
+                const sampleKeys = await database.prisma.apiKey.findMany({ 
+                    take: 3, 
+                    select: { key: true, isActive: true } 
+                });
+                console.log('🔍 Sample keys in database:');
+                sampleKeys.forEach(key => {
+                    console.log(`   - ${key.key.substring(0, 20)}... (active: ${key.isActive})`);
+                });
+            } catch (sampleError) {
+                console.error('❌ Failed to get sample keys:', sampleError.message);
+            }
+            
             return res.status(401).json({
                 error: 'Invalid or revoked API key',
                 code: 'INVALID_API_KEY',
