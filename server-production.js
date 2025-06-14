@@ -68,25 +68,122 @@ const database = require('./database-production.js');
             fs.mkdirSync(dbDir, { recursive: true });
         }
         
-        // Try to run Prisma migrations if in production
+        // FORCE database schema creation in production
         if (process.env.NODE_ENV === 'production') {
             try {
-                console.log('🔄 Running database migrations for production...');
+                console.log('🔄 Force creating database schema for production...');
                 const { execSync } = require('child_process');
-                execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-                console.log('✅ Database migrations completed');
-            } catch (migrationError) {
-                console.warn('⚠️  Migration failed, attempting to push schema:', migrationError.message);
+                
+                // Force schema push (more reliable than migrations for SQLite)
+                console.log('🔧 Forcing schema with prisma db push...');
+                execSync('npx prisma db push --force-reset', { stdio: 'inherit' });
+                console.log('✅ Database schema force-created successfully');
+                
+                // Verify tables exist
+                console.log('🔍 Verifying database tables...');
+                const tableCheck = await database.prisma.$queryRaw`
+                    SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'api_keys', 'sessions');
+                `;
+                console.log('📊 Database tables found:', tableCheck);
+                
+            } catch (schemaError) {
+                console.error('❌ Schema creation failed:', schemaError.message);
+                
+                // Last resort: try migrations
                 try {
-                    execSync('npx prisma db push', { stdio: 'inherit' });
-                    console.log('✅ Database schema pushed successfully');
-                } catch (pushError) {
-                    console.warn('⚠️  Schema push failed, continuing without migrations:', pushError.message);
+                    console.log('🔄 Fallback: Trying migrations...');
+                    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+                    console.log('✅ Migration fallback successful');
+                } catch (migrationError) {
+                    console.error('❌ Both schema push and migrations failed');
+                    console.error('Schema error:', schemaError.message);
+                    console.error('Migration error:', migrationError.message);
                 }
             }
         }
         
-        await database.healthCheck();
+        // Verify database health and table existence
+        try {
+            await database.healthCheck();
+            console.log('✅ Database connection verified');
+            
+            // Check if critical tables exist
+            const tableCheck = await database.prisma.$queryRaw`
+                SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'api_keys', 'sessions');
+            `;
+            console.log('🔍 Critical tables found:', tableCheck);
+            
+            if (tableCheck.length < 3) {
+                throw new Error(`Missing critical tables. Found: ${tableCheck.map(t => t.name).join(', ')}`);
+            }
+            
+        } catch (healthError) {
+            console.error('❌ Database health check failed:', healthError.message);
+            
+            // EMERGENCY: Manual table creation as last resort
+            if (healthError.message.includes('does not exist')) {
+                console.log('🚨 EMERGENCY: Creating tables manually...');
+                try {
+                    await database.prisma.$executeRaw`
+                        CREATE TABLE IF NOT EXISTS users (
+                            id TEXT PRIMARY KEY,
+                            email TEXT UNIQUE NOT NULL,
+                            name TEXT NOT NULL,
+                            password TEXT,
+                            provider TEXT DEFAULT 'email',
+                            googleId TEXT,
+                            githubId TEXT,
+                            emailVerified BOOLEAN DEFAULT FALSE,
+                            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            subscriptionPlan TEXT DEFAULT 'sandbox',
+                            subscriptionStatus TEXT DEFAULT 'active',
+                            stripeCustomerId TEXT,
+                            subscriptionTrialEnd DATETIME
+                        );
+                    `;
+                    
+                    await database.prisma.$executeRaw`
+                        CREATE TABLE IF NOT EXISTS api_keys (
+                            id TEXT PRIMARY KEY,
+                            userId TEXT NOT NULL,
+                            name TEXT NOT NULL,
+                            key TEXT UNIQUE NOT NULL,
+                            prefix TEXT NOT NULL,
+                            secret TEXT NOT NULL,
+                            lastUsed DATETIME,
+                            usageCount INTEGER DEFAULT 0,
+                            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            isActive BOOLEAN DEFAULT TRUE,
+                            revokedAt DATETIME,
+                            permissions TEXT DEFAULT 'authorize,confirm,refund',
+                            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+                        );
+                    `;
+                    
+                    await database.prisma.$executeRaw`
+                        CREATE TABLE IF NOT EXISTS sessions (
+                            id TEXT PRIMARY KEY,
+                            userId TEXT NOT NULL,
+                            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            expiresAt DATETIME NOT NULL,
+                            lastActivity DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+                        );
+                    `;
+                    
+                    console.log('✅ Emergency table creation completed');
+                    await database.healthCheck();
+                    
+                } catch (emergencyError) {
+                    console.error('❌ Emergency table creation failed:', emergencyError.message);
+                    throw emergencyError;
+                }
+            } else {
+                throw healthError;
+            }
+        }
+        
         console.log('✅ Persistent database initialized successfully');
         
         // DEBUG: Check if we have any users or API keys
