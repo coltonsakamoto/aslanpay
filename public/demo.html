@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aslan Demo - AI Agents Making Real Purchases</title>
+    <meta name="description" content="Watch AI agents make real purchases with AslanPay. See ChatGPT, Claude, and other AI agents make autonomous purchases with enterprise-grade spending controls.">
+    
+    <!-- Social Media Meta Tags -->
+    <meta property="og:title" content="Aslan Demo - AI Agents Making Real Purchases">
+    <meta property="og:description" content="Watch AI agents make real purchases with AslanPay. See ChatGPT, Claude, and other AI agents make autonomous purchases with enterprise-grade spending controls.">
+    <meta property="og:image" content="https://aslanpay.xyz/og-image.svg">
+    <meta property="og:url" content="https://aslanpay.xyz/demo">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AslanPay">
+    
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Aslan Demo - AI Agents Making Real Purchases">
+    <meta name="twitter:description" content="Watch AI agents make real purchases with AslanPay. See ChatGPT, Claude, and other AI agents make autonomous purchases with enterprise-grade spending controls.">
+    <meta name="twitter:image" content="https://aslanpay.xyz/og-image.svg">
+    <meta name="twitter:creator" content="@aslanpay">
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#daa520">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="demo-config.js"></script>
+    <script src="card-demo.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen overflow-x-hidden">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
+            </div>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="/" class="text-gray-600 hover:text-gray-900 transition-colors">Home</a>
+                <a href="/docs" class="text-gray-600 hover:text-gray-900 transition-colors">Documentation</a>
+                <a href="/api" class="text-gray-600 hover:text-gray-900 transition-colors">API</a>
+                <a href="/pricing" class="text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
+                <a href="/security" class="text-gray-600 hover:text-gray-900 transition-colors">Security</a>
+                <a href="/auth" class="text-gray-600 hover:text-gray-900 transition-colors">Sign In</a>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            
+            <div class="flex items-center space-x-4">
+                <button id="get-started-btn" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-aslan-gold transition-colors text-sm">
+                    Get Started
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 bg-white">
+            <div class="px-4 sm:px-6 py-4 space-y-4">
+                <a href="/" class="block text-gray-600 hover:text-gray-900 transition-colors">Home</a>
+                <a href="/docs" class="block text-gray-600 hover:text-gray-900 transition-colors">Documentation</a>
+                <a href="/api" class="block text-gray-600 hover:text-gray-900 transition-colors">API</a>
+                <a href="/pricing" class="block text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
+                <a href="/security" class="block text-gray-600 hover:text-gray-900 transition-colors">Security</a>
+                <a href="/auth" class="block text-gray-600 hover:text-gray-900 transition-colors">Sign In</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div class="text-center mb-8 sm:mb-12">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                Watch AI Agents Make <span class="text-aslan-orange">Real Purchases</span>
+            </h1>
+            <p class="text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto px-4">
+                Aslan is the universal payment infrastructure for AI agents. 
+                See ChatGPT, Claude, and other AI agents make autonomous purchases with spending controls.
+            </p>
+            <div class="flex flex-wrap justify-center gap-2 sm:gap-4">
+                <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                    ✅ Enterprise Security
+                </div>
+                <div class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                    ⚡ Sub-400ms Authorization
+                </div>
+                <div class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                    🤖 Universal AI Support
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Demo -->
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-8 mb-8 sm:mb-12">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">
+                🎪 Live Demo: ChatGPT with Purchase Powers
+            </h2>
+            
+            <!-- Demo Interface -->
+            <div class="grid lg:grid-cols-2 gap-6 lg:gap-8">
+                <!-- Chat Interface -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Chat with AI Agent</h3>
+                    <div id="chat-messages" class="bg-gray-50 rounded-lg p-4 h-80 sm:h-96 overflow-y-auto space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-aslan-orange rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-white text-sm">🤖</span>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 max-w-sm shadow-sm">
+                                <p class="text-sm text-gray-800 leading-relaxed">
+                                    Hi! I'm an AI agent with Aslan integration. I can make real purchases for you with enterprise-grade spending controls!
+                                </p>
+                                <div class="mt-3 p-3 bg-orange-50 rounded-lg">
+                                    <p class="text-xs text-orange-800">
+                                        💡 <strong>Tip:</strong> Click the "⚙️ Settings" button to configure your spending limits before we start.
+                                    </p>
+                                </div>
+                                <p class="text-sm text-gray-800 mt-3">
+                                    Try asking me to buy something!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Suggestions -->
+                    <div class="bg-orange-50 rounded-lg p-3">
+                        <div class="text-xs font-medium text-orange-800 mb-2">💡 Quick Examples:</div>
+                        <div id="suggestion-buttons" class="flex flex-wrap gap-2">
+                            <!-- Suggestions will be added here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Input Area -->
+                    <div class="space-y-3">
+                        <div class="flex space-x-2">
+                            <input 
+                                id="chat-input" 
+                                type="text" 
+                                placeholder="Try: 'Buy me a $10 Amazon gift card'"
+                                class="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-aslan-orange focus:border-transparent"
+                            >
+                            <button 
+                                id="send-btn"
+                                class="bg-aslan-orange text-white px-6 py-3 rounded-lg hover:bg-aslan-gold transition-colors font-medium"
+                            >
+                                Send
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Method Selection -->
+                    <div class="border-t pt-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-sm font-medium text-gray-700">
+                                💳 Payment Method
+                            </label>
+                            <button 
+                                id="add-card-btn"
+                                class="text-xs bg-aslan-orange text-white px-3 py-1 rounded-full hover:bg-aslan-gold transition-colors"
+                            >
+                                + Add Card
+                            </button>
+                        </div>
+                        <div id="payment-method-display" class="bg-gray-50 rounded-lg p-3 border">
+                            <div class="text-sm text-gray-500">Loading payment methods...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- OpenAI Key Input -->
+                    <div class="border-t pt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Your OpenAI API Key (optional - use demo key if blank)
+                        </label>
+                        <input 
+                            id="openai-key" 
+                            type="password" 
+                            placeholder="sk-..."
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">
+                            Your key is never stored. Get one at <a href="https://platform.openai.com/api-keys" class="text-aslan-orange">platform.openai.com</a>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Transaction Log -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Aslan Transaction Log</h3>
+                    <div id="transaction-log" class="bg-gray-50 rounded-lg p-4 h-80 overflow-y-auto">
+                        <div class="text-center text-gray-500 text-sm py-8">
+                            Transactions will appear here when AI agent makes purchases...
+                        </div>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center mb-4">
+                        <div class="bg-orange-50 rounded-lg p-3">
+                            <div class="text-2xl font-bold text-aslan-orange" id="total-transactions">0</div>
+                            <div class="text-xs text-orange-800">Transactions</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-3">
+                            <div class="text-2xl font-bold text-green-600" id="total-amount">$0</div>
+                            <div class="text-xs text-green-800">Total Spent</div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-3">
+                            <div class="text-2xl font-bold text-purple-600" id="avg-latency">0ms</div>
+                            <div class="text-xs text-purple-800">Avg Latency</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Controls Status -->
+                    <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-semibold text-orange-800">🛡️ Aslan Controls</h4>
+                            <button 
+                                id="settings-btn"
+                                class="text-xs bg-orange-600 text-white px-3 py-1 rounded-full hover:bg-orange-700 transition-colors"
+                            >
+                                ⚙️ Settings
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span class="text-orange-700">Daily Limit:</span>
+                                <span class="font-mono text-orange-900" id="daily-limit">$100</span>
+                            </div>
+                            <div>
+                                <span class="text-orange-700">Demo Limit:</span>
+                                <span class="font-mono text-orange-900" id="demo-limit">10 tx</span>
+                            </div>
+                            <div>
+                                <span class="text-orange-700">Spent Today:</span>
+                                <span class="font-mono text-orange-900" id="spent-today">$0</span>
+                            </div>
+                            <div>
+                                <span class="text-orange-700">Emergency:</span>
+                                <span class="font-mono text-orange-900" id="emergency-status">Disabled</span>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="text-xs text-orange-700 mb-1">Spending Progress</div>
+                            <div class="w-full bg-orange-200 rounded-full h-2">
+                                <div class="bg-orange-600 h-2 rounded-full transition-all duration-300" style="width: 0%" id="spending-progress"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Integration Examples -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
+            <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">🔥 2-Minute Integration</h3>
+                <div class="bg-gray-100 rounded text-sm p-3 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <pre class="whitespace-pre min-w-0"><code>npm install aslan
+export ASLAN_TOKEN=your_token
+node examples/first-purchase.js
+# ✅ AI agent just bought $10 gift card!</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">🤖 OpenAI Function Calling</h3>
+                <div class="bg-gray-100 rounded text-sm p-3 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <pre class="whitespace-pre min-w-0"><code>const aslan = require('aslan');
+const functions = aslan.getFunctionSchema();
+
+// Add to ChatGPT completion:
+functions: functions,
+function_call: "auto"</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">🛡️ Enterprise Security</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600">✅</span>
+                        <span>Sub-400ms authorization</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600">✅</span>
+                        <span>JWT security & scoped tokens</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600">✅</span>
+                        <span>Spending limits & controls</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600">✅</span>
+                        <span>Complete audit trails</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="bg-gradient-to-r from-aslan-orange to-purple-600 rounded-xl text-white p-6 sm:p-8 text-center">
+            <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to Give Your AI Agents Purchase Powers?</h2>
+            <p class="text-lg sm:text-xl mb-6 opacity-90">
+                Join hundreds of developers building the future of autonomous commerce
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button id="quick-start-btn"
+                   class="bg-white text-aslan-orange px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    Quick Start Guide
+                </button>
+                <button id="view-github-btn"
+                   class="border border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-aslan-orange transition-colors">
+                    View on GitHub
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Mobile menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+                
+                // Close mobile menu when clicking on links
+                const mobileLinks = mobileMenu.querySelectorAll('a');
+                mobileLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenu.classList.add('hidden');
+                    });
+                });
+            }
+        });
+
+        // Demo functionality with payment controls
+        let transactionCount = 0;
+        let totalAmount = 0;
+        let latencies = [];
+        let spendingTracker;
+        let cardManager;
+        let paymentProcessor;
+
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const transactionLog = document.getElementById('transaction-log');
+        const openaiKeyInput = document.getElementById('openai-key');
+
+        // Initialize components when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM loaded, initializing components...');
+            
+            try {
+                spendingTracker = new DemoSpendingTracker();
+                cardManager = new CardManagementDemo();
+                paymentProcessor = new PaymentProcessingDemo(cardManager);
+                
+                console.log('✅ All components initialized successfully');
+                console.log('DEMO_CONFIG:', DEMO_CONFIG);
+                console.log('spendingTracker:', spendingTracker);
+                
+                // Initialize displays
+                updatePaymentControlsDisplay();
+                updatePaymentMethodDisplay();
+                
+                // Initialize event listeners
+                const chatInput = document.getElementById('chat-input');
+                const sendBtn = document.getElementById('send-btn');
+                const addCardBtn = document.getElementById('add-card-btn');
+                const getStartedBtn = document.getElementById('get-started-btn');
+                const docsLink = document.getElementById('docs-link');
+                const githubLink = document.getElementById('github-link');
+                const settingsBtn = document.getElementById('settings-btn');
+                const quickStartBtn = document.getElementById('quick-start-btn');
+                const viewGithubBtn = document.getElementById('view-github-btn');
+                const manageCardsBtn = document.getElementById('manage-cards-btn');
+                
+                if (sendBtn) {
+                    sendBtn.addEventListener('click', handleSendClick);
+                }
+                
+                if (chatInput) {
+                    chatInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            handleSendClick();
+                        }
+                    });
+                }
+                
+                if (addCardBtn) {
+                    addCardBtn.addEventListener('click', showAddCardForm);
+                }
+                
+                if (getStartedBtn) {
+                    getStartedBtn.addEventListener('click', showQuickStart);
+                }
+                
+                if (docsLink) {
+                    docsLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        showDocs();
+                    });
+                }
+                
+                if (githubLink) {
+                    githubLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        showGitHub();
+                    });
+                }
+                
+                if (settingsBtn) {
+                    settingsBtn.addEventListener('click', showSpendingSettings);
+                }
+                
+                if (quickStartBtn) {
+                    quickStartBtn.addEventListener('click', showQuickStart);
+                }
+                
+                if (viewGithubBtn) {
+                    viewGithubBtn.addEventListener('click', showGitHub);
+                }
+                
+                if (manageCardsBtn) {
+                    manageCardsBtn.addEventListener('click', showCardManager);
+                }
+                
+                // Add suggestions after initialization
+                setTimeout(addSuggestionButtons, 1000);
+                
+            } catch (error) {
+                console.error('❌ Error initializing components:', error);
+                alert('Error initializing demo components: ' + error.message);
+            }
+        });
+
+        // Debug function to test if JavaScript is working
+        function debugShowSpendingSettings() {
+            console.log('🧪 Debug function called!');
+            alert('Debug: Function called successfully!');
+            
+            // Test if required objects exist
+            if (typeof DEMO_CONFIG === 'undefined') {
+                alert('❌ DEMO_CONFIG is undefined - this is the problem!');
+                return;
+            }
+            
+            if (!spendingTracker) {
+                alert('❌ spendingTracker is undefined - this is the problem!');
+                return;
+            }
+            
+            // If we get here, try the original function
+            alert('✅ All objects exist, calling showSpendingSettings...');
+            showSpendingSettings();
+        }
+
+        // Add message to chat
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex items-start space-x-3 ${isUser ? 'justify-end' : ''}`;
+            
+            messageDiv.innerHTML = `
+                <div class="w-8 h-8 ${isUser ? 'bg-gray-600' : 'bg-aslan-orange'} rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'order-2' : ''}">
+                    <span class="text-white text-sm">${isUser ? '👤' : '🤖'}</span>
+                </div>
+                <div class="bg-white rounded-lg p-4 max-w-sm shadow-sm ${isUser ? 'bg-gray-600 text-white order-1' : ''}">
+                    <p class="text-sm leading-relaxed">${content}</p>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Update payment controls display
+        function updatePaymentControlsDisplay() {
+            const status = spendingTracker.getDemoStatus();
+            
+            document.getElementById('spent-today').textContent = `$${status.spentToday.toFixed(2)}`;
+            document.getElementById('emergency-status').textContent = status.isEmergencyStop ? 'ACTIVE' : 'Disabled';
+            document.getElementById('spending-progress').style.width = `${status.spentPercentage}%`;
+            
+            // Update progress bar color based on percentage
+            const progressBar = document.getElementById('spending-progress');
+            if (status.spentPercentage > 75) {
+                progressBar.className = 'bg-red-600 h-2 rounded-full transition-all duration-300';
+            } else if (status.spentPercentage > 50) {
+                progressBar.className = 'bg-yellow-600 h-2 rounded-full transition-all duration-300';
+            } else {
+                progressBar.className = 'bg-orange-600 h-2 rounded-full transition-all duration-300';
+            }
+        }
+
+        // Update payment method display
+        function updatePaymentMethodDisplay() {
+            const cards = cardManager.getAllCards();
+            const selectedCard = cardManager.getSelectedCard();
+            const display = document.getElementById('payment-method-display');
+            
+            if (cards.length === 0) {
+                display.innerHTML = `
+                    <div class="text-center text-gray-500 py-2">
+                        <div class="text-sm">No payment methods added</div>
+                        <div class="text-xs mt-1">Add a test card to enable purchases</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            display.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                        ${getBrandIcon(selectedCard.brand)}
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-gray-900">${selectedCard.nickname}</div>
+                        <div class="text-xs text-gray-500">•••• •••• •••• ${selectedCard.last4} • ${selectedCard.expMonth}/${selectedCard.expYear}</div>
+                    </div>
+                    <div class="flex space-x-1">
+                        <button id="manage-cards-btn" class="text-xs text-aslan-orange hover:text-aslan-gold">Manage</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Get brand icon
+        function getBrandIcon(brand) {
+            const icons = {
+                'visa': '💳',
+                'mastercard': '💳', 
+                'amex': '💳',
+                'discover': '💳',
+                'unknown': '💳'
+            };
+            return icons[brand] || icons.unknown;
+        }
+
+        // Show card manager modal
+        function showCardManager() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.id = 'card-manager-modal';
+            
+            const cards = cardManager.getAllCards();
+            const cardList = cards.map(card => `
+                <div class="bg-white rounded-lg p-4 border ${card.isDefault ? 'border-aslan-orange' : 'border-gray-200'} mb-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div>${getBrandIcon(card.brand)}</div>
+                            <div>
+                                <div class="font-medium">${card.nickname}</div>
+                                <div class="text-sm text-gray-500">•••• ${card.last4} • ${card.expMonth}/${card.expYear}</div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            ${!card.isDefault ? `<button class="set-default-btn text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded" data-card-id="${card.id}">Set Default</button>` : '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Default</span>'}
+                            <button class="remove-card-btn text-xs bg-red-100 text-red-700 px-2 py-1 rounded" data-card-id="${card.id}">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl max-w-md w-full max-h-96 overflow-y-auto">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">💳 Payment Methods</h3>
+                            <button id="close-card-manager-btn" class="text-gray-400 hover:text-gray-600">✕</button>
+                        </div>
+                        
+                        <div class="space-y-3 mb-4">
+                            ${cardList}
+                        </div>
+                        
+                        <button id="add-new-card-btn" class="w-full bg-aslan-orange text-white py-2 px-4 rounded-lg hover:bg-aslan-gold transition-colors">
+                            + Add New Card
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Add event listeners for modal buttons
+            document.getElementById('close-card-manager-btn').addEventListener('click', closeCardManagerModal);
+            document.getElementById('add-new-card-btn').addEventListener('click', showAddCardForm);
+            
+            // Add event delegation for card action buttons
+            modal.addEventListener('click', function(e) {
+                if (e.target.classList.contains('set-default-btn')) {
+                    const cardId = e.target.getAttribute('data-card-id');
+                    setDefaultCard(cardId);
+                } else if (e.target.classList.contains('remove-card-btn')) {
+                    const cardId = e.target.getAttribute('data-card-id');
+                    removeCard(cardId);
+                }
+            });
+        }
+
+        // Show add card form
+        function showAddCardForm() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.id = 'add-card-modal';
+            
+            const testCards = cardManager.getTestCards();
+            const testCardOptions = testCards.map(card => `
+                <button class="test-card-btn text-left p-3 border rounded-lg hover:bg-gray-50 w-full mb-2" data-card-number="${card.number}" data-brand="${card.brand}">
+                    <div class="font-medium">${card.name}</div>
+                    <div class="text-sm text-gray-500">${card.description}</div>
+                    <div class="text-xs text-gray-400 font-mono">${card.number}</div>
+                </button>
+            `).join('');
+            
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl max-w-md w-full max-h-96 overflow-y-auto">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">➕ Add Payment Method</h3>
+                            <button id="close-add-card-btn" class="text-gray-400 hover:text-gray-600">✕</button>
+                        </div>
+                        
+                        <form id="add-card-form" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
+                                <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                            </div>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">MM</label>
+                                    <input type="text" id="exp-month" placeholder="12" maxlength="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">YY</label>
+                                    <input type="text" id="exp-year" placeholder="28" maxlength="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">CVC</label>
+                                    <input type="text" id="cvc" placeholder="123" maxlength="4" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nickname (optional)</label>
+                                <input type="text" id="card-nickname" placeholder="My Visa Card" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                            </div>
+                            
+                            <button type="submit" id="add-card-submit" class="w-full bg-aslan-orange text-white py-2 px-4 rounded-lg hover:bg-aslan-gold transition-colors">
+                                Add Card
+                            </button>
+                        </form>
+                        
+                        <div class="mt-6 pt-4 border-t">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3">🧪 Test Cards</h4>
+                            <div class="space-y-2 max-h-32 overflow-y-auto">
+                                ${testCardOptions}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Add event listeners for modal buttons
+            document.getElementById('close-add-card-btn').addEventListener('click', closeAddCardModal);
+            document.getElementById('add-card-form').addEventListener('submit', handleAddCard);
+            document.getElementById('card-number').addEventListener('input', formatCardNumber);
+            
+            // Add event delegation for test card buttons
+            modal.addEventListener('click', function(e) {
+                if (e.target.classList.contains('test-card-btn') || e.target.closest('.test-card-btn')) {
+                    const btn = e.target.closest('.test-card-btn') || e.target;
+                    const cardNumber = btn.getAttribute('data-card-number');
+                    const brand = btn.getAttribute('data-brand');
+                    fillTestCard(cardNumber, brand);
+                }
+            });
+        }
+        
+        // Format card number with spaces
+        function formatCardNumber(e) {
+            let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            if (formattedValue !== e.target.value) {
+                e.target.value = formattedValue;
+            }
+        }
+        
+        // Fill test card data
+        function fillTestCard(number, brand) {
+            document.getElementById('card-number').value = number.match(/.{1,4}/g).join(' ');
+            document.getElementById('exp-month').value = '12';
+            document.getElementById('exp-year').value = '28';
+            document.getElementById('cvc').value = brand === 'amex' ? '1234' : '123';
+            document.getElementById('card-nickname').value = `Test ${brand.toUpperCase()} Card`;
+        }
+        
+        // Handle add card form submission
+        async function handleAddCard(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('add-card-submit');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Adding Card...';
+            submitBtn.disabled = true;
+            
+            try {
+                const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+                const expMonth = document.getElementById('exp-month').value;
+                const expYear = document.getElementById('exp-year').value;
+                const cvc = document.getElementById('cvc').value;
+                const nickname = document.getElementById('card-nickname').value;
+                
+                const newCard = await cardManager.simulateCardAdding(cardNumber, expMonth, expYear, cvc, nickname);
+                
+                // Close modal
+                closeAddCardModal();
+                
+                // Update display
+                updatePaymentMethodDisplay();
+                
+                // Show success message in chat
+                addMessage(`✅ Payment method added successfully! ${newCard.nickname} (•••• ${newCard.last4}) is now available for purchases.`, false);
+                
+            } catch (error) {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                
+                // Show error in chat
+                addMessage(`❌ Failed to add payment method: ${error.message}`, false);
+            }
+        }
+        
+        // Card management functions
+        function closeCardManagerModal() {
+            const modal = document.getElementById('card-manager-modal');
+            if (modal && modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }
+        
+        function closeAddCardModal() {
+            const modal = document.getElementById('add-card-modal');
+            if (modal && modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }
+        
+        function setDefaultCard(cardId) {
+            cardManager.setDefaultCard(cardId);
+            updatePaymentMethodDisplay();
+            closeCardManagerModal();
+            addMessage(`✅ Default payment method updated.`, false);
+        }
+        
+        function removeCard(cardId) {
+            cardManager.removeCard(cardId);
+            updatePaymentMethodDisplay();
+            closeCardManagerModal();
+            addMessage(`✅ Payment method removed.`, false);
+        }
+
+        // Show spending settings modal
+        function showSpendingSettings() {
+            console.log('🛡️ showSpendingSettings called - creating modal...');
+            
+            try {
+                // Check if required objects exist
+                if (typeof DEMO_CONFIG === 'undefined') {
+                    console.error('❌ DEMO_CONFIG is undefined');
+                    alert('Demo configuration not loaded. Please refresh the page.');
+                    return;
+                }
+                
+                if (!spendingTracker) {
+                    console.error('❌ spendingTracker is undefined');
+                    alert('Spending tracker not initialized. Please refresh the page.');
+                    return;
+                }
+                
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4';
+                modal.style.zIndex = '9999';
+                modal.id = 'spending-settings-modal';
+                
+                const currentConfig = DEMO_CONFIG;
+                const currentStatus = spendingTracker.getDemoStatus();
+                
+                console.log('📊 Current config:', currentConfig);
+                console.log('📊 Current status:', currentStatus);
+                
+                modal.innerHTML = `
+                    <div class="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                        <!-- Header -->
+                        <div class="bg-gradient-to-r from-aslan-orange to-purple-600 text-white p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-2xl font-bold">🛡️ Spending Controls</h3>
+                                    <p class="text-orange-100 mt-1">Configure your AI agent's spending limits and safety features</p>
+                                </div>
+                                <button id="close-settings-btn" class="text-white hover:text-gray-200 text-2xl">✕</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Test Section for debugging -->
+                        <div class="bg-blue-50 px-6 py-2 text-center">
+                            <div class="text-sm text-blue-800">✅ Modal loaded successfully! Daily limit: $${currentConfig.demoUser.dailyLimit}</div>
+                        </div>
+                        
+                        <!-- Current Status Banner -->
+                        <div class="bg-gray-50 border-b px-6 py-4">
+                            <div class="grid grid-cols-4 gap-4 text-center">
+                                <div>
+                                    <div class="text-2xl font-bold text-aslan-orange">$${currentStatus.spentToday.toFixed(2)}</div>
+                                    <div class="text-sm text-gray-600">Spent Today</div>
+                                </div>
+                                <div>
+                                    <div class="text-2xl font-bold text-green-600">${currentStatus.transactionCount}</div>
+                                    <div class="text-sm text-gray-600">Transactions</div>
+                                </div>
+                                <div>
+                                    <div class="text-2xl font-bold text-purple-600">$${currentStatus.dailyLimit}</div>
+                                    <div class="text-sm text-gray-600">Daily Limit</div>
+                                </div>
+                                <div>
+                                    <div class="text-2xl font-bold ${currentStatus.isEmergencyStop ? 'text-red-600' : 'text-gray-400'}">${currentStatus.isEmergencyStop ? 'ACTIVE' : 'OFF'}</div>
+                                    <div class="text-sm text-gray-600">Emergency Stop</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Simple Content for Testing -->
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-4">💰 Quick Settings</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Daily Spending Limit</label>
+                                    <input type="number" id="daily-limit-input" value="${currentConfig.demoUser.dailyLimit}" min="10" max="1000" step="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Max Transactions per Day</label>
+                                    <input type="number" id="max-transactions-input" value="${currentConfig.maxDemoTransactions}" min="5" max="50" step="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex space-x-3 mt-6">
+                                <button type="button" id="cancel-settings-btn" class="flex-1 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors border border-gray-300 rounded-lg">
+                                    Cancel
+                                </button>
+                                <button type="button" id="save-settings-btn" class="flex-1 bg-aslan-orange text-white px-6 py-2 rounded-lg hover:bg-aslan-gold transition-colors font-medium">
+                                    💾 Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Add event listeners for modal buttons
+                document.getElementById('close-settings-btn').addEventListener('click', closeSpendingModal);
+                document.getElementById('cancel-settings-btn').addEventListener('click', closeSpendingModal);
+                document.getElementById('save-settings-btn').addEventListener('click', saveQuickSettings);
+                
+                console.log('✅ Modal added to DOM');
+                
+            } catch (error) {
+                console.error('❌ Error creating modal:', error);
+                alert('Error opening settings: ' + error.message);
+            }
+        }
+
+        // Save quick settings function
+        function saveQuickSettings() {
+            try {
+                // Update DEMO_CONFIG with new values
+                DEMO_CONFIG.demoUser.dailyLimit = parseFloat(document.getElementById('daily-limit-input').value);
+                DEMO_CONFIG.maxDemoTransactions = parseInt(document.getElementById('max-transactions-input').value);
+                
+                // Save to localStorage
+                localStorage.setItem('demoSpendingConfig', JSON.stringify(DEMO_CONFIG));
+                
+                // Update displays
+                updatePaymentControlsDisplay();
+                document.getElementById('daily-limit').textContent = `$${DEMO_CONFIG.demoUser.dailyLimit}`;
+                document.getElementById('demo-limit').textContent = `${DEMO_CONFIG.maxDemoTransactions} tx`;
+                
+                // Close modal
+                closeSpendingModal();
+                
+                // Show success message
+                addMessage('✅ Spending controls updated successfully! New limits are now active.', false);
+                
+            } catch (error) {
+                console.error('❌ Error saving settings:', error);
+                addMessage(`❌ Failed to update settings: ${error.message}`, false);
+            }
+        }
+        
+        // Close spending modal function
+        function closeSpendingModal() {
+            console.log('🧪 closeSpendingModal called!');
+            
+            const modal = document.getElementById('spending-settings-modal');
+            if (modal && modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+            // Fallback - remove any modal with .fixed class
+            const fallbackModal = document.querySelector('.fixed');
+            if (fallbackModal && fallbackModal.parentNode) {
+                fallbackModal.parentNode.removeChild(fallbackModal);
+            }
+        }
+
+        // Add transaction to log
+        function addTransaction(transaction) {
+            transactionCount++;
+            totalAmount += transaction.amount;
+            latencies.push(transaction.latency || 200);
+
+            const transactionDiv = document.createElement('div');
+            transactionDiv.className = 'bg-white rounded-lg p-3 border-l-4 border-green-500 mb-3';
+            
+            transactionDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-semibold text-green-600">✅ Purchase Completed</span>
+                    <span class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</span>
+                </div>
+                <div class="text-sm space-y-1">
+                    <div><strong>Service:</strong> ${transaction.service}</div>
+                    <div><strong>Amount:</strong> $${transaction.amount}</div>
+                    <div><strong>Transaction ID:</strong> ${transaction.transactionId}</div>
+                    <div><strong>Latency:</strong> ${transaction.latency || 200}ms</div>
+                </div>
+            `;
+            
+            transactionLog.insertBefore(transactionDiv, transactionLog.firstChild);
+            
+            // Clear empty state
+            const emptyState = transactionLog.querySelector('.text-center');
+            if (emptyState) emptyState.remove();
+
+            // Update stats
+            document.getElementById('total-transactions').textContent = transactionCount;
+            document.getElementById('total-amount').textContent = `$${totalAmount.toFixed(2)}`;
+            document.getElementById('avg-latency').textContent = `${Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)}ms`;
+            
+            // Update payment controls display
+            updatePaymentControlsDisplay();
+        }
+
+        // Simulate AI agent purchase with payment controls
+        async function simulateAgentPurchase(userMessage) {
+            const startTime = Date.now();
+            
+            addMessage('🔍 Analyzing purchase request...', false);
+            
+            // Simulate thinking delay
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Parse user intent (simplified)
+            let service = 'gift-card';
+            let amount = 10;
+            let brand = 'Amazon';
+            
+            if (userMessage.toLowerCase().includes('domain')) {
+                service = 'domain';
+                amount = 12.99;
+            } else if (userMessage.toLowerCase().includes('sms')) {
+                service = 'sms';
+                amount = 0.01;
+            } else if (userMessage.toLowerCase().includes('aws') || userMessage.toLowerCase().includes('cloud')) {
+                service = 'cloud-credits';
+                amount = 25;
+            }
+            
+            // Extract amount if specified
+            const amountMatch = userMessage.match(/\$(\d+(?:\.\d{2})?)/);
+            if (amountMatch) {
+                amount = parseFloat(amountMatch[1]);
+            }
+
+            // ⭐ PAYMENT VALIDATION - This is the key addition!
+            addMessage('🛡️ Validating spending limits and controls...', false);
+            await new Promise(resolve => setTimeout(resolve, 400));
+            
+            const validation = spendingTracker.validateTransaction(amount, service, userMessage);
+            
+            if (!validation.approved) {
+                const errorMessage = `❌ Transaction blocked: ${validation.reason}`;
+                addMessage(errorMessage, false);
+                
+                // Show current spending status
+                const status = spendingTracker.getDemoStatus();
+                addMessage(`📊 Demo Status: $${status.spentToday.toFixed(2)}/$${status.dailyLimit} spent (${status.spentPercentage}%), ${status.transactionCount}/${status.maxTransactions} transactions used`, false);
+                
+                if (validation.reason.includes('Emergency stop')) {
+                    addMessage('🚨 Emergency stop activated. Type "reset emergency" to continue demo.', false);
+                }
+                return;
+            }
+            
+            // Show warnings if any
+            if (validation.warnings.length > 0) {
+                validation.warnings.forEach(warning => {
+                    addMessage(warning, false);
+                });
+            }
+            
+            // Handle approval required
+            if (validation.requiresApproval) {
+                addMessage(`⏸️ Amount of $${amount} requires approval. For demo purposes, auto-approving...`, false);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            addMessage('💳 Processing payment with Aslan...', false);
+            
+            // Check if payment method is available
+            const selectedCard = cardManager.getSelectedCard();
+            if (!selectedCard) {
+                addMessage('❌ No payment method available. Please add a card first.', false);
+                return;
+            }
+            
+            try {
+                // Process payment through card system
+                const paymentResult = await paymentProcessor.processPayment(amount, service);
+                
+                // Record the transaction
+                const recordedTransaction = spendingTracker.recordTransaction(amount, service);
+                
+                const transaction = {
+                    service: service,
+                    amount: amount,
+                    transactionId: paymentResult.transactionId,
+                    latency: Date.now() - startTime,
+                    card: paymentResult.card
+                };
+
+                // Add to transaction log
+                addTransaction(transaction);
+
+                // AI response with enhanced security messaging
+                let response = '';
+                if (service === 'gift-card') {
+                    response = `✅ Secured! I've purchased a $${amount} ${brand} gift card using Aslan's authorized spending. Charged to ${paymentResult.card.brand.toUpperCase()} •••• ${paymentResult.card.last4}. Transaction verified in ${transaction.latency}ms with full audit trail.`;
+                } else if (service === 'domain') {
+                    const domain = userMessage.match(/([a-z0-9-]+\.com)/i);
+                    response = `✅ Domain secured! Registered ${domain ? domain[1] : 'your-domain.com'} for $${amount} through Aslan's enterprise controls. Charged to ${paymentResult.card.brand.toUpperCase()} •••• ${paymentResult.card.last4}. DNS active with ${transaction.latency}ms authorization time.`;
+                } else if (service === 'sms') {
+                    response = `✅ Message delivered! SMS sent for $${amount} with Aslan velocity controls and spending verification. Charged to ${paymentResult.card.brand.toUpperCase()} •••• ${paymentResult.card.last4}. Delivery confirmed in ${transaction.latency}ms.`;
+                } else if (service === 'cloud-credits') {
+                    response = `✅ Credits purchased! Added $${amount} in cloud credits through Aslan's secure payment system. Charged to ${paymentResult.card.brand.toUpperCase()} •••• ${paymentResult.card.last4}. Credits active with ${transaction.latency}ms processing time.`;
+                }
+
+                addMessage(response, false);
+                
+                // Show updated spending status
+                const status = spendingTracker.getDemoStatus();
+                addMessage(`📊 Updated limits: $${status.spentToday.toFixed(2)}/$${status.dailyLimit} spent, ${status.remainingTransactions} transactions remaining`, false);
+                
+            } catch (paymentError) {
+                addMessage(`❌ Payment failed: ${paymentError.message}. Please try again or use a different payment method.`, false);
+                return;
+            }
+        }
+
+        // Handle send button
+        async function handleSendClick() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            addMessage(message, true);
+            chatInput.value = '';
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Processing...';
+            
+            // Handle special commands
+            if (message.toLowerCase().includes('reset emergency')) {
+                spendingTracker.resetEmergencyStop();
+                addMessage('✅ Emergency stop reset. Demo transactions enabled again.', false);
+            } else if (message.toLowerCase().includes('spending status')) {
+                const status = spendingTracker.getDemoStatus();
+                addMessage(`📊 Demo Status:\n💰 Spent: $${status.spentToday.toFixed(2)}/$${status.dailyLimit} (${status.spentPercentage}%)\n📦 Transactions: ${status.transactionCount}/${status.maxTransactions} (${status.transactionPercentage}%)\n⏱️ Emergency Stop: ${status.isEmergencyStop ? 'ACTIVE' : 'Disabled'}`, false);
+            } else if (message.toLowerCase().includes('add') && message.toLowerCase().includes('card')) {
+                addMessage('💳 Opening card management interface...', false);
+                showAddCardForm();
+            } else {
+                await simulateAgentPurchase(message);
+            }
+            
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send';
+        }
+
+        // Navigation functions
+        function showDocs() {
+            window.open('local-docs.html', '_blank');
+        }
+
+        function showGitHub() {
+            window.open('https://github.com/coltonsakamoto/aslanpay', '_blank');
+        }
+
+        function showQuickStart() {
+            const quickStartCode = `🚀 Aslan Quick Start
+
+// 1. Install
+npm install aslan
+
+// 2. Basic usage
+import Aslan from 'aslan';
+
+const aslan = new Aslan({
+  apiKey: 'your_api_key',
+  environment: 'sandbox'
+});
+
+// 3. AI agent makes purchase
+const result = await aslan.purchase('gift-card', {
+  brand: 'amazon',
+  amount: 25
+});
+
+// 4. OpenAI integration
+const functions = aslan.getFunctionSchema();
+const response = await openai.chat.completions.create({
+  model: "gpt-4",
+  messages: [{ role: "user", content: "Buy me a gift card" }],
+  functions: functions,
+  function_call: "auto"
+});
+
+📧 Support: support@aslanpay.xyz`;
+
+            // Create a modal-like experience
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.8); z-index: 1000; display: flex;
+                align-items: center; justify-content: center; padding: 20px;
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white; padding: 30px; border-radius: 10px;
+                max-width: 600px; max-height: 80%; overflow-y: auto;
+                font-family: monospace; white-space: pre-wrap;
+            `;
+            content.textContent = quickStartCode;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = '✕ Close';
+            closeBtn.style.cssText = `
+                position: absolute; top: 10px; right: 10px;
+                background: #ef4444; color: white; border: none;
+                padding: 5px 10px; border-radius: 5px; cursor: pointer;
+            `;
+            closeBtn.onclick = () => document.body.removeChild(modal);
+            
+            content.appendChild(closeBtn);
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
+        // Add suggestion buttons
+        function addSuggestionButtons() {
+            const suggestions = [
+                "⚙️ Configure your spending controls first",
+                "Buy me a $10 Amazon gift card",
+                "Get me a $50 gift card (test limits)",
+                "Purchase AWS credits for $25",
+                "Register the domain my-ai-startup.com", 
+                "Send an SMS to +1234567890",
+                "Emergency stop all transactions",
+                "Check spending status"
+            ];
+            
+            // Add card management suggestion if no cards
+            if (cardManager.getAllCards().length === 0) {
+                suggestions.unshift("Add a test payment card first");
+            }
+
+            // Add suggestion buttons
+            const suggestionContainer = document.getElementById('suggestion-buttons');
+            
+            suggestions.forEach(suggestion => {
+                const btn = document.createElement('button');
+                btn.className = 'text-xs bg-white text-aslan-700 px-3 py-2 rounded-full hover:bg-aslan-100 transition-colors border border-aslan-200 font-medium';
+                btn.textContent = suggestion;
+                btn.onclick = () => {
+                    if (suggestion.includes('Configure your spending controls')) {
+                        showSpendingSettings();
+                    } else if (suggestion.includes('Add a test payment card')) {
+                        showAddCardForm();
+                    } else {
+                        chatInput.value = suggestion;
+                        sendBtn.click();
+                    }
+                };
+                suggestionContainer.appendChild(btn);
+            });
+        }
+    </script>
+</body>
+</html> 

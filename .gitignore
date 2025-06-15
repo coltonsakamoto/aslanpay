@@ -1,0 +1,338 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.save
+.env.backup
+.env.bak
+*.env
+
+# Cookies and session data
+cookies.txt
+*.cookies
+cookies/
+.cookies/
+session.txt
+*.session
+sessions/
+.sessions/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+dev.db
+test.db
+
+# Logs - DEVELOPMENT FILES
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+server.log
+app.log
+debug.log
+error.log
+access.log
+combined.log
+audit.log
+system.log
+test-results.txt
+
+# Log directories
+logs/
+log/
+*.logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.save
+.env.backup
+.env.bak
+*.env
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+!public/comparison.html
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Prisma
+prisma/dev.db
+prisma/migrations/
+
+# Build outputs
+build/
+dist/
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+certs/
+
+# Backup files
+*.backup
+*.bak
+*.save
+*.orig
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test files
+test-results/
+coverage/
+
+# Deployment
+.vercel
+.netlify
+
+# Local development
+.local
+
+# Vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Wallet database
+wallet.db
+*.db-journal
+
+# Generated files
+generated/
+auto-generated/
+
+# Package manager files
+package-lock.json.backup
+yarn.lock.backup
+
+# Local configuration
+local.json
+local.config.js
+local.config.json
+
+# Debug files
+debug/
+*.debug
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Vim
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Atom
+.atom/
+
+# JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+# Development and Testing Files - KEEP PRIVATE
+temp-fixes/
+temp-work/
+quarantine/
+patches/
+test-reports/
+code-analysis/
+performance-tests/
+*.temp
+*.draft
+*-temp-*
+
+# Test files (development)
+test-*.js
+test_*.py
+*-test.js
+*-test.ts
+test-results.txt
+run-*-tests.sh
+
+# Code analysis files
+code-analysis*.js
+*-analysis.js
+analysis-*.js
+
+# Temporary development files
+*.dev.bak
+*.dev.tmp
+dev-backup/

@@ -1,0 +1,29 @@
+{
+    "name": "Aslan - Payment Infrastructure for AI Agents",
+    "short_name": "Aslan",
+    "description": "Enable any AI agent to make autonomous purchases with enterprise-grade security, real-time spending controls, and sub-400ms authorization.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#FF6B35",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "categories": ["finance", "developer", "productivity"],
+    "lang": "en-US"
+} 

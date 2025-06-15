@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Wallet {
+  id          String   @id @default(uuid())
+  balanceSat  Int      @default(0)    // Lightning BTC (backend)
+  balanceUSD  Int      @default(0)    // USD in cents (user-facing)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  agents       Agent[]
+  payments     Payment[]
+  invoices     InvoiceMapping[]
+  creditCards  CreditCard[]
+  bankAccounts BankAccount[]
+}
+
+model CreditCard {
+  id          String   @id @default(uuid())
+  walletId    String
+  last4       String
+  brand       String   // visa, mastercard, amex
+  stripeId    String   @unique // Stripe payment method ID
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+model BankAccount {
+  id          String   @id @default(uuid())
+  walletId    String
+  last4       String
+  bankName    String
+  routingNumber String
+  accountType String   // checking, savings
+  stripeId    String   @unique // Stripe bank account ID
+  isVerified  Boolean  @default(false)
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+model Agent {
+  id               String   @id @default(uuid())
+  token            String   @unique // JWT token
+  walletId         String
+  limitSat         Int      // Legacy BTC limit
+  limitUSD         Int      @default(0) // USD limit in cents
+  spentTodaySat    Int      @default(0) // Legacy BTC spending
+  spentTodayUSD    Int      @default(0) // USD spending in cents
+  spentThisMonth   Int      @default(0) // Monthly USD spending in cents
+  monthlyLimitUSD  Int      @default(0) // Monthly USD limit in cents
+  category         String?  // "travel", "food", "shopping", etc.
+  lastResetAt      DateTime @default(now())
+  
+  // NEW: Direct card charging controls
+  paymentMode      String   @default("wallet") // "wallet" | "direct_card" | "hybrid"
+  dailyLimitUSD    Int      @default(5000) // Daily limit in cents ($50 default)
+  transactionLimitUSD Int   @default(50000) // Per-transaction limit in cents ($500 default)
+  categoryLimits   String?  // JSON string: { "flights": 100000, "food": 20000, "shopping": 30000 }
+  approvalSettings String?  // JSON string: { "requireApprovalOver": 20000, "autoApproveUnder": 1000, "alwaysApprove": ["food"] }
+  emergencyStop    Boolean  @default(false) // Kill switch to disable all spending
+  velocityLimit    Int      @default(10) // Max transactions per hour
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Relations
+  wallet           Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  payments         Payment[]
+  approvals        PurchaseApproval[]
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  walletId      String
+  agentId       String?
+  invoice       String?  // Lightning invoice (optional)
+  amountSat     Int      @default(0) // BTC amount
+  amountUSD     Int      @default(0) // USD amount in cents
+  type          String   // 'lightning', 'card', 'funding', 'direct_card', 'platform_fee'
+  status        String   // 'pending', 'completed', 'failed'
+  failureReason String?
+  stripeId      String?  // Stripe payment intent ID
+  metadata      String?  // JSON metadata
+  
+  // NEW: Enhanced tracking for direct card payments
+  service       String?  // Service purchased: "flight", "food", "shopping", etc.
+  paymentMode   String   @default("wallet") // "wallet" | "direct_card"
+  cardLast4     String?  // Last 4 digits of card used (for direct payments)
+  approvalId    String?  // Reference to PurchaseApproval if required
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  wallet        Wallet   @relation(fields: [walletId], references: [id])
+  agent         Agent?   @relation(fields: [agentId], references: [id])
+}
+
+model InvoiceMapping {
+  id        String   @id @default(uuid())
+  invoiceId String   @unique // Lightning invoice ID
+  walletId  String
+  createdAt DateTime @default(now())
+  
+  // Relations
+  wallet    Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+// NEW: Purchase approval system
+model PurchaseApproval {
+  id              String   @id @default(uuid())
+  agentId         String
+  amount          Int      // Amount in cents
+  service         String   // "flight", "food", etc.
+  params          String   // JSON string of purchase parameters
+  status          String   // "pending", "approved", "denied", "expired"
+  userResponse    String?  // Optional user message
+  expiresAt       DateTime
+  respondedAt     DateTime?
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  agent           Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+// Idempotency protection for requests
+model IdempotencyRecord {
+  id              String   @id @default(uuid())
+  requestHash     String   @unique // SHA-256 hash of request
+  response        String   // Cached response
+  statusCode      Int      // HTTP status code
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime // 10 minutes from creation
+  
+  @@index([requestHash])
+  @@index([expiresAt])
+}
+
+// Webhook delivery tracking and protection
+model WebhookLog {
+  id              String   @id @default(uuid())
+  webhookId       String   // Unique ID for this webhook
+  payload         String   // Webhook payload
+  signature       String   // Webhook signature
+  source          String   // Source service (stripe, etc.)
+  status          String   // "received", "processed", "failed"
+  attempts        Int      @default(1)
+  lastAttemptAt   DateTime @default(now())
+  createdAt       DateTime @default(now())
+  
+  @@index([webhookId])
+  @@index([source])
+  @@index([createdAt])
+}

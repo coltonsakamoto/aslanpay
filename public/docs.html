@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aslan Documentation - Payment Infrastructure for AI Agents</title>
+    <meta name="description" content="Complete documentation for AslanPay. Learn how to integrate AI agents with payment infrastructure, including OpenAI, LangChain, CrewAI examples and security guides.">
+    
+    <!-- Social Media Meta Tags -->
+    <meta property="og:title" content="Aslan Documentation - Payment Infrastructure for AI Agents">
+    <meta property="og:description" content="Complete documentation for AslanPay. Learn how to integrate AI agents with payment infrastructure, including OpenAI, LangChain, CrewAI examples and security guides.">
+    <meta property="og:image" content="https://aslanpay.xyz/og-image.svg">
+    <meta property="og:url" content="https://aslanpay.xyz/docs">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AslanPay">
+    
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Aslan Documentation - Payment Infrastructure for AI Agents">
+    <meta name="twitter:description" content="Complete documentation for AslanPay. Learn how to integrate AI agents with payment infrastructure, including OpenAI, LangChain, CrewAI examples and security guides.">
+    <meta name="twitter:image" content="https://aslanpay.xyz/og-image.svg">
+    <meta name="twitter:creator" content="@aslanpay">
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#daa520">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                        'aslan-dark': '#1a1a1a',
+                        'aslan-gray': '#6B7280'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white overflow-x-hidden">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
+                    <a href="/docs" class="text-aslan-orange font-medium">Documentation</a>
+                    <a href="/api" class="text-aslan-gray hover:text-aslan-dark transition-colors">API</a>
+                    <a href="/comparison" class="text-aslan-gray hover:text-aslan-dark transition-colors">vs Stripe</a>
+                    <a href="/pricing" class="text-aslan-gray hover:text-aslan-dark transition-colors">Pricing</a>
+                    <a href="/security" class="text-aslan-gray hover:text-aslan-dark transition-colors">Security</a>
+                    <a href="/auth" class="text-aslan-gray hover:text-aslan-dark transition-colors">Sign In</a>
+                    <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                        Try Demo
+                    </a>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-aslan-gray hover:text-aslan-dark hover:bg-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
+                <div class="flex flex-col space-y-4">
+                    <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
+                    <a href="/docs" class="text-aslan-orange font-medium">Documentation</a>
+                    <a href="/api" class="text-aslan-gray hover:text-aslan-dark transition-colors">API</a>
+                    <a href="/comparison" class="text-aslan-gray hover:text-aslan-dark transition-colors">vs Stripe</a>
+                    <a href="/pricing" class="text-aslan-gray hover:text-aslan-dark transition-colors">Pricing</a>
+                    <a href="/security" class="text-aslan-gray hover:text-aslan-dark transition-colors">Security</a>
+                    <a href="/auth" class="text-aslan-gray hover:text-aslan-dark transition-colors">Sign In</a>
+                    <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-center">
+                        Try Demo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div class="grid lg:grid-cols-4 gap-8">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-8 space-y-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-aslan-dark mb-3">Getting Started</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="#introduction" class="text-aslan-orange font-medium">Introduction</a></li>
+                            <li><a href="#installation" class="text-aslan-gray hover:text-aslan-dark">Installation</a></li>
+                            <li><a href="#quickstart" class="text-aslan-gray hover:text-aslan-dark">Quick Start</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-aslan-dark mb-3">Integration</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="#openai" class="text-aslan-gray hover:text-aslan-dark">OpenAI</a></li>
+                            <li><a href="#anthropic" class="text-aslan-gray hover:text-aslan-dark">Anthropic</a></li>
+                            <li><a href="#langchain" class="text-aslan-gray hover:text-aslan-dark">LangChain</a></li>
+                            <li><a href="#crewai" class="text-aslan-gray hover:text-aslan-dark">CrewAI</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-aslan-dark mb-3">Security</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="#authentication" class="text-aslan-gray hover:text-aslan-dark">Authentication</a></li>
+                            <li><a href="#spending-limits" class="text-aslan-gray hover:text-aslan-dark">Spending Limits</a></li>
+                            <li><a href="#audit-trails" class="text-aslan-gray hover:text-aslan-dark">Audit Trails</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="lg:col-span-3">
+                <div class="prose prose-lg max-w-none">
+                    <h1 id="introduction" class="text-3xl sm:text-4xl font-bold text-aslan-dark mb-6">Aslan Documentation</h1>
+                    
+                    <p class="text-lg text-aslan-gray mb-8">
+                        Aslan is the universal payment infrastructure for AI agents. Enable any AI agent to make autonomous purchases 
+                        with enterprise-grade security, real-time spending controls, and sub-400ms authorization.
+                    </p>
+
+                    <!-- Getting Started -->
+                    <section id="getting-started" class="mb-12">
+                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Getting Started</h2>
+                        
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+                            <h3 class="text-lg font-semibold text-blue-900 mb-2">Quick Start</h3>
+                            <p class="text-blue-800 mb-4">Get your AI agent making purchases in under 5 minutes.</p>
+                            <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors">
+                                Try Interactive Demo
+                            </a>
+                        </div>
+                    </section>
+
+                    <!-- Installation -->
+                    <section id="installation" class="mb-12">
+                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Installation</h2>
+                        
+                        <div class="bg-gray-900 rounded-lg p-4 sm:p-6 text-white overflow-hidden mb-6">
+                            <div class="flex items-center space-x-2 mb-4">
+                                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span class="text-gray-400 text-sm ml-2">terminal</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <pre class="text-sm whitespace-pre min-w-0"><code><span class="text-gray-400"># Install Aslan SDK</span>
+<span class="text-green-400">npm install</span> @aslanpay/sdk
+
+<span class="text-gray-400"># Or using yarn</span>
+<span class="text-green-400">yarn add</span> @aslanpay/sdk</code></pre>
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">Basic Setup</h3>
+                        <div class="bg-gray-100 rounded-lg p-4 overflow-hidden mb-6">
+                            <div class="overflow-x-auto">
+                                <pre class="text-sm whitespace-pre min-w-0"><code>const { Aslan } = require('@aslanpay/sdk');
+
+const aslan = new Aslan({
+  apiKey: process.env.ASLAN_API_KEY,
+  environment: 'production' // or 'sandbox'
+});
+
+// Enable AI agent to make purchases
+async function enableAIPurchases() {
+  const result = await aslan.purchase({
+    amount: 2500, // $25.00
+    description: 'AWS credits for AI training',
+    agentId: 'gpt-4-assistant'
+  });
+  
+  console.log('Purchase successful:', result);
+}</code></pre>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Authentication -->
+                    <section id="authentication" class="mb-12">
+                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Authentication</h2>
+                        
+                        <p class="text-aslan-gray mb-6">
+                            Aslan uses API keys for authentication. You can get your API key from the 
+                            <a href="/auth" class="text-aslan-orange hover:underline">dashboard</a>.
+                        </p>
+
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+                            <h4 class="font-semibold text-yellow-900 mb-2">🔒 Keep your API keys secure</h4>
+                            <ul class="text-yellow-800 text-sm space-y-1">
+                                <li>• Never commit API keys to version control</li>
+                                <li>• Use environment variables in production</li>
+                                <li>• Rotate keys regularly</li>
+                                <li>• Use different keys for development and production</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- API Reference -->
+                    <section id="api-reference" class="mb-12">
+                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">API Reference</h2>
+                        
+                        <div class="space-y-8">
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-xl font-semibold text-aslan-dark mb-4">authorize()</h3>
+                                <p class="text-aslan-gray mb-4">Authorize a payment for an AI agent.</p>
+                                
+                                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>await aslan.authorize({
+  amount: 2500,           // Required: Amount in cents
+  description: 'string',  // Required: Purchase description
+  agentId: 'string',     // Optional: Agent identifier
+  metadata: {}           // Optional: Additional data
+})</code></pre>
+                                    </div>
+                                </div>
+
+                                <h4 class="font-semibold text-aslan-dark mb-2">Response</h4>
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>{
+  "id": "auth_1234567890",
+  "amount": 2500,
+  "status": "authorized",
+  "description": "AWS credits for computation",
+  "created_at": "2024-01-15T10:30:00Z"
+}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-xl font-semibold text-aslan-dark mb-4">confirm()</h3>
+                                <p class="text-aslan-gray mb-4">Confirm and execute an authorized payment.</p>
+                                
+                                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>await aslan.confirm({
+  authorizationId: 'auth_1234567890'
+})</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-xl font-semibold text-aslan-dark mb-4">refund()</h3>
+                                <p class="text-aslan-gray mb-4">Refund a completed payment.</p>
+                                
+                                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>await aslan.refund({
+  paymentId: 'pay_1234567890',
+  amount: 2500, // Optional: partial refund
+  reason: 'Customer request'
+})</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Examples -->
+                    <section id="examples" class="mb-12">
+                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Examples</h2>
+                        
+                        <div class="space-y-8">
+                            <div>
+                                <h3 class="text-xl font-semibold text-aslan-dark mb-4">OpenAI Integration</h3>
+                                <div class="bg-aslan-dark rounded-lg p-6 text-white overflow-hidden">
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>import OpenAI from 'openai'
+import { Aslan } from '@aslanpay/sdk'
+
+const openai = new OpenAI()
+const aslan = new Aslan({ apiKey: process.env.ASLAN_API_KEY })
+
+const completion = await openai.chat.completions.create({
+  model: "gpt-4",
+  messages: [{ role: "user", content: "Buy AWS credits" }],
+  tools: [{
+    type: "function",
+    function: {
+      name: "purchase",
+      description: "Make a purchase",
+      parameters: {
+        type: "object",
+        properties: {
+          amount: { type: "number" },
+          description: { type: "string" }
+        }
+      }
+    }
+  }]
+})
+
+// If AI decides to make a purchase
+if (completion.choices[0].message.tool_calls) {
+  const purchase = await aslan.authorize({
+    amount: 2500,
+    description: "AWS credits"
+  })
+}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 class="text-xl font-semibold text-aslan-dark mb-4">LangChain Integration</h3>
+                                <div class="bg-aslan-dark rounded-lg p-6 text-white overflow-hidden">
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>from langchain.tools import Tool
+from aslanpay import Aslan
+
+aslan = Aslan(api_key="your_api_key")
+
+def purchase_tool(amount: int, description: str):
+    """Make a purchase with AI agent"""
+    return aslan.authorize(
+        amount=amount,
+        description=description
+    )
+
+purchase = Tool(
+    name="purchase",
+    description="Make purchases for the AI agent",
+    func=purchase_tool
+)</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Integrations -->
+                    <section id="integrations" class="mb-12">
+                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Integrations</h2>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">OpenAI</h3>
+                                <p class="text-aslan-gray text-sm mb-4">Integrate with GPT-4, function calling, and assistants.</p>
+                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/openai" class="text-aslan-orange hover:underline text-sm">View Example →</a>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">LangChain</h3>
+                                <p class="text-aslan-gray text-sm mb-4">Add payment tools to LangChain agents.</p>
+                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/langchain" class="text-aslan-orange hover:underline text-sm">View Example →</a>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">CrewAI</h3>
+                                <p class="text-aslan-gray text-sm mb-4">Enable multi-agent teams to make purchases.</p>
+                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/crewai" class="text-aslan-orange hover:underline text-sm">View Example →</a>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">Custom Frameworks</h3>
+                                <p class="text-aslan-gray text-sm mb-4">REST API works with any framework.</p>
+                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/custom" class="text-aslan-orange hover:underline text-sm">View Example →</a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Security -->
+                    <section id="security" class="mb-12">
+                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Security</h2>
+                        
+                        <div class="space-y-6">
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-green-900 mb-3">🔒 Enterprise Security</h3>
+                                <ul class="text-green-800 space-y-2">
+                                    <li>• JWT-based authentication with rotating secrets</li>
+                                    <li>• Rate limiting and DDoS protection</li>
+                                    <li>• Complete audit trails for all transactions</li>
+                                    <li>• Granular spending controls and velocity limits</li>
+                                    <li>• Real-time fraud detection</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">Spending Controls</h3>
+                                <div class="bg-gray-50 rounded-lg p-4 overflow-hidden">
+                                    <div class="overflow-x-auto">
+                                        <pre class="text-sm min-w-0"><code>const aslan = new Aslan({
+  apiKey: 'your_api_key',
+  limits: {
+    daily: 10000,        // $100 daily limit
+    perTransaction: 5000, // $50 per transaction
+    velocity: {
+      count: 10,         // Max 10 transactions
+      window: 3600       // Per hour
+    }
+  }
+})</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Support -->
+                    <section class="bg-gray-50 rounded-lg p-8">
+                        <h2 class="text-2xl font-bold text-aslan-dark mb-4">Need Help?</h2>
+                        <p class="text-aslan-gray mb-6">
+                            Get support from our team of AI and payments experts.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <a href="mailto:support@aslanpay.xyz" class="bg-aslan-orange text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors text-center">
+                                Contact Support
+                            </a>
+                            <a href="https://github.com/coltonsakamoto/aslanpay" class="border border-gray-300 text-aslan-dark px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center">
+                                View on GitHub
+                            </a>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for mobile menu -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+                
+                // Close mobile menu when clicking on links
+                const mobileLinks = mobileMenu.querySelectorAll('a');
+                mobileLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenu.classList.add('hidden');
+                    });
+                });
+            }
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
+    <div id="troubleshooting" class="section">
+        <h2>🔧 Troubleshooting Guide</h2>
+        
+        <div class="troubleshooting-grid">
+            <div class="trouble-item">
+                <h3>🌐 Domain Confusion</h3>
+                <p><strong>Issue:</strong> Tried aslanpay.com instead of aslanpay.xyz</p>
+                <p><strong>Solution:</strong> Always use <code>aslanpay.xyz</code> for live demo</p>
+                <p><strong>Local:</strong> <code>localhost:3000</code> for development</p>
+            </div>
+
+            <div class="trouble-item">
+                <h3>🔑 API Key Issues</h3>
+                <p><strong>Invalid Key:</strong> Ensure format is <code>ak_live_...</code> or <code>ak_test_...</code></p>
+                <p><strong>Test Your Key:</strong></p>
+                <pre><code>curl -X GET http://localhost:3000/api/v1/test \
+  -H "Authorization: Bearer ak_live_your_key"</code></pre>
+            </div>
+
+            <div class="trouble-item">
+                <h3>📡 Endpoint Discovery</h3>
+                <p><strong>Correct Endpoints:</strong></p>
+                <ul>
+                    <li><code>POST /api/v1/authorize</code> - Start payment</li>
+                    <li><code>POST /api/v1/confirm</code> - Complete payment</li>
+                    <li><code>POST /api/v1/refund</code> - Process refund</li>
+                    <li><code>GET /api/v1/test</code> - Test API key</li>
+                </ul>
+            </div>
+
+            <div class="trouble-item">
+                <h3>⚡ Two-Step Flow</h3>
+                <p><strong>Always:</strong> authorize → confirm (never single purchase)</p>
+                <p><strong>Why:</strong> Gives AI agents time to validate before charging</p>
+                <pre><code>// 1. Authorize
+const auth = await aslan.authorize({amount: 2500, description: "..."});
+
+// 2. Confirm  
+const payment = await aslan.confirm({authorizationId: auth.id});</code></pre>
+            </div>
+
+            <div class="trouble-item">
+                <h3>🔄 Mock vs Real SDK</h3>
+                <p><strong>Development:</strong> Use MockAslanSDK.js for testing</p>
+                <p><strong>Production:</strong> Use real API endpoints with authentication</p>
+                <p><strong>How to tell:</strong> Mock responses include <code>"mock": true</code></p>
+            </div>
+
+            <div class="trouble-item">
+                <h3>🚨 Common Errors</h3>
+                <table>
+                    <tr><td><code>401</code></td><td>Missing/invalid API key</td></tr>
+                    <tr><td><code>400</code></td><td>Invalid request format</td></tr>
+                    <tr><td><code>404</code></td><td>Wrong endpoint URL</td></tr>
+                    <tr><td><code>429</code></td><td>Rate limit exceeded</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="quick-test">
+            <h3>⚡ Quick Test Sequence</h3>
+            <ol>
+                <li><strong>Health Check:</strong> <code>GET /health</code></li>
+                <li><strong>API Key Test:</strong> <code>GET /api/v1/test</code></li>
+                <li><strong>Test Payment:</strong> <code>POST /api/v1/authorize</code></li>
+                <li><strong>Complete Flow:</strong> Run <code>node test-api-keys.js</code></li>
+            </ol>
+        </div>
+    </div>
+
+    <style>
+    .troubleshooting-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+    }
+
+    .trouble-item {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #ff6b35;
+    }
+
+    .trouble-item h3 {
+        color: #ff6b35;
+        margin-top: 0;
+    }
+
+    .trouble-item pre {
+        background: #fff;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        overflow-x: auto;
+    }
+
+    .trouble-item table {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .trouble-item table td {
+        padding: 5px 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .quick-test {
+        background: #e8f5e8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 30px;
+    }
+
+    .quick-test h3 {
+        color: #28a745;
+        margin-top: 0;
+    }
+    </style>
+</body>
+</html> 

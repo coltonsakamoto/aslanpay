@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦁 Aslan - Payment Infrastructure for AI Agents</title>
+    <meta name="description" content="Sign in to AslanPay to manage your AI agent payment infrastructure. Get API keys, set spending limits, and monitor transactions.">
+    
+    <!-- Social Media Meta Tags -->
+    <meta property="og:title" content="Sign In - Aslan Payment Infrastructure">
+    <meta property="og:description" content="Sign in to AslanPay to manage your AI agent payment infrastructure. Get API keys, set spending limits, and monitor transactions.">
+    <meta property="og:image" content="https://aslanpay.xyz/og-image.svg">
+    <meta property="og:url" content="https://aslanpay.xyz/auth">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AslanPay">
+    
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sign In - Aslan Payment Infrastructure">
+    <meta name="twitter:description" content="Sign in to AslanPay to manage your AI agent payment infrastructure. Get API keys, set spending limits, and monitor transactions.">
+    <meta name="twitter:image" content="https://aslanpay.xyz/og-image.svg">
+    <meta name="twitter:creator" content="@aslanpay">
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#daa520">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(218, 165, 32, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 80%, rgba(184, 134, 11, 0.1) 0%, transparent 50%);
+            animation: glow 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.6; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.3), 
+                        0 0 0 1px rgba(255, 255, 255, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #b8860b 0%, #daa520 50%, #ffd700 100%);
+            color: #1a1a2e;
+            padding: 48px 40px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .lion-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .lion-icon {
+            font-size: 56px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+            position: relative;
+            z-index: 2;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+
+        .header p {
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.8;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #64748b;
+            position: relative;
+        }
+
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #b8860b, #daa520);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(-50%);
+        }
+
+        .tab.active {
+            background: white;
+            color: #b8860b;
+        }
+
+        .tab.active::after {
+            width: 60%;
+        }
+
+        .tab:hover:not(.active) {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .form-container {
+            padding: 40px;
+            background: white;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #f8fafc;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #daa520;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(218, 165, 32, 0.1),
+                        0 8px 20px rgba(218, 165, 32, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        .button {
+            width: 100%;
+            background: linear-gradient(135deg, #b8860b 0%, #daa520 50%, #ffd700 100%);
+            color: #1a1a2e;
+            padding: 18px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 16px;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 20px rgba(218, 165, 32, 0.3);
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(218, 165, 32, 0.4);
+        }
+
+        .button:hover::before {
+            left: 100%;
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 4px 12px rgba(218, 165, 32, 0.2);
+        }
+
+        .button:disabled:hover {
+            transform: none;
+            box-shadow: 0 4px 12px rgba(218, 165, 32, 0.2);
+        }
+
+        .button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(26, 26, 46, 0.3);
+            border-radius: 50%;
+            border-top-color: #1a1a2e;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .message {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 500;
+            font-size: 14px;
+            border: 1px solid;
+            position: relative;
+        }
+
+        .message.success {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            color: #065f46;
+            border-color: #10b981;
+        }
+
+        .message.error {
+            background: linear-gradient(135deg, #fef2f2, #fecaca);
+            color: #991b1b;
+            border-color: #ef4444;
+        }
+
+        .message.info {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            color: #1e40af;
+            border-color: #3b82f6;
+        }
+
+        .forgot-link {
+            text-align: center;
+            margin-top: 24px;
+        }
+
+        .forgot-link a {
+            color: #b8860b;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .forgot-link a:hover {
+            color: #daa520;
+            text-decoration: underline;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            color: rgba(26, 26, 46, 0.8);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            z-index: 3;
+        }
+
+        .back-link:hover {
+            color: #1a1a2e;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-2px);
+        }
+
+        .password-hint {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .feature-hint {
+            background: rgba(218, 165, 32, 0.1);
+            border: 1px solid rgba(218, 165, 32, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #92400e;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                max-width: none;
+                margin: 0;
+            }
+            
+            .form-container {
+                padding: 24px;
+            }
+            
+            .header {
+                padding: 32px 24px 24px;
+            }
+            
+            .lion-icon {
+                font-size: 48px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .tab {
+                padding: 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Home</a>
+            <div class="lion-container">
+                <div class="lion-icon">🦁</div>
+            </div>
+            <h1>Aslan</h1>
+            <p>Payment Infrastructure for AI Agents</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" id="signin-tab">Sign In</button>
+            <button class="tab" id="signup-tab">Sign Up</button>
+        </div>
+
+        <div class="form-container">
+            <div id="message-container"></div>
+
+            <!-- Sign In Form -->
+            <div id="signin-form">
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" placeholder="your@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" placeholder="Enter your password" required>
+                    </div>
+
+                    <button type="submit" class="button" id="login-btn">
+                        <div class="button-content">
+                            <span id="login-text">Sign In</span>
+                            <div id="login-loading" class="loading hidden"></div>
+                        </div>
+                    </button>
+                </form>
+
+                <div class="forgot-link">
+                    <a href="#" id="forgot-password-link">Forgot your password?</a>
+                </div>
+
+                <div class="feature-hint">
+                    💡 <strong>New to Aslan?</strong> Sign up to get instant API keys and start processing payments for your AI agents in minutes.
+                </div>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div id="signup-form" class="hidden">
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-name">Full Name</label>
+                        <input type="text" id="register-name" placeholder="John Doe" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-email">Email Address</label>
+                        <input type="email" id="register-email" placeholder="john@company.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input type="password" id="register-password" placeholder="Create a strong password" required minlength="8">
+                        <div class="password-hint">Must be at least 8 characters long</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-organization">Organization Name</label>
+                        <input type="text" id="register-organization" placeholder="Your Company (Optional)">
+                    </div>
+
+                    <button type="submit" class="button" id="register-btn">
+                        <div class="button-content">
+                            <span id="register-text">Create Account</span>
+                            <div id="register-loading" class="loading hidden"></div>
+                        </div>
+                    </button>
+                </form>
+
+                <div class="feature-hint">
+                    🚀 <strong>Instant Setup:</strong> Your account comes with production-ready API keys, documentation, and $100 in free credits to get started.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        const signinTab = document.getElementById('signin-tab');
+        const signupTab = document.getElementById('signup-tab');
+        const signinForm = document.getElementById('signin-form');
+        const signupForm = document.getElementById('signup-form');
+
+        function switchToSignin() {
+            signinTab.classList.add('active');
+            signupTab.classList.remove('active');
+            signinForm.classList.remove('hidden');
+            signupForm.classList.add('hidden');
+            hideMessage();
+            resetLoadingStates();
+        }
+
+        function switchToSignup() {
+            signupTab.classList.add('active');
+            signinTab.classList.remove('active');
+            signupForm.classList.remove('hidden');
+            signinForm.classList.add('hidden');
+            hideMessage();
+            resetLoadingStates();
+        }
+
+        signinTab.addEventListener('click', switchToSignin);
+        signupTab.addEventListener('click', switchToSignup);
+
+        // Message management
+        function showMessage(text, type = 'info') {
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="message ${type}">${text}</div>`;
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function hideMessage() {
+            const container = document.getElementById('message-container');
+            container.innerHTML = '';
+        }
+
+        // Loading state management - FIXED VERSION
+        function setLoading(formType, loading) {
+            const textEl = document.getElementById(`${formType}-text`);
+            const loadingEl = document.getElementById(`${formType}-loading`);
+            const btnEl = document.getElementById(`${formType}-btn`);
+            
+            if (loading) {
+                textEl.textContent = 'Processing...';
+                loadingEl.classList.remove('hidden');
+                btnEl.disabled = true;
+            } else {
+                // Reset to original text
+                textEl.textContent = formType === 'login' ? 'Sign In' : 'Create Account';
+                loadingEl.classList.add('hidden');
+                btnEl.disabled = false;
+            }
+        }
+
+        function resetLoadingStates() {
+            setLoading('login', false);
+            setLoading('register', false);
+        }
+
+        // Enhanced error handling
+        function handleApiError(response, data) {
+            if (response.status === 409) {
+                return 'An account with this email already exists. Try signing in instead.';
+            } else if (response.status === 401) {
+                return 'Invalid email or password. Please check your credentials.';
+            } else if (response.status === 400) {
+                return data.error || 'Please check your input and try again.';
+            } else if (response.status >= 500) {
+                return 'Server error. Please try again in a moment.';
+            } else {
+                return data.error || 'Something went wrong. Please try again.';
+            }
+        }
+
+        // Login form handler
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            if (!email || !password) {
+                showMessage('Please fill in all fields.', 'error');
+                return;
+            }
+            
+            setLoading('login', true);
+            hideMessage();
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('✅ Login successful! Redirecting to your dashboard...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 1500);
+                } else {
+                    const errorMessage = handleApiError(response, data);
+                    showMessage(errorMessage, 'error');
+                    setLoading('login', false); // Reset loading state on error
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showMessage('Network error. Please check your connection and try again.', 'error');
+                setLoading('login', false); // Reset loading state on error
+            }
+        });
+
+        // Register form handler
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('register-name').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value;
+            const organizationName = document.getElementById('register-organization').value.trim();
+            
+            if (!name || !email || !password) {
+                showMessage('Please fill in all required fields.', 'error');
+                return;
+            }
+
+            if (password.length < 8) {
+                showMessage('Password must be at least 8 characters long.', 'error');
+                return;
+            }
+            
+            setLoading('register', true);
+            hideMessage();
+            
+            try {
+                const response = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ 
+                        name, 
+                        email, 
+                        password,
+                        organizationName: organizationName || `${name}'s Organization`
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('🎉 Account created successfully! You now have production-ready API keys. Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 2000);
+                } else {
+                    const errorMessage = handleApiError(response, data);
+                    showMessage(errorMessage, 'error');
+                    setLoading('register', false); // Reset loading state on error
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showMessage('Network error. Please check your connection and try again.', 'error');
+                setLoading('register', false); // Reset loading state on error
+            }
+        });
+
+        // Forgot password handler
+        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            showMessage('Password reset feature is coming soon. Please contact support at support@aslanpay.xyz if you need assistance.', 'info');
+        });
+
+        // Auto-switch based on URL parameters
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
+            
+            if (action === 'signup') {
+                switchToSignup();
+            }
+
+            // Auto-focus first input
+            if (signinForm.classList.contains('hidden')) {
+                document.getElementById('register-name').focus();
+            } else {
+                document.getElementById('login-email').focus();
+            }
+        });
+
+        // Prevent form resubmission
+        window.addEventListener('beforeunload', () => {
+            resetLoadingStates();
+        });
+    </script>
+</body>
+</html> 

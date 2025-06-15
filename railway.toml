@@ -1,0 +1,19 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "never"
+
+[environments.production]
+variables = { NODE_ENV = "production" }
+
+# Required for Stripe (add in Railway dashboard):
+# STRIPE_SECRET_KEY = "sk_live_your_stripe_secret_key"
+# STRIPE_PUBLISHABLE_KEY = "pk_live_your_stripe_publishable_key"
+
+# Optional security tokens (auto-generated if not provided):
+# JWT_SECRET = "your_secure_jwt_secret"
+# SESSION_SECRET = "your_secure_session_secret"

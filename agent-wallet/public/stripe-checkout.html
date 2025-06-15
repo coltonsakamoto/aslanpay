@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fund Wallet - Aslan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                        'aslan-dark': '#1a1a1a',
+                        'aslan-gray': '#6B7280'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen overflow-x-hidden">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-4">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">🦁</span>
+                </div>
+                <h1 class="text-2xl font-bold">💳 Fund Your Aslan Wallet</h1>
+            </div>
+            <p class="text-orange-100">Secure payment powered by Stripe</p>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6 sm:p-8">
+            <!-- Wallet Info -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Wallet Details</h3>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-600">Wallet ID:</p>
+                    <p id="wallet-id" class="font-mono text-sm bg-white p-2 rounded border break-all"></p>
+                    <p class="text-sm text-gray-600 mt-2">Current Balance:</p>
+                    <p id="current-balance" class="text-2xl font-bold text-aslan-orange">$0.00</p>
+                </div>
+            </div>
+
+            <!-- Amount Selection -->
+            <div class="mb-6">
+                <h4 class="font-semibold text-gray-800 mb-3">Select Amount to Add</h4>
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <button class="amount-btn bg-orange-100 hover:bg-orange-200 text-aslan-orange py-3 px-4 rounded-lg font-semibold transition duration-300" data-amount="10">$10</button>
+                    <button class="amount-btn bg-orange-100 hover:bg-orange-200 text-aslan-orange py-3 px-4 rounded-lg font-semibold transition duration-300" data-amount="25">$25</button>
+                    <button class="amount-btn bg-orange-100 hover:bg-orange-200 text-aslan-orange py-3 px-4 rounded-lg font-semibold transition duration-300" data-amount="50">$50</button>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <input type="number" id="custom-amount" placeholder="Custom amount" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aslan-orange focus:border-aslan-orange" min="1" max="1000">
+                    <button id="set-custom" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-lg transition duration-300">Set</button>
+                </div>
+                
+                <div class="mt-4 p-4 bg-orange-50 rounded-lg">
+                    <p class="text-aslan-orange font-semibold">Amount to charge: <span id="charge-amount">$0.00</span></p>
+                    <p class="text-sm text-orange-600">Including processing fee</p>
+                </div>
+            </div>
+
+            <!-- Stripe Payment Form -->
+            <form id="payment-form">
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">💳 Payment Details</h4>
+                    
+                    <!-- Card Holder Name -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cardholder Name</label>
+                        <input type="text" id="cardholder-name" placeholder="John Doe" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aslan-orange focus:border-aslan-orange" required>
+                    </div>
+                    
+                    <!-- Stripe Elements will be mounted here -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Card Information</label>
+                        <div id="card-element" class="p-4 border border-gray-300 rounded-lg bg-white">
+                            <!-- Stripe Elements will create form elements here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Billing Address -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" id="email" placeholder="john@example.com" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aslan-orange focus:border-aslan-orange" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
+                            <input type="text" id="zip-code" placeholder="90210" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aslan-orange focus:border-aslan-orange" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Error messages -->
+                    <div id="card-errors" class="text-red-600 text-sm mt-2"></div>
+                </div>
+
+                <button id="submit-payment" class="w-full bg-aslan-orange hover:bg-aslan-gold text-white font-bold py-4 px-6 rounded-lg text-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="button-text">💰 Fund Wallet</span>
+                    <div id="spinner" class="hidden inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
+                </button>
+                
+                <!-- Terms and Privacy -->
+                <p class="text-xs text-gray-500 mt-4 text-center">
+                    By completing this payment, you agree to our 
+                    <a href="/terms-of-service.html" class="text-aslan-orange hover:underline">Terms of Service</a> and 
+                    <a href="/privacy-policy.html" class="text-aslan-orange hover:underline">Privacy Policy</a>
+                </p>
+            </form>
+
+            <!-- Success Message -->
+            <div id="success-message" class="hidden mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div class="flex items-center">
+                    <div class="text-green-600 text-2xl mr-3">✅</div>
+                    <div>
+                        <p class="text-green-800 font-semibold">Payment Successful!</p>
+                        <p class="text-green-600 text-sm">Your wallet has been funded successfully.</p>
+                    </div>
+                </div>
+                <button id="return-dashboard" class="mt-4 w-full bg-aslan-orange hover:bg-aslan-gold text-white py-2 px-4 rounded transition duration-300">
+                    Return to Dashboard
+                </button>
+            </div>
+
+            <!-- Security Info -->
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <div class="flex items-center text-gray-600">
+                    <div class="text-xl mr-2">🔒</div>
+                    <div>
+                        <p class="text-sm font-semibold">Secure Payment</p>
+                        <p class="text-xs">Powered by Stripe. Your card details are never stored on our servers.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Stripe dynamically from backend configuration
+        let stripe = null;
+        let elements = null;
+        let cardElement = null;
+
+        // Load configuration and initialize Stripe
+        async function initializeStripe() {
+            try {
+                const response = await fetch('/v1/config/frontend-config');
+                const config = await response.json();
+                
+                if (!config.stripe?.publishableKey) {
+                    throw new Error('Stripe configuration not available');
+                }
+                
+                // Initialize Stripe with the key from backend
+                stripe = Stripe(config.stripe.publishableKey);
+                elements = stripe.elements();
+
+                // Create card element
+                cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#424770',
+                            '::placeholder': {
+                                color: '#aab7c4',
+                            },
+                        },
+                    },
+                });
+
+                cardElement.mount('#card-element');
+
+                // Handle card validation errors
+                cardElement.on('change', ({error}) => {
+                    const displayError = document.getElementById('card-errors');
+                    if (error) {
+                        displayError.textContent = error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                });
+                
+                console.log('✅ Stripe initialized successfully');
+            } catch (error) {
+                console.error('❌ Failed to initialize Stripe:', error);
+                showError('Failed to initialize payment system. Please refresh the page.');
+            }
+        }
+
+        // Initialize Stripe when page loads
+        document.addEventListener('DOMContentLoaded', initializeStripe);
+
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const walletId = urlParams.get('walletId');
+        const preselectedAmount = urlParams.get('amount');
+        let selectedAmount = 0;
+
+        // Auto-select amount from URL if provided
+        function preselectAmount() {
+            if (preselectedAmount) {
+                const amount = parseInt(preselectedAmount);
+                if (amount > 0) {
+                    // Find and select the matching button
+                    const matchingBtn = document.querySelector(`[data-amount="${amount}"]`);
+                    if (matchingBtn) {
+                        // Select the button
+                        document.querySelectorAll('.amount-btn').forEach(b => {
+                            b.classList.remove('bg-orange-600', 'text-white');
+                            b.classList.add('bg-orange-100', 'text-orange-800');
+                        });
+                        
+                        matchingBtn.classList.remove('bg-orange-100', 'text-orange-800');
+                        matchingBtn.classList.add('bg-orange-600', 'text-white');
+                        
+                        selectedAmount = amount;
+                        updateChargeAmount();
+                    } else {
+                        // Custom amount
+                        selectedAmount = amount;
+                        updateChargeAmount();
+                    }
+                }
+            }
+        }
+
+        // Load wallet info
+        async function loadWalletInfo() {
+            if (!walletId) {
+                alert('No wallet ID provided');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/v1/wallets/${walletId}`);
+                const wallet = await response.json();
+                
+                document.getElementById('wallet-id').textContent = walletId;
+                document.getElementById('current-balance').textContent = `$${wallet.balanceUSD.toFixed(2)}`;
+            } catch (error) {
+                console.error('Failed to load wallet:', error);
+            }
+        }
+
+        // Amount selection
+        document.querySelectorAll('.amount-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove selection from other buttons
+                document.querySelectorAll('.amount-btn').forEach(b => {
+                    b.classList.remove('bg-orange-600', 'text-white');
+                    b.classList.add('bg-orange-100', 'text-orange-800');
+                });
+                
+                // Select this button
+                btn.classList.remove('bg-orange-100', 'text-orange-800');
+                btn.classList.add('bg-orange-600', 'text-white');
+                
+                selectedAmount = parseInt(btn.dataset.amount);
+                updateChargeAmount();
+            });
+        });
+
+        document.getElementById('set-custom').addEventListener('click', () => {
+            const customAmount = parseInt(document.getElementById('custom-amount').value);
+            if (customAmount && customAmount > 0) {
+                // Clear other selections
+                document.querySelectorAll('.amount-btn').forEach(b => {
+                    b.classList.remove('bg-orange-600', 'text-white');
+                    b.classList.add('bg-orange-100', 'text-orange-800');
+                });
+                
+                selectedAmount = customAmount;
+                updateChargeAmount();
+                document.getElementById('custom-amount').value = '';
+            }
+        });
+
+        function updateChargeAmount() {
+            // Add Stripe processing fee (2.9% + $0.30)
+            const processingFee = Math.round((selectedAmount * 0.029 + 0.30) * 100) / 100;
+            const totalCharge = selectedAmount + processingFee;
+            
+            document.getElementById('charge-amount').textContent = `$${totalCharge.toFixed(2)}`;
+        }
+
+        // Handle form submission
+        const form = document.getElementById('payment-form');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            // Ensure Stripe is initialized
+            if (!stripe || !cardElement) {
+                showError('Payment system not ready. Please refresh the page and try again.');
+                return;
+            }
+
+            if (selectedAmount <= 0) {
+                showError('Please select an amount to fund');
+                return;
+            }
+
+            // Validate required fields
+            const cardholderName = document.getElementById('cardholder-name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const zipCode = document.getElementById('zip-code').value.trim();
+
+            if (!cardholderName) {
+                showError('Please enter the cardholder name');
+                return;
+            }
+
+            if (!email || !isValidEmail(email)) {
+                showError('Please enter a valid email address');
+                return;
+            }
+
+            if (!zipCode) {
+                showError('Please enter your ZIP code');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Create payment method with billing details
+                const {error, paymentMethod} = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement,
+                    billing_details: {
+                        name: cardholderName,
+                        email: email,
+                        address: {
+                            postal_code: zipCode
+                        }
+                    }
+                });
+
+                if (error) {
+                    showError(error.message);
+                    setLoading(false);
+                    return;
+                }
+
+                // Show processing message
+                showProcessingMessage();
+
+                // Send payment method to server
+                const response = await fetch('/v1/process-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        paymentMethodId: paymentMethod.id,
+                        walletId: walletId,
+                        amount: selectedAmount,
+                        customerInfo: {
+                            name: cardholderName,
+                            email: email,
+                            zipCode: zipCode
+                        }
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess(result);
+                } else {
+                    showError(result.error || 'Payment failed');
+                }
+            } catch (error) {
+                showError('Network error. Please check your connection and try again.');
+                console.error('Payment error:', error);
+            }
+
+            setLoading(false);
+        });
+
+        // Email validation helper
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        // Enhanced loading state
+        function setLoading(isLoading) {
+            const button = document.getElementById('submit-payment');
+            const buttonText = document.getElementById('button-text');
+            const spinner = document.getElementById('spinner');
+            const form = document.getElementById('payment-form');
+
+            button.disabled = isLoading;
+            
+            if (isLoading) {
+                buttonText.textContent = 'Processing Payment...';
+                spinner.classList.remove('hidden');
+                form.style.opacity = '0.7';
+            } else {
+                buttonText.textContent = '💰 Fund Wallet';
+                spinner.classList.add('hidden');
+                form.style.opacity = '1';
+            }
+        }
+
+        // Enhanced error display
+        function showError(message) {
+            const errorElement = document.getElementById('card-errors');
+            errorElement.innerHTML = `
+                <div class="flex items-center p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="text-red-600 mr-2">⚠️</div>
+                    <div class="text-red-800">${message}</div>
+                </div>
+            `;
+            
+            // Clear error after 10 seconds
+            setTimeout(() => {
+                errorElement.innerHTML = '';
+            }, 10000);
+        }
+
+        // Processing message
+        function showProcessingMessage() {
+            const errorElement = document.getElementById('card-errors');
+            errorElement.innerHTML = `
+                <div class="flex items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div class="text-aslan-orange mr-2">🔄</div>
+                    <div class="text-orange-800">Processing your payment securely...</div>
+                </div>
+            `;
+        }
+
+        // Enhanced success display
+        function showSuccess(result) {
+            document.getElementById('payment-form').classList.add('hidden');
+            
+            const successDiv = document.getElementById('success-message');
+            successDiv.innerHTML = `
+                <div class="flex items-center mb-4">
+                    <div class="text-green-600 text-3xl mr-3">✅</div>
+                    <div>
+                        <p class="text-green-800 font-semibold text-lg">Payment Successful!</p>
+                        <p class="text-green-600 text-sm">$${result.amountAdded} has been added to your wallet</p>
+                    </div>
+                </div>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">Amount Added:</span>
+                            <span class="font-semibold text-green-800">$${result.amountAdded}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Processing Fee:</span>
+                            <span class="font-semibold">$${result.processingFee}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Total Charged:</span>
+                            <span class="font-semibold">$${result.totalCharged}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">New Balance:</span>
+                            <span class="font-semibold text-green-800">$${result.newBalance}</span>
+                        </div>
+                    </div>
+                </div>
+                <button id="return-dashboard" class="w-full bg-aslan-orange hover:bg-aslan-gold text-white py-3 px-4 rounded-lg transition duration-300 mb-2">
+                    🏠 Return to Dashboard
+                </button>
+                <button onclick="window.print()" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition duration-300">
+                    🖨️ Print Receipt
+                </button>
+            `;
+            
+            successDiv.classList.remove('hidden');
+            
+            // Add confetti effect (optional)
+            if (typeof confetti !== 'undefined') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        // Return to dashboard
+        document.getElementById('return-dashboard').addEventListener('click', () => {
+            window.location.href = `/index.html?wallet=${walletId}`;
+        });
+
+        // Load wallet info on page load
+        loadWalletInfo();
+        
+        // Pre-select amount if provided in URL
+        preselectAmount();
+    </script>
+</body>
+</html> 

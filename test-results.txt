@@ -1,0 +1,57 @@
+🔐 Starting Security Test Suite...
+
+📋 Make sure your server is running on http://localhost:3000
+
+[36m[1m🛡️  SECURITY TEST SUITE[22m[39m
+[36m=======================
+[39m
+[33m
+🔒 Testing CSRF Protection...[39m
+[32m✅ PASS[39m CSRF Token Required (Protected): Status: 403
+[32m✅ PASS[39m Public Endpoints CSRF Exempt: Login endpoint accessible without CSRF
+[32m✅ PASS[39m CSRF Token Endpoint: Token received
+[33m
+🔒 Testing Account Lockout...[39m
+[32m✅ PASS[39m Account Lockout + Rate Limiting: Rate limited after 1 attempts (both protections working)
+[33m
+🔒 Testing Input Validation...[39m
+[32m✅ PASS[39m Validation - Email Format: Validation failed
+[32m✅ PASS[39m Validation - Password Length: Validation failed
+[32m✅ PASS[39m Validation - Missing Required Fields: Validation failed
+[33m
+🔒 Testing Request Signing...[39m
+[32m✅ PASS[39m Request Signature Required: Rejected unsigned request with status: 403
+[32m✅ PASS[39m Invalid Signature Rejected: Rejected invalid signature with status: 403
+[32m✅ PASS[39m Replay Attack Prevention: Nonce-based replay prevention implemented
+[33m
+🔒 Testing Security Headers...[39m
+[32m✅ PASS[39m Security Header: x-content-type-options: nosniff
+[32m✅ PASS[39m Security Header: x-frame-options: DENY
+[32m✅ PASS[39m Security Header: x-xss-protection: 0
+[32m✅ PASS[39m Security Header: strict-transport-security: Present
+[32m✅ PASS[39m Security Header: content-security-policy: Present
+[32m✅ PASS[39m Security Header: referrer-policy: Present
+[32m✅ PASS[39m Security Header: permissions-policy: Present
+[32m✅ PASS[39m X-Powered-By Header Removed: Removed
+[33m
+🔒 Testing Rate Limiting...[39m
+[32m✅ PASS[39m Login Rate Limiting: Limited after 1 requests
+[33m
+🔒 Testing Session Security...[39m
+  → Registering test user: session-1748963379876-1d1b800f@example.com
+  → Registration response: 500 Internal server error
+[31m❌ FAIL[39m Session Security: Unexpected status: 500, Error: {"error":"Internal server error","code":"INTERNAL_ERROR"}
+[36m[1m
+📊 TEST SUMMARY[22m[39m
+[36m================[39m
+[32m✅ Passed: 19[39m
+[31m❌ Failed: 1[39m
+📝 Total:  20
+[31m
+❌ FAILED TESTS:[39m
+[31m  - Session Security: Unexpected status: 500, Error: {"error":"Internal server error","code":"INTERNAL_ERROR"}[39m
+[33m[1m
+🔒 Security Score: 95%[22m[39m
+[33m👍 Good security posture, but some improvements needed.[39m
+
+💪 Security score: 95% - Keep improving!

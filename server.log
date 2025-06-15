@@ -1,0 +1,263 @@
+
+> aslan@1.0.0 start
+> node server.js
+
+✅ Stripe initialized successfully
+🔍 Database environment detection:
+   NODE_ENV: undefined
+   isDevelopment: true
+   DATABASE_URL set: true
+   hasPostgreSQLUrl: false
+🔗 Using in-memory database
+⚠️  Google OAuth disabled - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET
+⚠️  GitHub OAuth disabled - missing GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET
+✅ Auth routes loaded successfully
+✅ API key routes loaded successfully
+✅ Authorize routes loaded successfully
+✅ Database module loaded successfully
+✅ Security module loaded successfully
+✅ Security headers initialized
+🦁 Aslan server running at http://localhost:3000
+📋 Available endpoints:
+   • Authentication: /api/auth/*
+   • API Keys: /api/keys/*
+   • Authorization: /api/v1/authorize/*
+   • Stripe: /api/create-subscription, /api/setup-products
+   • Health: /api/health
+   • Security: /api/security
+   • Dev Database: /api/dev/database
+
+🔒 Security Status:
+   • Environment: development
+   • HTTPS Enforcement: false
+   • Security Headers: true
+   • CORS Protection: true
+   • Rate Limiting: true
+
+🦁 Like the great lion of Narnia, Aslan guides AI agents to accomplish their missions
+⚠️  Make sure to set your environment variables:
+   • JWT_SECRET (strong random value)
+   • SESSION_SECRET (strong random value)
+   • STRIPE_SECRET_KEY
+   • CORS_ORIGINS (production domains)
+[SECURITY WARNING] PERMISSION_DENIED: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: '5f3ad3e7-3f2d-40b6-a3a8-8509b075deab',
+  method: 'POST',
+  path: '/api/keys',
+  requestId: 'dc5ac619-b5c2-47e2-91e5-258f9433b8bc',
+  statusCode: 403
+}
+[SECURITY WARNING] AUTHORIZATION_FAILED: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: '0a0ca0f5-b3a8-4655-bcf3-79821b8bef56',
+  method: 'POST',
+  path: '/login',
+  requestId: '32c58ea5-2ccf-4d52-b2c7-c3a324309290',
+  statusCode: 401
+}
+[SECURITY WARNING] AUTHORIZATION_FAILED: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: 'cae88b1c-eaf2-4fb5-9b48-fee54021665e',
+  method: 'POST',
+  path: '/login',
+  requestId: 'e278b4fa-6fdc-460b-bc54-3136813e7296',
+  statusCode: 401
+}
+[SECURITY WARNING] AUTHORIZATION_FAILED: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: 'd145fa61-e9bb-4d16-b92f-4e5ea916642a',
+  method: 'POST',
+  path: '/login',
+  requestId: 'baed5a2c-16e7-426a-afed-a92e43c72ff0',
+  statusCode: 401
+}
+[SECURITY WARNING] AUTHORIZATION_FAILED: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: 'f000c9fc-bfce-4335-96d0-5590d8941db6',
+  method: 'POST',
+  path: '/login',
+  requestId: '830db03e-438e-4b0b-8cf4-398924834ec8',
+  statusCode: 401
+}
+[SECURITY WARNING] AUTHORIZATION_FAILED: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: '96775d17-efb5-4eb8-bce0-664e4dc34a68',
+  method: 'POST',
+  path: '/login',
+  requestId: '1c84d435-2bfe-40ee-be1f-859212a120a8',
+  statusCode: 401
+}
+[SECURITY WARNING] RATE_LIMIT_EXCEEDED: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: 'b7bcd10e-fa7a-407e-b196-2645d1b52620',
+  method: 'POST',
+  path: '/login',
+  requestId: '65747e84-4df1-4f8f-af48-b7725c43076f',
+  statusCode: 429
+}
+📝 Registration attempt for: xss-1748964869331@example.com
+✅ User created successfully: 98162fdc-0bb4-4479-b00d-787732c51471
+✅ Verification token created
+📧 Attempting to send email via Console...
+
+📧 EMAIL WOULD BE SENT:
+From: Aslan <noreply@aslanpay.xyz>
+To: xss-1748964869331@example.com
+Subject: Verify your Aslan account
+Content: Verify Your Email Address
+
+Thanks for signing up for Aslan! Please verify your email address to complete your account setup.
+
+Visit this link to verify your email:
+http://localhost:3000/verify-email?token=9f36157f44d5b2704659c55506c986bffad995822ab582d221b666f40f29d605
+
+This link will expire in 24 hours.
+
+© 2024 Aslan Technologies. All rights reserved.
+---
+
+✅ Email sent successfully via Console
+✅ Verification email sent
+✅ Session created: 22a06944-3c3a-4bca-84c3-53a608e16553
+✅ JWT token generated
+✅ Registration successful for: xss-1748964869331@example.com
+📝 Registration attempt for: xss-1748964870092@example.com
+✅ User created successfully: 4ccf1c85-9555-47f3-b30f-bc21b937b47a
+✅ Verification token created
+📧 Attempting to send email via Console...
+
+📧 EMAIL WOULD BE SENT:
+From: Aslan <noreply@aslanpay.xyz>
+To: xss-1748964870092@example.com
+Subject: Verify your Aslan account
+Content: Verify Your Email Address
+
+Thanks for signing up for Aslan! Please verify your email address to complete your account setup.
+
+Visit this link to verify your email:
+http://localhost:3000/verify-email?token=1a3ed8f43dfe3e270af6395f92f028cb150adcf52b3e43ea79473a56e1aade4f
+
+This link will expire in 24 hours.
+
+© 2024 Aslan Technologies. All rights reserved.
+---
+
+✅ Email sent successfully via Console
+✅ Verification email sent
+✅ Session created: d415fd4b-3abd-4956-99f2-1843cd621bcb
+✅ JWT token generated
+✅ Registration successful for: xss-1748964870092@example.com
+Error fetching API key: TypeError: database.getApiKeyByKey is not a function
+    at RequestSigning.getApiKeyData (/Users/coltonsakamoto/Desktop/agentpay/middleware/request-signing.js:251:38)
+    at /Users/coltonsakamoto/Desktop/agentpay/middleware/request-signing.js:135:47
+    at Layer.handle [as handle_request] (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/layer.js:95:5)
+    at /Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/index.js:346:12)
+    at next (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/index.js:175:3)
+[SECURITY WARNING] API_KEY_INVALID: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: 'd1e37ee4-cec1-4354-8746-ce3778a77054',
+  method: 'POST',
+  path: '/api/v1/authorize',
+  requestId: '2e881103-1c47-4eea-8e9f-17586dda89ed',
+  apiKey: 'ak_test_...'
+}
+[SECURITY WARNING] AUTHORIZATION_FAILED: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: 'd1e37ee4-cec1-4354-8746-ce3778a77054',
+  method: 'POST',
+  path: '/',
+  requestId: '2e881103-1c47-4eea-8e9f-17586dda89ed',
+  statusCode: 401
+}
+Error fetching API key: TypeError: database.getApiKeyByKey is not a function
+    at RequestSigning.getApiKeyData (/Users/coltonsakamoto/Desktop/agentpay/middleware/request-signing.js:251:38)
+    at /Users/coltonsakamoto/Desktop/agentpay/middleware/request-signing.js:135:47
+    at Layer.handle [as handle_request] (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/layer.js:95:5)
+    at /Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/index.js:346:12)
+    at next (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/Users/coltonsakamoto/Desktop/agentpay/node_modules/express/lib/router/index.js:175:3)
+[SECURITY WARNING] API_KEY_INVALID: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: '9f0cca50-5eae-4743-9a82-01ae5695e7e2',
+  method: 'POST',
+  path: '/api/v1/authorize',
+  requestId: '75353261-e7b5-4a5d-88a5-c442ee1fb9b9',
+  apiKey: 'ak_test_...'
+}
+[SECURITY WARNING] AUTHORIZATION_FAILED: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: '9f0cca50-5eae-4743-9a82-01ae5695e7e2',
+  method: 'POST',
+  path: '/',
+  requestId: '75353261-e7b5-4a5d-88a5-c442ee1fb9b9',
+  statusCode: 401
+}
+[SECURITY WARNING] RATE_LIMIT_EXCEEDED: {
+  ip: '::1',
+  userAgent: 'axios/1.9.0',
+  userId: undefined,
+  sessionId: 'ea857d32-8cc9-46bf-9881-43327a03adcf',
+  method: 'POST',
+  path: '/login',
+  requestId: 'a92f7926-465a-456a-b5ba-7bd6e93367d4',
+  statusCode: 429
+}
+📝 Registration attempt for: session-1748964870394-e6bc47e4@example.com
+✅ User created successfully: 0c98672a-3804-402b-bb07-46dc0db5d395
+✅ Verification token created
+📧 Attempting to send email via Console...
+
+📧 EMAIL WOULD BE SENT:
+From: Aslan <noreply@aslanpay.xyz>
+To: session-1748964870394-e6bc47e4@example.com
+Subject: Verify your Aslan account
+Content: Verify Your Email Address
+
+Thanks for signing up for Aslan! Please verify your email address to complete your account setup.
+
+Visit this link to verify your email:
+http://localhost:3000/verify-email?token=6fa9705f7a3cc103f4a564544154a9e0fc6c589d6d7cc98e035598a444a50881
+
+This link will expire in 24 hours.
+
+© 2024 Aslan Technologies. All rights reserved.
+---
+
+✅ Email sent successfully via Console
+✅ Verification email sent
+✅ Session created: 90ac1220-6fdf-47b4-9149-c6e1d1196c6d
+✅ JWT token generated
+✅ Registration successful for: session-1748964870394-e6bc47e4@example.com
+🧹 Cleaned up 2 expired lockout entries

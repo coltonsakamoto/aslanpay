@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+include examples/*.py
+recursive-include agentpay *.py
+global-exclude *.pyc
+global-exclude .DS_Store 

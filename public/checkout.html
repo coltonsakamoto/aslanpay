@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Aslan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                        'aslan-dark': '#1a1a1a',
+                        'aslan-gray': '#6B7280'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 overflow-x-hidden">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-200 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="pricing.html" class="text-aslan-gray hover:text-aslan-dark transition-colors">← Back to Pricing</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <!-- Loading State -->
+        <div id="loading-state" class="text-center">
+            <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-aslan-orange mx-auto mb-4"></div>
+                <h2 class="text-xl font-semibold text-aslan-dark mb-2">Loading checkout...</h2>
+                <p class="text-aslan-gray">Please wait while we prepare your subscription</p>
+            </div>
+        </div>
+
+        <!-- Checkout Form -->
+        <div id="checkout-form" class="hidden">
+            <div class="grid lg:grid-cols-2 gap-6 lg:gap-8">
+                <!-- Order Summary -->
+                <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-aslan-dark mb-6">Order Summary</h2>
+                    
+                    <div id="plan-details" class="mb-6">
+                        <!-- Plan details will be populated by JavaScript -->
+                    </div>
+                    
+                    <div class="border-t pt-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-aslan-gray">Subtotal</span>
+                            <span id="subtotal" class="font-semibold text-aslan-dark"></span>
+                        </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-aslan-gray">Tax</span>
+                            <span class="text-aslan-gray">Calculated at checkout</span>
+                        </div>
+                        <div class="border-t pt-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-semibold text-aslan-dark">Total</span>
+                                <span id="total" class="text-lg font-bold text-aslan-orange"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Features -->
+                    <div class="mt-6 pt-6 border-t">
+                        <h3 class="font-semibold text-aslan-dark mb-3">What's included:</h3>
+                        <ul id="plan-features" class="space-y-2 text-sm text-aslan-gray">
+                            <!-- Features will be populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Payment Form -->
+                <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-aslan-dark mb-6">Payment Information</h2>
+                    
+                    <form id="payment-form">
+                        <!-- Customer Information -->
+                        <div class="space-y-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-aslan-dark mb-2">Email Address</label>
+                                <input type="email" id="email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                            </div>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-aslan-dark mb-2">First Name</label>
+                                    <input type="text" id="first-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-aslan-dark mb-2">Last Name</label>
+                                    <input type="text" id="last-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-aslan-dark mb-2">Company (Optional)</label>
+                                <input type="text" id="company" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                            </div>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-aslan-dark mb-2">Payment Method</label>
+                            <div id="card-element" class="border border-gray-300 rounded-lg p-3">
+                                <!-- Stripe Elements will create form elements here -->
+                            </div>
+                            <div id="card-errors" class="text-red-600 text-sm mt-2"></div>
+                        </div>
+
+                        <!-- Trial Notice -->
+                        <div id="trial-notice" class="hidden bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div class="text-sm text-green-800">
+                                    <strong>14-day free trial</strong> - You won't be charged until your trial ends. Cancel anytime.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" id="submit-button" class="w-full bg-aslan-orange text-white py-3 px-4 rounded-lg font-semibold hover:bg-aslan-gold transition-colors">
+                            <span id="button-text">Complete Purchase</span>
+                            <div id="button-spinner" class="hidden inline-block ml-2">
+                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            </div>
+                        </button>
+
+                        <!-- Security Notice -->
+                        <div class="mt-4 text-center text-sm text-aslan-gray">
+                            <div class="flex items-center justify-center space-x-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                <span>Secure checkout powered by Stripe</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success State -->
+        <div id="success-state" class="hidden text-center">
+            <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-aslan-dark mb-4">Payment Successful!</h2>
+                <p class="text-aslan-gray mb-6">Your subscription has been activated and you're ready to start building with Aslan.</p>
+                <div class="space-y-3">
+                    <a href="/demo" class="block bg-aslan-orange text-white px-6 py-3 rounded-lg font-medium hover:bg-aslan-gold transition-colors">
+                        Try the Demo
+                    </a>
+                    <a href="mailto:support@aslanpay.xyz" class="block text-aslan-gray hover:text-aslan-dark transition-colors">
+                        Get help setting up →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="hidden text-center">
+            <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-aslan-dark mb-4">Payment Failed</h2>
+                <p id="error-message" class="text-aslan-gray mb-6"></p>
+                <button onclick="location.reload()" class="bg-aslan-orange text-white px-6 py-3 rounded-lg font-medium hover:bg-aslan-gold transition-colors">
+                    Try Again
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Plan configurations
+        const PLANS = {
+            sandbox: {
+                name: 'Sandbox',
+                price: 0,
+                priceId: null, // Free plan
+                features: [
+                    '1,000 successful authorizations/month',
+                    '$0.05 per auth after quota',
+                    'Test & production environments',
+                    'Community support',
+                    'All AI spending controls',
+                    'Perfect for side projects & MVPs'
+                ]
+            },
+            starter: {
+                name: 'Starter',
+                price: 19,
+                priceId: 'price_starter_monthly', // You'll need to create this in Stripe
+                features: [
+                    '2,000 successful authorizations/month',
+                    '$0.03 per auth after quota',
+                    'Production environment',
+                    'Email support',
+                    'Advanced spending controls',
+                    'Real-time analytics'
+                ],
+                trial: true
+            },
+            builder: {
+                name: 'Builder',
+                price: 79,
+                priceId: 'price_builder_monthly', // You'll need to create this in Stripe
+                features: [
+                    '25,000 successful authorizations/month',
+                    '$0.02 per auth after quota',
+                    'Multiple environments',
+                    'Priority support',
+                    'Multi-agent management',
+                    'Advanced analytics'
+                ],
+                trial: true
+            }
+        };
+
+        // Initialize Stripe (you'll need to replace with your publishable key)
+        const stripe = Stripe(window.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
+        const elements = stripe.elements();
+
+        // Create card element
+        const cardElement = elements.create('card', {
+            style: {
+                base: {
+                    fontSize: '16px',
+                    color: '#424770',
+                    '::placeholder': {
+                        color: '#aab7c4',
+                    },
+                },
+            },
+        });
+
+        let currentPlan = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get plan from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const planType = urlParams.get('plan');
+            
+            if (!planType || !PLANS[planType]) {
+                window.location.href = 'pricing.html';
+                return;
+            }
+
+            currentPlan = PLANS[planType];
+            
+            // Handle free plan
+            if (planType === 'sandbox') {
+                handleFreePlan();
+                return;
+            }
+
+            // Setup paid plan checkout
+            setupCheckout();
+        });
+
+        function handleFreePlan() {
+            // Redirect to registration for free sandbox plan
+            window.location.href = 'auth.html?plan=sandbox&redirect=dashboard';
+        }
+
+        function setupCheckout() {
+            // Mount card element
+            cardElement.mount('#card-element');
+
+            // Handle card element changes
+            cardElement.on('change', function(event) {
+                const displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
+
+            // Update UI with plan details
+            updatePlanDetails();
+            
+            // Show checkout form
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('checkout-form').classList.remove('hidden');
+
+            // Setup form submission
+            document.getElementById('payment-form').addEventListener('submit', handleSubmit);
+        }
+
+        function updatePlanDetails() {
+            // Update plan details
+            document.getElementById('plan-details').innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="font-semibold text-aslan-dark">${currentPlan.name} Plan</h3>
+                        <p class="text-sm text-aslan-gray">Monthly subscription</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-bold text-aslan-dark">$${currentPlan.price}</div>
+                        <div class="text-sm text-aslan-gray">/month</div>
+                    </div>
+                </div>
+            `;
+
+            // Update totals
+            document.getElementById('subtotal').textContent = `$${currentPlan.price}.00`;
+            document.getElementById('total').textContent = `$${currentPlan.price}.00/mo`;
+
+            // Update features
+            const featuresHtml = currentPlan.features.map(feature => `
+                <li class="flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>${feature}</span>
+                </li>
+            `).join('');
+            document.getElementById('plan-features').innerHTML = featuresHtml;
+
+            // Show trial notice if applicable
+            if (currentPlan.trial) {
+                document.getElementById('trial-notice').classList.remove('hidden');
+                document.getElementById('button-text').textContent = 'Start Free Trial';
+            }
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            const submitButton = document.getElementById('submit-button');
+            const buttonText = document.getElementById('button-text');
+            const buttonSpinner = document.getElementById('button-spinner');
+            
+            // Disable submit button and show loading
+            submitButton.disabled = true;
+            buttonText.classList.add('hidden');
+            buttonSpinner.classList.remove('hidden');
+
+            // Get form data
+            const email = document.getElementById('email').value;
+            const firstName = document.getElementById('first-name').value;
+            const lastName = document.getElementById('last-name').value;
+            const company = document.getElementById('company').value;
+
+            try {
+                // Create payment method
+                const {error, paymentMethod} = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement,
+                    billing_details: {
+                        name: `${firstName} ${lastName}`,
+                        email: email,
+                    },
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                // Create subscription (you'll need to implement this endpoint)
+                const response = await fetch('/api/create-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        paymentMethodId: paymentMethod.id,
+                        priceId: currentPlan.priceId,
+                        email: email,
+                        name: `${firstName} ${lastName}`,
+                        company: company,
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                // Handle successful payment
+                showSuccess();
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                // Re-enable submit button
+                submitButton.disabled = false;
+                buttonText.classList.remove('hidden');
+                buttonSpinner.classList.add('hidden');
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('checkout-form').classList.add('hidden');
+            document.getElementById('success-state').classList.remove('hidden');
+        }
+
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('checkout-form').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+        }
+
+        // Handle enterprise plan contact
+        if (new URLSearchParams(window.location.search).get('plan') === 'enterprise') {
+            window.location.href = 'mailto:support@aslanpay.xyz?subject=Enterprise Plan Inquiry';
+        }
+    </script>
+</body>
+</html> 

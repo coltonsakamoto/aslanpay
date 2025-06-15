@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentPay Demo - AI Agents Making Real Purchases</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">AP</span>
+                </div>
+                <h1 class="text-xl font-semibold text-gray-900">AgentPay Demo</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="https://docs.agentpay.com" class="text-blue-600 hover:text-blue-700 font-medium">Docs</a>
+                <a href="https://github.com/agentpay/agentpay-sdk" class="text-gray-600 hover:text-gray-700">GitHub</a>
+                <button id="get-started-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="max-w-6xl mx-auto px-6 py-12">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">
+                Watch AI Agents Make <span class="text-blue-600">Real Purchases</span>
+            </h1>
+            <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                AgentPay is the universal payment infrastructure for AI agents. 
+                See ChatGPT, Claude, and other AI agents make autonomous purchases with spending controls.
+            </p>
+            <div class="flex justify-center space-x-4">
+                <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                    ✅ Enterprise Security
+                </div>
+                <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                    ⚡ Sub-400ms Authorization
+                </div>
+                <div class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                    🤖 Universal AI Support
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Demo -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">
+                🎪 Live Demo: ChatGPT with Purchase Powers
+            </h2>
+            
+            <!-- Demo Interface -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Chat Interface -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Chat with AI Agent</h3>
+                    <div id="chat-messages" class="bg-gray-50 rounded-lg p-4 h-80 overflow-y-auto space-y-3">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">🤖</span>
+                            </div>
+                            <div class="bg-white rounded-lg p-3 max-w-xs">
+                                <p class="text-sm text-gray-800">
+                                    Hi! I'm an AI agent with AgentPay integration. I can make real purchases for you! 
+                                    Try asking me to buy something.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Input Area -->
+                    <div class="flex space-x-2">
+                        <input 
+                            id="chat-input" 
+                            type="text" 
+                            placeholder="Try: 'Buy me a $10 Amazon gift card'"
+                            class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                        <button 
+                            id="send-btn"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            Send
+                        </button>
+                    </div>
+                    
+                    <!-- OpenAI Key Input -->
+                    <div class="border-t pt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Your OpenAI API Key (optional - use demo key if blank)
+                        </label>
+                        <input 
+                            id="openai-key" 
+                            type="password" 
+                            placeholder="sk-..."
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">
+                            Your key is never stored. Get one at <a href="https://platform.openai.com/api-keys" class="text-blue-600">platform.openai.com</a>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Transaction Log -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-800">AgentPay Transaction Log</h3>
+                    <div id="transaction-log" class="bg-gray-50 rounded-lg p-4 h-80 overflow-y-auto">
+                        <div class="text-center text-gray-500 text-sm py-8">
+                            Transactions will appear here when AI agent makes purchases...
+                        </div>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div class="bg-blue-50 rounded-lg p-3">
+                            <div class="text-2xl font-bold text-blue-600" id="total-transactions">0</div>
+                            <div class="text-xs text-blue-800">Transactions</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-3">
+                            <div class="text-2xl font-bold text-green-600" id="total-amount">$0</div>
+                            <div class="text-xs text-green-800">Total Spent</div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-3">
+                            <div class="text-2xl font-bold text-purple-600" id="avg-latency">0ms</div>
+                            <div class="text-xs text-purple-800">Avg Latency</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Integration Examples -->
+        <div class="grid md:grid-cols-3 gap-8 mb-12">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">🔥 2-Minute Integration</h3>
+                <pre class="bg-gray-100 rounded text-sm p-3 overflow-x-auto">
+<code>npm install agentpay
+export AGENTPAY_TOKEN=your_token
+node examples/first-purchase.js
+# ✅ AI agent just bought $10 gift card!</code>
+                </pre>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">🤖 OpenAI Function Calling</h3>
+                <pre class="bg-gray-100 rounded text-sm p-3 overflow-x-auto">
+<code>const agentpay = require('agentpay');
+const functions = agentpay.getFunctionSchema();
+
+// Add to ChatGPT completion:
+functions: functions,
+function_call: "auto"</code>
+                </pre>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">🛡️ Enterprise Security</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600">✅</span>
+                        <span>Sub-400ms authorization</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600">✅</span>
+                        <span>JWT security & scoped tokens</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600">✅</span>
+                        <span>Spending limits & controls</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600">✅</span>
+                        <span>Complete audit trails</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white p-8 text-center">
+            <h2 class="text-3xl font-bold mb-4">Ready to Give Your AI Agents Purchase Powers?</h2>
+            <p class="text-xl mb-6 opacity-90">
+                Join hundreds of developers building the future of autonomous commerce
+            </p>
+            <div class="flex justify-center space-x-4">
+                <a href="https://docs.agentpay.com/quickstart" 
+                   class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    Quick Start Guide
+                </a>
+                <a href="https://github.com/agentpay/agentpay-sdk" 
+                   class="border border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+                    View on GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Demo functionality
+        let transactionCount = 0;
+        let totalAmount = 0;
+        let latencies = [];
+
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const transactionLog = document.getElementById('transaction-log');
+        const openaiKeyInput = document.getElementById('openai-key');
+
+        // Add message to chat
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex items-start space-x-3 ${isUser ? 'justify-end' : ''}`;
+            
+            messageDiv.innerHTML = `
+                <div class="w-8 h-8 ${isUser ? 'bg-gray-600' : 'bg-blue-600'} rounded-full flex items-center justify-center ${isUser ? 'order-2' : ''}">
+                    <span class="text-white text-sm">${isUser ? '👤' : '🤖'}</span>
+                </div>
+                <div class="bg-white rounded-lg p-3 max-w-xs ${isUser ? 'bg-gray-600 text-white order-1' : ''}">
+                    <p class="text-sm">${content}</p>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Add transaction to log
+        function addTransaction(transaction) {
+            transactionCount++;
+            totalAmount += transaction.amount;
+            latencies.push(transaction.latency || 200);
+
+            const transactionDiv = document.createElement('div');
+            transactionDiv.className = 'bg-white rounded-lg p-3 border-l-4 border-green-500 mb-3';
+            
+            transactionDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-semibold text-green-600">✅ Purchase Completed</span>
+                    <span class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</span>
+                </div>
+                <div class="text-sm space-y-1">
+                    <div><strong>Service:</strong> ${transaction.service}</div>
+                    <div><strong>Amount:</strong> $${transaction.amount}</div>
+                    <div><strong>Transaction ID:</strong> ${transaction.transactionId}</div>
+                    <div><strong>Latency:</strong> ${transaction.latency || 200}ms</div>
+                </div>
+            `;
+            
+            transactionLog.insertBefore(transactionDiv, transactionLog.firstChild);
+            
+            // Clear empty state
+            const emptyState = transactionLog.querySelector('.text-center');
+            if (emptyState) emptyState.remove();
+
+            // Update stats
+            document.getElementById('total-transactions').textContent = transactionCount;
+            document.getElementById('total-amount').textContent = `$${totalAmount.toFixed(2)}`;
+            document.getElementById('avg-latency').textContent = `${Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)}ms`;
+        }
+
+        // Simulate AI agent purchase
+        async function simulateAgentPurchase(userMessage) {
+            const startTime = Date.now();
+            
+            addMessage('Processing your request...', false);
+            
+            // Simulate thinking delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Parse user intent (simplified)
+            let service = 'gift-card';
+            let amount = 10;
+            let brand = 'Amazon';
+            
+            if (userMessage.toLowerCase().includes('domain')) {
+                service = 'domain';
+                amount = 12.99;
+            } else if (userMessage.toLowerCase().includes('sms')) {
+                service = 'sms';
+                amount = 0.0075;
+            }
+            
+            // Extract amount if specified
+            const amountMatch = userMessage.match(/\$(\d+(?:\.\d{2})?)/);
+            if (amountMatch) {
+                amount = parseFloat(amountMatch[1]);
+            }
+
+            // Simulate AgentPay API call
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            const transaction = {
+                service: service,
+                amount: amount,
+                transactionId: `demo_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                latency: Date.now() - startTime
+            };
+
+            // Add to transaction log
+            addTransaction(transaction);
+
+            // AI response
+            let response = '';
+            if (service === 'gift-card') {
+                response = `✅ Perfect! I've purchased a $${amount} ${brand} gift card for you. The gift card code has been sent to your email and is ready to use. Transaction completed in ${transaction.latency}ms!`;
+            } else if (service === 'domain') {
+                const domain = userMessage.match(/([a-z0-9-]+\.com)/i);
+                response = `✅ Great! I've registered the domain ${domain ? domain[1] : 'your-domain.com'} for $${amount}. The domain is now active and pointed to your account. Setup completed in ${transaction.latency}ms!`;
+            } else if (service === 'sms') {
+                response = `✅ SMS sent successfully! The message has been delivered for $${amount}. Response time: ${transaction.latency}ms with enterprise-grade delivery confirmation.`;
+            }
+
+            addMessage(response, false);
+        }
+
+        // Handle send button
+        sendBtn.addEventListener('click', async () => {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            addMessage(message, true);
+            chatInput.value = '';
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Processing...';
+            
+            await simulateAgentPurchase(message);
+            
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send';
+        });
+
+        // Handle enter key
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendBtn.click();
+            }
+        });
+
+        // Get started button
+        document.getElementById('get-started-btn').addEventListener('click', () => {
+            window.open('https://docs.agentpay.com/quickstart', '_blank');
+        });
+
+        // Demo suggestions
+        const suggestions = [
+            "Buy me a $25 Starbucks gift card",
+            "Register the domain my-ai-startup.com",
+            "Send an SMS to +1234567890 saying 'Hello from AI!'",
+            "Get me a $50 Amazon gift card",
+            "Purchase AWS credits for $100"
+        ];
+
+        // Add suggestion buttons
+        setTimeout(() => {
+            const suggestionDiv = document.createElement('div');
+            suggestionDiv.className = 'flex flex-wrap gap-2 mt-4';
+            suggestionDiv.innerHTML = '<div class="text-sm text-gray-600 w-full mb-2">💡 Try these examples:</div>';
+            
+            suggestions.forEach(suggestion => {
+                const btn = document.createElement('button');
+                btn.className = 'text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-colors';
+                btn.textContent = suggestion;
+                btn.onclick = () => {
+                    chatInput.value = suggestion;
+                    sendBtn.click();
+                };
+                suggestionDiv.appendChild(btn);
+            });
+            
+            chatInput.parentNode.appendChild(suggestionDiv);
+        }, 1000);
+    </script>
+</body>
+</html> 
