@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const database = require('../config/database');
+const database = require('../database-production.js');
 const { validateSession } = require('../middleware/auth');
 const SecureRandom = require('../utils/secure-random');
 
@@ -11,43 +11,26 @@ function maskApiKey(key) {
     return key.substring(0, 8) + '•'.repeat(key.length - 12) + key.substring(key.length - 4);
 }
 
-// Get all API keys for authenticated user's tenant (masked)
+// Get all API keys for authenticated user
 router.get('/', validateSession, async (req, res) => {
     try {
-        const session = database.getSession(req.session.id);
-        if (!session || !session.tenantId) {
-            return res.status(400).json({
-                error: 'No tenant context found',
-                code: 'NO_TENANT_CONTEXT'
-            });
-        }
-
-        const apiKeys = database.getApiKeysByTenant(session.tenantId);
+        console.log(`📋 Get API keys request by user ${req.user.id}`);
         
-        // Mask the keys before sending
-        const maskedKeys = apiKeys.map(key => ({
-            ...key,
-            maskedKey: maskApiKey(key.key),
-            key: undefined // Remove the full key
-        }));
+        const apiKeys = await database.getApiKeysByUserId(req.user.id);
         
-        const tenant = database.getTenant(session.tenantId);
+        console.log(`✅ Found ${apiKeys.length} API keys for user ${req.user.id}`);
         
         res.json({
-            apiKeys: maskedKeys,
-            total: maskedKeys.length,
-            tenant: {
-                id: tenant.id,
-                name: tenant.name,
-                plan: tenant.plan
-            }
+            apiKeys,
+            total: apiKeys.length
         });
         
     } catch (error) {
-        console.error('Get API keys error:', error);
+        console.error('❌ Get API keys error:', error);
         res.status(500).json({
             error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
+            code: 'INTERNAL_ERROR',
+            details: error.message
         });
     }
 });
@@ -98,14 +81,8 @@ router.post('/:keyId/reveal', validateSession, async (req, res) => {
 router.post('/', validateSession, async (req, res) => {
     try {
         const { name } = req.body;
-        const session = database.getSession(req.session.id);
         
-        if (!session || !session.tenantId) {
-            return res.status(400).json({
-                error: 'No tenant context found',
-                code: 'NO_TENANT_CONTEXT'
-            });
-        }
+        console.log(`🔑 Create API key request: "${name}" by user ${req.user.id}`);
         
         if (!name || name.trim() === '') {
             return res.status(400).json({
@@ -114,55 +91,34 @@ router.post('/', validateSession, async (req, res) => {
             });
         }
         
-        // Check rate limiting for API key creation per tenant
-        const tenantId = session.tenantId;
-        const dayStart = new Date();
-        dayStart.setHours(0, 0, 0, 0);
-        
-        // Count keys created today for this tenant
-        const tenantKeys = database.getApiKeysByTenant(tenantId);
-        const keysCreatedToday = tenantKeys.filter(key => 
-            new Date(key.createdAt) >= dayStart
-        ).length;
-        
-        if (keysCreatedToday >= 10) {
-            return res.status(429).json({
-                error: 'Daily API key creation limit reached (10 per day per organization)',
-                code: 'RATE_LIMIT_EXCEEDED'
-            });
-        }
-
-        // Check if name already exists in tenant
-        const existingKey = tenantKeys.find(key => 
+        // Check if name already exists for this user
+        const userApiKeys = await database.getApiKeysByUserId(req.user.id);
+        const existingKey = userApiKeys.find(key => 
             key.name.toLowerCase() === name.trim().toLowerCase()
         );
         
         if (existingKey) {
             return res.status(400).json({
-                error: 'An API key with this name already exists in your organization',
+                error: 'An API key with this name already exists',
                 code: 'DUPLICATE_NAME'
             });
         }
         
-        const apiKey = await database.createApiKey(req.user.id, tenantId, name.trim());
+        const apiKey = await database.createApiKey(req.user.id, name.trim());
         
-        console.log(`🔑 API key created: ${apiKey.id} for tenant ${tenantId} by user ${req.user.id}`);
+        console.log(`✅ API key created: ${apiKey.id} for user ${req.user.id}`);
         
-        // Return the full key only on creation
         res.status(201).json({
-            apiKey: {
-                ...apiKey,
-                maskedKey: maskApiKey(apiKey.key)
-            },
-            message: 'API key created successfully. Please save this key securely - it will not be shown again.',
-            warning: 'This is the only time you will see the full API key.'
+            apiKey,
+            message: 'API key created successfully'
         });
         
     } catch (error) {
-        console.error('Create API key error:', error);
+        console.error('❌ Create API key error:', error);
         res.status(500).json({
             error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
+            code: 'INTERNAL_ERROR',
+            details: error.message
         });
     }
 });
@@ -171,47 +127,38 @@ router.post('/', validateSession, async (req, res) => {
 router.delete('/:keyId', validateSession, async (req, res) => {
     try {
         const { keyId } = req.params;
-        const session = database.getSession(req.session.id);
         
-        if (!session || !session.tenantId) {
-            return res.status(400).json({
-                error: 'No tenant context found',
-                code: 'NO_TENANT_CONTEXT'
-            });
-        }
-
-        // Verify the key belongs to this tenant
-        const tenantKeys = database.getApiKeysByTenant(session.tenantId);
-        const keyToRevoke = tenantKeys.find(k => k.id === keyId);
+        console.log(`🗑️ Revoke API key request: ${keyId} by user ${req.user.id}`);
+        
+        // Verify the key belongs to this user
+        const userApiKeys = await database.getApiKeysByUserId(req.user.id);
+        const keyToRevoke = userApiKeys.find(k => k.id === keyId);
         
         if (!keyToRevoke) {
+            console.log(`❌ API key not found: ${keyId} for user ${req.user.id}`);
             return res.status(404).json({
-                error: 'API key not found in your organization',
+                error: 'API key not found or access denied',
                 code: 'KEY_NOT_FOUND'
             });
         }
 
-        // Mark key as inactive (we'll use the existing revokeApiKey method)
-        const allKeys = database.getAllData().apiKeys;
-        const keyData = allKeys.find(k => k.id === keyId);
+        console.log(`✅ Found key to revoke: ${keyToRevoke.name}`);
         
-        if (keyData) {
-            keyData.isActive = false;
-            keyData.revokedAt = new Date();
-            keyData.revokedBy = req.user.id;
-        }
+        // Use production database revoke method
+        await database.revokeApiKey(req.user.id, keyId);
         
-        console.log(`🗑️ API key revoked: ${keyId} in tenant ${session.tenantId} by user ${req.user.id}`);
+        console.log(`🗑️ API key revoked: ${keyId} by user ${req.user.id}`);
         
         res.json({
             message: 'API key revoked successfully'
         });
         
     } catch (error) {
-        console.error('Revoke API key error:', error);
+        console.error('❌ Revoke API key error:', error);
         res.status(500).json({
             error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
+            code: 'INTERNAL_ERROR',
+            details: error.message
         });
     }
 });
@@ -223,8 +170,7 @@ router.post('/:keyId/rotate', validateSession, async (req, res) => {
         
         console.log(`🔄 Rotate API key request: ${keyId} by user ${req.user.id}`);
         
-        // PRODUCTION FIX: Use database-production.js methods directly
-        const database = require('../database-production.js');
+        // Use production database methods
         
         // Get user's API keys
         const userApiKeys = await database.getApiKeysByUserId(req.user.id);
