@@ -981,9 +981,13 @@ app.post('/v1/purchase', async (req: Request, res: Response) => {
       });
     }
     
-    // Calculate costs with 1% platform fee
-    const serviceCost = purchaseResult.amount;
-    const platformFee = Math.round(serviceCost * 0.01 * 100) / 100; // 1% platform fee
+      // Calculate costs with standard 2.9% + $0.30 platform fee
+  const serviceCost = purchaseResult.amount;
+  const serviceCostCents = Math.round(serviceCost * 100);
+  const percentageFee = Math.round(serviceCostCents * 0.029); // 2.9%
+  const fixedFee = 30; // $0.30 in cents
+  const calculatedPlatformFeeCents = percentageFee + fixedFee;
+  const platformFee = calculatedPlatformFeeCents / 100;
     const totalAmount = serviceCost + platformFee;
     const totalAmountCents = Math.round(totalAmount * 100);
     const platformFeeCents = Math.round(platformFee * 100);
@@ -1077,7 +1081,7 @@ app.post('/v1/purchase', async (req: Request, res: Response) => {
       service: purchaseResult.service,
       details: purchaseResult.details,
       remainingBalance: updatedWallet?.balanceUSD ? updatedWallet.balanceUSD / 100 : 0,
-      message: `Successfully purchased ${service} for $${serviceCost} + $${platformFee} platform fee (1%) = $${totalAmount} total. Transaction ID: ${purchaseResult.transactionId}`
+                message: `Successfully purchased ${service} for $${serviceCost} + $${platformFee} platform fee (2.9% + $0.30) = $${totalAmount} total. Transaction ID: ${purchaseResult.transactionId}`
     });
     
   } catch (error: any) {
@@ -1271,12 +1275,16 @@ app.post('/v1/purchase-direct', async (req: Request, res: Response) => {
           });
         }
         
-        // Calculate platform fee (1%)
+        // Calculate platform fee (2.9% + $0.30)
         const serviceCost = purchaseResult.amount;
-        const platformFee = Math.round(serviceCost * 0.01 * 100) / 100;
+        const serviceCostCents = Math.round(serviceCost * 100);
+        const percentageFee = Math.round(serviceCostCents * 0.029); // 2.9%
+        const fixedFee = 30; // $0.30 in cents
+        const totalPlatformFeeCents = percentageFee + fixedFee;
+        const platformFee = totalPlatformFeeCents / 100;
         const totalAmount = serviceCost + platformFee;
         
-        console.log(`💰 Direct card purchase breakdown: Service $${serviceCost} + Platform fee $${platformFee} = Total $${totalAmount}`);
+        console.log(`💰 Direct card purchase breakdown: Service $${serviceCost} + Platform fee $${platformFee} (2.9% + $0.30) = Total $${totalAmount}`);
         
         // Charge user's credit card directly
         const totalAmountCents = Math.round(totalAmount * 100);
@@ -1334,7 +1342,7 @@ app.post('/v1/purchase-direct', async (req: Request, res: Response) => {
           amount: totalAmount,
           serviceCost: serviceCost,
           platformFee: platformFee,
-          feePercentage: '1%',
+          feePercentage: '2.9% + $0.30',
           service: purchaseResult.service,
           details: purchaseResult.details,
           paymentMethod: {
@@ -1343,7 +1351,7 @@ app.post('/v1/purchase-direct', async (req: Request, res: Response) => {
             brand: testCardForPurchase.brand
           },
           spendingSummary,
-          message: `Successfully purchased ${service} for $${serviceCost} + $${platformFee} platform fee (1%) = $${totalAmount} total. Charged to card ending in ${testCardForPurchase.last4}.`
+          message: `Successfully purchased ${service} for $${serviceCost} + $${platformFee} platform fee (2.9% + $0.30) = $${totalAmount} total. Charged to card ending in ${testCardForPurchase.last4}.`
         });
         
       } catch (error: any) {
@@ -1399,12 +1407,16 @@ app.post('/v1/purchase-direct', async (req: Request, res: Response) => {
       });
     }
     
-    // Calculate platform fee (1%)
+    // Calculate platform fee (2.9% + $0.30)
     const serviceCost = purchaseResult.amount;
-    const platformFee = Math.round(serviceCost * 0.01 * 100) / 100;
+    const serviceCostCents2 = Math.round(serviceCost * 100);
+    const percentageFee2 = Math.round(serviceCostCents2 * 0.029); // 2.9%
+    const fixedFee2 = 30; // $0.30 in cents
+    const platformFeeCents2 = percentageFee2 + fixedFee2;
+    const platformFee = platformFeeCents2 / 100;
     const totalAmount = serviceCost + platformFee;
     
-    console.log(`💰 Direct card purchase breakdown: Service $${serviceCost} + Platform fee $${platformFee} = Total $${totalAmount}`);
+    console.log(`💰 Direct card purchase breakdown: Service $${serviceCost} + Platform fee $${platformFee} (2.9% + $0.30) = Total $${totalAmount}`);
     
     // Charge user's credit card directly
     try {
@@ -1468,7 +1480,7 @@ app.post('/v1/purchase-direct', async (req: Request, res: Response) => {
         amount: totalAmount,
         serviceCost: serviceCost,
         platformFee: platformFee,
-        feePercentage: '1%',
+        feePercentage: '2.9% + $0.30',
         service: purchaseResult.service,
         details: purchaseResult.details,
         paymentMethod: {
@@ -1477,7 +1489,7 @@ app.post('/v1/purchase-direct', async (req: Request, res: Response) => {
           brand: defaultCard.brand
         },
         spendingSummary,
-        message: `Successfully purchased ${service} for $${serviceCost} + $${platformFee} platform fee (1%) = $${totalAmount} total. Charged to card ending in ${defaultCard.last4}.`
+        message: `Successfully purchased ${service} for $${serviceCost} + $${platformFee} platform fee (2.9% + $0.30) = $${totalAmount} total. Charged to card ending in ${defaultCard.last4}.`
       });
       
     } catch (stripeError: any) {
@@ -1970,12 +1982,16 @@ app.post('/v1/authorize/:authorizationId/confirm', async (req: Request, res: Res
       });
     }
     
-    // Calculate platform fee
-    const platformFee = Math.round(confirmAmount * 0.01 * 100) / 100; // 1%
+    // Calculate platform fee (2.9% + $0.30)
+    const confirmAmountCents = Math.round(confirmAmount * 100);
+    const percentageFee3 = Math.round(confirmAmountCents * 0.029); // 2.9%
+    const fixedFee3 = 30; // $0.30 in cents
+    const platformFeeCents3 = percentageFee3 + fixedFee3;
+    const platformFee = platformFeeCents3 / 100;
     const totalAmount = confirmAmount + platformFee;
     const totalAmountCents = Math.round(totalAmount * 100);
     
-    console.log(`💳 CONTROL TOWER: Charging $${totalAmount} (including $${platformFee} fee)`);
+    console.log(`💳 CONTROL TOWER: Charging $${totalAmount} (including $${platformFee} fee - 2.9% + $0.30)`);
     
     // Charge the card
     let paymentIntent;
