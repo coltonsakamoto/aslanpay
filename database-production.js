@@ -240,35 +240,69 @@ class ProductionDatabase {
     }
 
     async validateApiKey(apiKey) {
-        const keyData = await this.prisma.apiKey.findFirst({
-            where: {
-                key: apiKey,
-                isActive: true
-            },
-            include: {
-                user: true
-            }
-        });
+        console.log('🔍 VALIDATING API KEY:', apiKey.substring(0, 20) + '...');
         
-        if (!keyData) {
-            return null;
-        }
+        try {
+            const keyData = await this.prisma.apiKey.findFirst({
+                where: {
+                    key: apiKey,
+                    isActive: true
+                },
+                include: {
+                    user: true
+                }
+            });
+            
+            console.log('🔍 Database lookup result:', keyData ? 'FOUND' : 'NOT FOUND');
+            
+            if (!keyData) {
+                // Debug: Check if key exists but is inactive
+                const inactiveKey = await this.prisma.apiKey.findFirst({
+                    where: { key: apiKey }
+                });
+                
+                if (inactiveKey) {
+                    console.log('⚠️  Key exists but isActive:', inactiveKey.isActive);
+                } else {
+                    console.log('❌ Key does not exist in database at all');
+                    
+                    // Show recent keys for debugging
+                    const recentKeys = await this.prisma.apiKey.findMany({
+                        take: 3,
+                        orderBy: { createdAt: 'desc' },
+                        select: { key: true, isActive: true, createdAt: true }
+                    });
+                    console.log('🔍 Recent keys in database:');
+                    recentKeys.forEach(k => {
+                        console.log(`   - ${k.key.substring(0, 20)}... (active: ${k.isActive}) (created: ${k.createdAt})`);
+                    });
+                }
+                
+                return null;
+            }
 
-        // Update usage statistics
-        await this.prisma.apiKey.update({
-            where: { id: keyData.id },
-            data: {
-                lastUsed: new Date(),
-                usageCount: { increment: 1 }
-            }
-        });
-        
-        return {
-            keyId: keyData.id,
-            userId: keyData.userId,
-            user: this.sanitizeUser(keyData.user),
-            permissions: keyData.permissions ? keyData.permissions.split(',') : []
-        };
+            console.log('✅ Key validation successful for user:', keyData.user.email);
+
+            // Update usage statistics
+            await this.prisma.apiKey.update({
+                where: { id: keyData.id },
+                data: {
+                    lastUsed: new Date(),
+                    usageCount: { increment: 1 }
+                }
+            });
+            
+            return {
+                keyId: keyData.id,
+                userId: keyData.userId,
+                user: this.sanitizeUser(keyData.user),
+                permissions: keyData.permissions ? keyData.permissions.split(',') : []
+            };
+            
+        } catch (error) {
+            console.error('❌ API key validation database error:', error);
+            throw error;
+        }
     }
 
     // Email Verification

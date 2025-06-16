@@ -104,7 +104,7 @@ const database = require('./database-production.js');
         
         // Verify database health and table existence
         try {
-            await database.healthCheck();
+        await database.healthCheck();
             console.log('✅ Database connection verified');
             
             // Check if critical tables exist
@@ -226,7 +226,7 @@ const database = require('./database-production.js');
                 return;
             } catch (altError) {
                 console.error('❌ Alternative path also failed:', altError.message);
-            }
+        }
         }
         
         console.error('💥 Database initialization failed. Server may not function properly.');
@@ -321,12 +321,14 @@ app.get('/test', (req, res) => {
     });
 });
 
-// DEBUGGING: Quick API key creation endpoint (for testing only)
+// FIXED: API key creation with proper validation
 app.post('/debug/create-test-user', async (req, res) => {
     try {
-        console.log('🔧 DEBUG: Creating test user and API key...');
+        console.log('🚨 EMERGENCY: Creating test user and API key...');
         
         const testEmail = `test-${Date.now()}@aslanpay.xyz`;
+        
+        // Create user and wait for completion
         const testUser = await database.createUser({
             email: testEmail,
             password: 'TestPassword123!',
@@ -334,25 +336,70 @@ app.post('/debug/create-test-user', async (req, res) => {
             provider: 'email'
         });
         
-        const apiKeys = await database.getApiKeysByUserId(testUser.id);
+        console.log('✅ User created:', testUser.id);
+        
+        // Wait a moment to ensure database commit
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Get API keys (user creation should have created one)
+        let apiKeys = await database.getApiKeysByUserId(testUser.id);
+        console.log('🔑 Found', apiKeys.length, 'API keys for user');
+        
+        if (apiKeys.length === 0) {
+            console.log('🔧 No API keys found, creating manually...');
+            const manualKey = await database.createApiKey(testUser.id, 'Emergency Test Key');
+            apiKeys = [manualKey];
+        }
+        
+        const apiKey = apiKeys[0].key;
+        console.log('🔑 Using API key:', apiKey.substring(0, 20) + '...');
+        
+        // CRITICAL: Wait for database commit and test validation
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Test the API key validation immediately
+        console.log('🔍 Testing API key validation...');
+        const validationTest = await database.validateApiKey(apiKey);
+        
+        if (!validationTest) {
+            console.error('❌ CRITICAL: API key validation failed immediately');
+            
+            // Try to find the key directly
+            const directCheck = await database.prisma.apiKey.findFirst({
+                where: { key: apiKey },
+                include: { user: true }
+            });
+            
+            console.log('🔍 Direct key lookup:', directCheck ? 'FOUND' : 'NOT FOUND');
+            
+            if (!directCheck) {
+                throw new Error('API key not found in database after creation - database transaction issue');
+            }
+            
+            throw new Error('API key exists but validation logic is broken');
+        }
+        
+        console.log('✅ API key validation successful');
         
         res.json({
             success: true,
-            message: 'Test user and API key created',
+            message: 'Test user and VALIDATED API key created',
             user: testUser,
-            apiKey: apiKeys[0]?.key,
+            apiKey: apiKey,
+            validation: 'PASSED',
             instructions: {
                 testEndpoint: '/api/v1/test',
-                authorization: `Bearer ${apiKeys[0]?.key}`,
-                example: `curl -H "Authorization: Bearer ${apiKeys[0]?.key}" https://your-domain/api/v1/test`
+                authorization: `Bearer ${apiKey}`,
+                example: `curl -H "Authorization: Bearer ${apiKey}" https://aslanpay.xyz/api/v1/test`
             }
         });
         
     } catch (error) {
-        console.error('❌ DEBUG: Failed to create test user:', error);
+        console.error('❌ EMERGENCY: Failed to create test user:', error);
         res.status(500).json({
-            error: 'Failed to create test user',
-            details: error.message
+            error: 'Emergency test user creation failed',
+            details: error.message,
+            timestamp: new Date().toISOString()
         });
     }
 });
