@@ -56,6 +56,9 @@ if (!process.env.DATABASE_URL) {
 // Production database with persistent storage
 const database = require('./database-production.js');
 
+// Import API key management router
+const apiKeyRoutes = require('./routes/api-keys');
+
 // Initialize database on startup
 (async () => {
     try {
@@ -758,6 +761,61 @@ app.post('/api/keys', validateSession, async (req, res) => {
         res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
     }
 });
+
+// API Key rotation endpoint (API key authenticated for programmatic access)
+app.post('/api/v1/keys/rotate', validateApiKey, async (req, res) => {
+    try {
+        const { keyId } = req.body;
+        
+        if (!keyId) {
+            return res.status(400).json({
+                error: 'API key ID required for rotation',
+                code: 'MISSING_KEY_ID',
+                example: { keyId: "your-api-key-id" }
+            });
+        }
+
+        // Verify the key belongs to this user
+        const userApiKeys = await database.getApiKeysByUserId(req.user.id);
+        const keyToRotate = userApiKeys.find(k => k.id === keyId);
+        
+        if (!keyToRotate) {
+            return res.status(404).json({
+                error: 'API key not found or access denied',
+                code: 'KEY_NOT_FOUND'
+            });
+        }
+
+        // Use the database's rotate method
+        const newKey = await database.rotateApiKey(req.user.id, keyId);
+        
+        console.log(`🔄 API key rotated via API: ${keyId} -> ${newKey.id} by user ${req.user.id}`);
+        
+        res.json({
+            success: true,
+            message: 'API key rotated successfully via API',
+            oldKeyId: keyId,
+            newApiKey: {
+                id: newKey.id,
+                name: newKey.name,
+                key: newKey.key,
+                createdAt: newKey.createdAt
+            },
+            warning: 'The old API key has been revoked and will no longer work. Update your applications immediately.'
+        });
+        
+    } catch (error) {
+        console.error('API key rotation error:', error);
+        res.status(500).json({ 
+            error: 'API key rotation failed', 
+            code: 'ROTATION_FAILED',
+            details: error.message
+        });
+    }
+});
+
+// Mount the full API key management router (includes dashboard routes)
+app.use('/api/keys', apiKeyRoutes);
 
 // Payment authorization endpoint (with API key authentication)
 app.post('/api/v1/authorize', validateApiKey, (req, res) => {

@@ -5,15 +5,15 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 // Prisma schema for AgentPay production database
-// Production ready with PostgreSQL support
+// Production ready with SQLite support
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // User Management
