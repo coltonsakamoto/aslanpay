@@ -8,6 +8,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const app = express();
 const port = process.env.PORT || 3000;
+const helmet = require('helmet');
+const cors = require('cors');
 
 // Stripe configuration
 const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
@@ -41,6 +43,14 @@ process.on('unhandledRejection', (reason, promise) => {
 // Basic middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
+app.use(helmet());
+app.use(cors());
+
+// Auto-configure DATABASE_URL if missing (Railway compatibility)
+if (!process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = "file:./prisma/dev.db";
+    console.log('⚠️  Auto-configured DATABASE_URL for Railway deployment');
+}
 
 // Use Railway's PostgreSQL for data persistence, fallback to SQLite for local dev
 if (!process.env.DATABASE_URL) {
@@ -1329,6 +1339,24 @@ app.use('*', (req, res) => {
     res.status(404).json({
         error: 'Endpoint not found',
         message: 'Available pages: /, /docs, /api, /demo, /pricing, /auth, /status, /security, /comparison, /dashboard | API endpoints: /health, /test, /api/status, /api/auth/*, /api/keys, /api/v1/* | Note: Both /page and /page.html work',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Immediate health check for Railway
+app.get('/', (req, res) => {
+    res.json({ 
+        status: 'online', 
+        service: 'AslanPay API',
+        timestamp: new Date().toISOString(),
+        version: '1.0.1'
+    });
+});
+
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'healthy', 
+        service: 'AslanPay',
         timestamp: new Date().toISOString()
     });
 });
