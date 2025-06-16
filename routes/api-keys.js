@@ -216,43 +216,34 @@ router.delete('/:keyId', validateSession, async (req, res) => {
     }
 });
 
-// Rotate API key
+// Rotate API key - PRODUCTION FIXED VERSION
 router.post('/:keyId/rotate', validateSession, async (req, res) => {
     try {
         const { keyId } = req.params;
-        const session = database.getSession(req.session.id);
         
-        if (!session || !session.tenantId) {
-            return res.status(400).json({
-                error: 'No tenant context found',
-                code: 'NO_TENANT_CONTEXT'
-            });
-        }
-
-        // Verify the key belongs to this tenant
-        const tenantKeys = database.getApiKeysByTenant(session.tenantId);
-        const keyToRotate = tenantKeys.find(k => k.id === keyId);
+        console.log(`🔄 Rotate API key request: ${keyId} by user ${req.user.id}`);
+        
+        // PRODUCTION FIX: Use database-production.js methods directly
+        const database = require('../database-production.js');
+        
+        // Get user's API keys
+        const userApiKeys = await database.getApiKeysByUserId(req.user.id);
+        const keyToRotate = userApiKeys.find(k => k.id === keyId);
         
         if (!keyToRotate) {
+            console.log(`❌ API key not found: ${keyId} for user ${req.user.id}`);
             return res.status(404).json({
-                error: 'API key not found in your organization',
+                error: 'API key not found or access denied',
                 code: 'KEY_NOT_FOUND'
             });
         }
 
-        // Create new key with same name
-        const newKey = await database.createApiKey(req.user.id, session.tenantId, keyToRotate.name);
+        console.log(`✅ Found key to rotate: ${keyToRotate.name}`);
         
-        // Revoke old key
-        const allKeys = database.getAllData().apiKeys;
-        const oldKeyData = allKeys.find(k => k.id === keyId);
-        if (oldKeyData) {
-            oldKeyData.isActive = false;
-            oldKeyData.revokedAt = new Date();
-            oldKeyData.revokedBy = req.user.id;
-        }
+        // Use production database rotate method
+        const newKey = await database.rotateApiKey(req.user.id, keyId);
         
-        console.log(`🔄 API key rotated: ${keyId} -> ${newKey.id} in tenant ${session.tenantId} by user ${req.user.id}`);
+        console.log(`🔄 API key rotated: ${keyId} -> ${newKey.id} by user ${req.user.id}`);
         
         res.json({
             apiKey: {
@@ -264,10 +255,11 @@ router.post('/:keyId/rotate', validateSession, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Rotate API key error:', error);
+        console.error('❌ Rotate API key error:', error);
         res.status(500).json({
             error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
+            code: 'INTERNAL_ERROR',
+            details: error.message
         });
     }
 });
