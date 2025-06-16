@@ -1393,23 +1393,7 @@ app.use('*', (req, res) => {
     });
 });
 
-// Immediate health check for Railway
-app.get('/', (req, res) => {
-    res.json({ 
-        status: 'online', 
-        service: 'AslanPay API',
-        timestamp: new Date().toISOString(),
-        version: '1.0.1'
-    });
-});
-
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'healthy', 
-        service: 'AslanPay',
-        timestamp: new Date().toISOString()
-    });
-});
+// Duplicate endpoints removed - using the ones defined earlier
 
 // STARTUP MONITORING AND TIMEOUT PROTECTION
 const startupTimeout = setTimeout(() => {
