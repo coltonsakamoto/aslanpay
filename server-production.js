@@ -46,6 +46,22 @@ app.use(cookieParser());
 app.use(helmet());
 app.use(cors());
 
+// CRITICAL: Static files MUST be served FIRST (before any route handlers)
+try {
+    if (fs.existsSync('public')) {
+        app.use(express.static('public', {
+            maxAge: '1h',
+            etag: true,
+            lastModified: true
+        }));
+        console.log('✅ Static files enabled at top of middleware stack');
+    } else {
+        console.log('⚠️  Public directory not found - static files disabled');
+    }
+} catch (error) {
+    console.log('⚠️  Static files failed to initialize:', error.message);
+}
+
 // Auto-configure DATABASE_URL if missing (Railway compatibility)
 if (!process.env.DATABASE_URL) {
     process.env.DATABASE_URL = "file:./prisma/dev.db";
@@ -356,15 +372,7 @@ app.get('/vs-stripe', (req, res) => {
     }
 });
 
-// Serve static files
-try {
-    if (fs.existsSync('public')) {
-        app.use(express.static('public'));
-        console.log('✅ Static files enabled');
-    }
-} catch (error) {
-    console.log('⚠️  Static files disabled:', error.message);
-}
+// REMOVED - moved to top of middleware stack
 
 // BULLETPROOF health check - FIRST priority
 app.get('/health', (req, res) => {
