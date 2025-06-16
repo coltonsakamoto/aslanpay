@@ -72,6 +72,53 @@ const apiKeyRoutes = require('./routes/api-keys');
 // Import safe database backup manager
 const DatabaseBackupManager = require('./database-backup.js');
 
+// STARTUP HEALTH MONITORING
+const startupTime = Date.now();
+let serverReady = false;
+let databaseReady = false;
+
+// CRITICAL: Immediate health endpoints (must be first)
+app.get('/', (req, res) => {
+    const uptime = Date.now() - startupTime;
+    res.json({ 
+        status: 'AslanPay API Online', 
+        timestamp: new Date().toISOString(),
+        version: '1.0.1',
+        uptime: `${Math.floor(uptime / 1000)}s`,
+        serverReady,
+        databaseReady,
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+app.get('/health', (req, res) => {
+    const uptime = Date.now() - startupTime;
+    const status = serverReady && databaseReady ? 'healthy' : 'starting';
+    
+    res.status(serverReady ? 200 : 503).json({ 
+        status,
+        timestamp: new Date().toISOString(),
+        uptime: `${Math.floor(uptime / 1000)}s`,
+        components: {
+            server: serverReady ? 'ready' : 'starting',
+            database: databaseReady ? 'connected' : 'connecting'
+        }
+    });
+});
+
+// Readiness probe for Railway
+app.get('/ready', (req, res) => {
+    if (serverReady && databaseReady) {
+        res.status(200).json({ status: 'ready' });
+    } else {
+        res.status(503).json({ 
+            status: 'not ready',
+            server: serverReady,
+            database: databaseReady
+        });
+    }
+});
+
 // Initialize database on startup
 (async () => {
     try {
@@ -229,6 +276,9 @@ const DatabaseBackupManager = require('./database-backup.js');
         } catch (debugError) {
             console.error('⚠️  Debug check failed:', debugError.message);
         }
+
+        serverReady = true;
+        databaseReady = true;
     } catch (error) {
         console.error('❌ Failed to initialize persistent database:', error.message);
         console.log('⚠️  This will affect user account persistence');
@@ -1361,8 +1411,17 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Start server
-app.listen(port, () => {
+// STARTUP MONITORING AND TIMEOUT PROTECTION
+const startupTimeout = setTimeout(() => {
+    if (!serverReady) {
+        console.error('❌ STARTUP TIMEOUT: Server failed to start within 30 seconds');
+        console.error('❌ This usually indicates a hanging database connection or dependency');
+        process.exit(1);
+    }
+}, 30000); // 30 second timeout
+
+// Start server with comprehensive error handling
+const server = app.listen(port, () => {
     console.log(`🦁 ASLAN PRODUCTION SERVER RUNNING`);
     console.log(`📍 Port: ${port}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -1386,4 +1445,33 @@ app.listen(port, () => {
     console.log('');
     console.log('🦁 Like the great lion of Narnia, Aslan guides AI agents to accomplish their missions');
     console.log('✅ PRODUCTION DEPLOYMENT SUCCESSFUL - API key authentication operational!');
+    
+    // Mark server as ready and clear timeout
+    clearTimeout(startupTimeout);
+});
+
+// Handle server startup errors
+server.on('error', (error) => {
+    console.error('❌ Server startup error:', error.message);
+    if (error.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${port} is already in use`);
+        process.exit(1);
+    }
+});
+
+// Graceful shutdown handling for Railway
+process.on('SIGTERM', () => {
+    console.log('📴 Received SIGTERM, shutting down gracefully...');
+    server.close(() => {
+        console.log('🛑 Server closed');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('📴 Received SIGINT, shutting down gracefully...');
+    server.close(() => {
+        console.log('🛑 Server closed');
+        process.exit(0);
+    });
 }); 
