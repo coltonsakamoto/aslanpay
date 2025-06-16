@@ -42,13 +42,15 @@ process.on('unhandledRejection', (reason, promise) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
-// Set default DATABASE_URL if not provided OR force SQLite in production
-if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.startsWith('file:')) {
-    // Railway sets DATABASE_URL to PostgreSQL, but we need SQLite
+// Use Railway's PostgreSQL for data persistence, fallback to SQLite for local dev
+if (!process.env.DATABASE_URL) {
+    // Only use SQLite as fallback for local development
     const sqliteUrl = "file:./prisma/dev.db";
-    console.log('🔧 Current DATABASE_URL:', process.env.DATABASE_URL || 'undefined');
-    console.log('🔧 Forcing SQLite DATABASE_URL to:', sqliteUrl);
+    console.log('🔧 No DATABASE_URL provided, using SQLite for local dev:', sqliteUrl);
     process.env.DATABASE_URL = sqliteUrl;
+} else {
+    console.log('✅ Using provided DATABASE_URL for persistent storage');
+    console.log('🔧 Database URL type:', process.env.DATABASE_URL.split(':')[0]);
 }
 
 // Production database with persistent storage
@@ -60,12 +62,14 @@ const database = require('./database-production.js');
         console.log('🔄 Initializing persistent database...');
         console.log('📂 Database URL:', process.env.DATABASE_URL);
         
-        // Ensure database directory exists (for Railway)
-        const dbPath = process.env.DATABASE_URL.replace('file:', '');
-        const dbDir = path.dirname(dbPath);
-        if (!fs.existsSync(dbDir)) {
-            console.log('📁 Creating database directory:', dbDir);
-            fs.mkdirSync(dbDir, { recursive: true });
+        // Skip directory creation for PostgreSQL
+        if (process.env.DATABASE_URL.startsWith('file:')) {
+            const dbPath = process.env.DATABASE_URL.replace('file:', '');
+            const dbDir = path.dirname(dbPath);
+            if (!fs.existsSync(dbDir)) {
+                console.log('📁 Creating database directory:', dbDir);
+                fs.mkdirSync(dbDir, { recursive: true });
+            }
         }
         
         // FORCE database schema creation in production
@@ -82,7 +86,8 @@ const database = require('./database-production.js');
                 // Verify tables exist
                 console.log('🔍 Verifying database tables...');
                 const tableCheck = await database.prisma.$queryRaw`
-                    SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'api_keys', 'sessions');
+                    SELECT table_name as name FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_name IN ('users', 'api_keys', 'sessions');
                 `;
                 console.log('📊 Database tables found:', tableCheck);
                 
@@ -107,10 +112,15 @@ const database = require('./database-production.js');
         await database.healthCheck();
             console.log('✅ Database connection verified');
             
-            // Check if critical tables exist
-            const tableCheck = await database.prisma.$queryRaw`
-                SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'api_keys', 'sessions');
-            `;
+            // Check if critical tables exist (database-agnostic)
+            const tableCheck = process.env.DATABASE_URL.startsWith('file:') 
+                ? await database.prisma.$queryRaw`
+                    SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'api_keys', 'sessions');
+                  `
+                : await database.prisma.$queryRaw`
+                    SELECT table_name as name FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_name IN ('users', 'api_keys', 'sessions');
+                  `;
             console.log('🔍 Critical tables found:', tableCheck);
             
             if (tableCheck.length < 3) {
@@ -120,66 +130,15 @@ const database = require('./database-production.js');
         } catch (healthError) {
             console.error('❌ Database health check failed:', healthError.message);
             
-            // EMERGENCY: Manual table creation as last resort
-            if (healthError.message.includes('does not exist')) {
-                console.log('🚨 EMERGENCY: Creating tables manually...');
-                try {
-                    await database.prisma.$executeRaw`
-                        CREATE TABLE IF NOT EXISTS users (
-                            id TEXT PRIMARY KEY,
-                            email TEXT UNIQUE NOT NULL,
-                            name TEXT NOT NULL,
-                            password TEXT,
-                            provider TEXT DEFAULT 'email',
-                            googleId TEXT,
-                            githubId TEXT,
-                            emailVerified BOOLEAN DEFAULT FALSE,
-                            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                            updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                            subscriptionPlan TEXT DEFAULT 'sandbox',
-                            subscriptionStatus TEXT DEFAULT 'active',
-                            stripeCustomerId TEXT,
-                            subscriptionTrialEnd DATETIME
-                        );
-                    `;
-                    
-                    await database.prisma.$executeRaw`
-                        CREATE TABLE IF NOT EXISTS api_keys (
-                            id TEXT PRIMARY KEY,
-                            userId TEXT NOT NULL,
-                            name TEXT NOT NULL,
-                            key TEXT UNIQUE NOT NULL,
-                            prefix TEXT NOT NULL,
-                            secret TEXT NOT NULL,
-                            lastUsed DATETIME,
-                            usageCount INTEGER DEFAULT 0,
-                            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                            isActive BOOLEAN DEFAULT TRUE,
-                            revokedAt DATETIME,
-                            permissions TEXT DEFAULT 'authorize,confirm,refund',
-                            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-                        );
-                    `;
-                    
-                    await database.prisma.$executeRaw`
-                        CREATE TABLE IF NOT EXISTS sessions (
-                            id TEXT PRIMARY KEY,
-                            userId TEXT NOT NULL,
-                            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                            expiresAt DATETIME NOT NULL,
-                            lastActivity DATETIME DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-                        );
-                    `;
-                    
-                    console.log('✅ Emergency table creation completed');
-                    await database.healthCheck();
-                    
-                } catch (emergencyError) {
-                    console.error('❌ Emergency table creation failed:', emergencyError.message);
-                    throw emergencyError;
-                }
-            } else {
+            // For PostgreSQL, rely on migrations instead of manual table creation
+            console.log('🔄 Database schema issue, attempting migration deploy...');
+            try {
+                const { execSync } = require('child_process');
+                execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+                console.log('✅ Migration deploy successful');
+                await database.healthCheck();
+            } catch (migrationError) {
+                console.error('❌ Migration deploy failed:', migrationError.message);
                 throw healthError;
             }
         }
@@ -463,8 +422,9 @@ app.post('/api/auth/signup', async (req, res) => {
             provider: 'email'
         });
         
-        // Create API key automatically for SaaS signup
-        const apiKey = await database.createApiKey(user.id, 'Default API Key');
+        // Get the API key that was automatically created with the user
+        const apiKeys = await database.getApiKeysByUserId(user.id);
+        const apiKey = apiKeys[0]; // First (and should be only) API key
         
         const sessionId = await database.createSession(user.id);
         const token = generateToken(sessionId);
