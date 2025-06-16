@@ -88,11 +88,11 @@ class BillingService {
                 billing_scheme: 'per_unit',
                 product_data: {
                     name: 'Aslan Transaction Fees',
-                    description: 'Pay-per-transaction pricing: 2.9% + $0.30 per successful transaction'
+                    description: 'Per-transaction overage pricing based on subscription plan'
                 },
                 metadata: {
                     tenantId: tenant.id,
-                    feeStructure: '2.9% + $0.30',
+                    feeStructure: 'overage-based',
                     plan: 'production'
                 }
             });
@@ -140,10 +140,11 @@ class BillingService {
                 return null;
             }
 
-            // Calculate our fee: 2.9% + $0.30
-            const percentageFee = Math.round(transactionAmount * 0.029); // 2.9%
-            const fixedFee = 30; // $0.30 in cents
-            const totalFee = percentageFee + fixedFee;
+            // Calculate overage fee based on plan
+            // TODO: Get actual user plan
+            // For now use Builder plan rate as default
+            const overageFeePerTransaction = 2; // $0.02 in cents
+            const totalFee = overageFeePerTransaction;
 
             // Report usage to Stripe for billing
             const usageRecord = await stripe.subscriptionItems.createUsageRecord(

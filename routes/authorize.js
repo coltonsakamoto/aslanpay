@@ -328,10 +328,11 @@ router.post('/',
             // REAL STRIPE INTEGRATION - Process actual payments!
             if (stripe) {
                 try {
-                    // Calculate Aslan's fee: 2.9% + $0.30
-                    const percentageFee = Math.round(amount * 0.029); // 2.9%
-                    const fixedFee = 30; // $0.30 in cents
-                    const aslanFee = percentageFee + fixedFee;
+                    // Calculate overage fee based on user's plan
+                    // TODO: Get user's actual plan from database
+                    // For now use Builder plan rate as default
+                    const overageFeePerTransaction = 2; // $0.02 in cents
+                    const aslanFee = overageFeePerTransaction;
 
                     // Create PaymentIntent with Aslan as the merchant
                     const paymentIntent = await stripe.paymentIntents.create({
