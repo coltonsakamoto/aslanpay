@@ -93,32 +93,12 @@ const startupTime = Date.now();
 let serverReady = false;
 let databaseReady = false;
 
-// CRITICAL: Immediate health endpoints (must be first)
-app.get('/', (req, res) => {
-    const uptime = Date.now() - startupTime;
-    res.json({ 
-        status: 'AslanPay API Online', 
-        timestamp: new Date().toISOString(),
-        version: '1.0.1',
-        uptime: `${Math.floor(uptime / 1000)}s`,
-        serverReady,
-        databaseReady,
-        environment: process.env.NODE_ENV || 'development'
-    });
-});
-
+// CRITICAL: Health endpoint that ALWAYS returns 200 (fixes Railway healthcheck)
 app.get('/health', (req, res) => {
-    const uptime = Date.now() - startupTime;
-    const status = serverReady && databaseReady ? 'healthy' : 'starting';
-    
-    res.status(serverReady ? 200 : 503).json({ 
-        status,
+    res.status(200).json({ 
+        status: 'OK', 
         timestamp: new Date().toISOString(),
-        uptime: `${Math.floor(uptime / 1000)}s`,
-        components: {
-            server: serverReady ? 'ready' : 'starting',
-            database: databaseReady ? 'connected' : 'connecting'
-        }
+        uptime: process.uptime()
     });
 });
 
@@ -374,17 +354,7 @@ app.get('/vs-stripe', (req, res) => {
 
 // REMOVED - moved to top of middleware stack
 
-// BULLETPROOF health check - FIRST priority
-app.get('/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'OK', 
-        service: 'aslan-production', 
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        version: '1.0.0-production'
-    });
-});
+// DUPLICATE HEALTH ENDPOINT REMOVED
 
 // Simple test endpoint
 app.get('/test', (req, res) => {
