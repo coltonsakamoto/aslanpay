@@ -661,7 +661,7 @@ class ProductionDatabase {
                 status: 'connected', 
                 responseTime: `${responseTime}ms`,
                 timestamp: new Date().toISOString(),
-                type: 'sqlite',
+                type: 'postgresql',
                 environment: process.env.NODE_ENV || 'unknown'
             };
         } catch (error) {
@@ -674,7 +674,7 @@ class ProductionDatabase {
                 error: error.message,
                 code: error.code,
                 timestamp: new Date().toISOString(),
-                type: 'sqlite',
+                type: 'postgresql',
                 environment: process.env.NODE_ENV || 'unknown',
                 databaseUrlSet: !!process.env.DATABASE_URL
             };
