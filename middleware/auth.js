@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
-const database = require('../config/database');
+const database = require('../database-production.js');
 
 // JWT secret validation and secure fallback
 function getSecureJWTSecret() {
@@ -162,7 +162,7 @@ const validateSession = async (req, res, next) => {
 
         // Check session in database
         console.log('🔍 Checking session in database:', decoded.sessionId);
-        const session = database.getSession(decoded.sessionId);
+        const session = await database.getSession(decoded.sessionId);
         console.log('🔍 Session found:', session ? 'YES' : 'NO');
         if (!session) {
             console.log('❌ Session not found or expired');
@@ -174,7 +174,7 @@ const validateSession = async (req, res, next) => {
 
         // Get user data
         console.log('🔍 Getting user data for:', session.userId);
-        const user = database.getUserById(session.userId);
+        const user = await database.getUserById(session.userId);
         console.log('🔍 User found:', user ? 'YES' : 'NO');
         if (!user) {
             console.log('❌ User not found');
@@ -236,7 +236,7 @@ const validateSessionSimple = async (req, res, next) => {
         }
 
         // Get the session to find the real user ID
-        const session = database.getSession(decoded.sessionId);
+        const session = await database.getSession(decoded.sessionId);
         if (!session) {
             console.log('❌ Session not found');
             return res.status(401).json({
@@ -246,7 +246,7 @@ const validateSessionSimple = async (req, res, next) => {
         }
 
         // Get the real user
-        const user = database.getUserById(session.userId);
+        const user = await database.getUserById(session.userId);
         if (!user) {
             console.log('❌ User not found');
             return res.status(401).json({
