@@ -59,6 +59,9 @@ const database = require('./database-production.js');
 // Import API key management router
 const apiKeyRoutes = require('./routes/api-keys');
 
+// Import safe database backup manager
+const DatabaseBackupManager = require('./database-backup.js');
+
 // Initialize database on startup
 (async () => {
     try {
@@ -75,38 +78,61 @@ const apiKeyRoutes = require('./routes/api-keys');
             }
         }
         
-        // FORCE database schema creation in production
+        // SAFE database schema creation with backup protection
         if (process.env.NODE_ENV === 'production') {
+            const backupManager = new DatabaseBackupManager();
+            
             try {
-                console.log('🔄 Force creating database schema for production...');
-                const { execSync } = require('child_process');
+                console.log('🔄 Safe database schema setup for production...');
                 
-                // Force schema push (more reliable than migrations for SQLite)
-                console.log('🔧 Forcing schema with prisma db push...');
-                execSync('npx prisma db push --force-reset', { stdio: 'inherit' });
-                console.log('✅ Database schema force-created successfully');
+                // Create backup before any schema changes
+                await backupManager.createBackup('startup-safety');
                 
-                // Verify tables exist
+                // Use safe migration instead of force-reset
+                await backupManager.safeMigration(async () => {
+                    const { execSync } = require('child_process');
+                    
+                    console.log('🔧 Running safe schema migration...');
+                    // Try migrate deploy first (preserves data)
+                    try {
+                        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+                        console.log('✅ Database migration successful');
+                    } catch (migrateError) {
+                        console.log('🔄 Migration not possible, trying safe schema push...');
+                        // Only use db push if no existing data would be lost
+                        const integrity = await backupManager.validateDatabaseIntegrity();
+                        if (integrity.userCount > 0) {
+                            throw new Error('Cannot modify schema: existing users detected. Manual migration required.');
+                        }
+                        execSync('npx prisma db push', { stdio: 'inherit' });
+                        console.log('✅ Safe schema push completed');
+                    }
+                }, 'production-schema-setup');
+                
+                // Verify tables exist (SQLite compatible)
                 console.log('🔍 Verifying database tables...');
                 const tableCheck = await database.prisma.$queryRaw`
-                    SELECT table_name as name FROM information_schema.tables 
-                    WHERE table_schema = 'public' AND table_name IN ('users', 'api_keys', 'sessions');
+                    SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'api_keys', 'sessions');
                 `;
                 console.log('📊 Database tables found:', tableCheck);
                 
             } catch (schemaError) {
-                console.error('❌ Schema creation failed:', schemaError.message);
+                console.error('❌ Safe schema setup failed:', schemaError.message);
+                console.log('🔄 Attempting backup restoration...');
                 
-                // Last resort: try migrations
+                // Try to restore from backup
                 try {
-                    console.log('🔄 Fallback: Trying migrations...');
-                    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-                    console.log('✅ Migration fallback successful');
-                } catch (migrationError) {
-                    console.error('❌ Both schema push and migrations failed');
-                    console.error('Schema error:', schemaError.message);
-                    console.error('Migration error:', migrationError.message);
+                    const backups = backupManager.listBackups();
+                    if (backups.length > 0) {
+                        await backupManager.restoreFromBackup(backups[0].filename);
+                        console.log('✅ Database restored from backup');
+                    }
+                } catch (restoreError) {
+                    console.error('❌ Backup restoration failed:', restoreError.message);
                 }
+                
+                // Continue with limited functionality rather than crashing
+                console.log('⚠️  Continuing with existing database state...');
             }
         }
         
@@ -148,6 +174,22 @@ const apiKeyRoutes = require('./routes/api-keys');
         
         console.log('✅ Persistent database initialized successfully');
         
+        // Setup automatic backup system
+        const backupManager = new DatabaseBackupManager();
+        
+        // Create initial backup after successful initialization
+        await backupManager.createBackup('post-initialization');
+        
+        // Setup periodic backups every 6 hours
+        setInterval(async () => {
+            try {
+                console.log('🔄 Creating scheduled backup...');
+                await backupManager.createBackup('scheduled');
+            } catch (error) {
+                console.error('❌ Scheduled backup failed:', error.message);
+            }
+        }, 6 * 60 * 60 * 1000); // 6 hours
+        
         // DEBUG: Check if we have any users or API keys
         try {
             const userCount = await database.prisma.user.count();
@@ -170,6 +212,9 @@ const apiKeyRoutes = require('./routes/api-keys');
                     console.log(`🔑 Test API Key: ${testApiKeys[0].key}`);
                     console.log('💡 Use this key to test: Authorization: Bearer ' + testApiKeys[0].key);
                 }
+                
+                // Create backup after adding test user
+                await backupManager.createBackup('test-user-created');
             }
         } catch (debugError) {
             console.error('⚠️  Debug check failed:', debugError.message);
