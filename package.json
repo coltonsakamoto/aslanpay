@@ -4,7 +4,7 @@
   "description": "Payment infrastructure for AI agents - Like the great lion, Aslan guides AI agents to accomplish their missions in the real world",
   "main": "server-hybrid.js",
   "scripts": {
-    "start": "node railway-start.js",
+    "start": "node server-production.js",
     "start-minimal": "node server-minimal.js",
     "start-hybrid": "node server-hybrid.js",
     "start-full": "node server.js",
