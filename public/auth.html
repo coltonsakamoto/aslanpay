@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🦁 Aslan - Payment Infrastructure for AI Agents</title>
+    <title>Sign In - Aslan Payment Infrastructure for AI Agents</title>
     <meta name="description" content="Sign in to AslanPay to manage your AI agent payment infrastructure. Get API keys, set spending limits, and monitor transactions.">
     
     <!-- Social Media Meta Tags -->
@@ -27,483 +27,231 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#daa520">
+    <meta name="theme-color" content="#FF6B35">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#FF6B35',
+                        'primary-dark': '#E55A2B',
+                        'secondary': '#F7931E',
+                        'neutral-950': '#0A0A0A',
+                        'neutral-900': '#1A1A1A',
+                        'neutral-800': '#2A2A2A',
+                        'neutral-700': '#3A3A3A',
+                        'neutral-600': '#525252',
+                        'neutral-500': '#737373',
+                        'neutral-400': '#A3A3A3',
+                        'neutral-300': '#D4D4D4',
+                        'neutral-200': '#E5E5E5',
+                        'neutral-100': '#F5F5F5',
+                        'neutral-50': '#FAFAFA'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
         }
-
+        .glass-effect {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .shadow-soft {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        .shadow-elegant {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* Animated background elements */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 50%, rgba(218, 165, 32, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 80%, rgba(184, 134, 11, 0.1) 0%, transparent 50%);
-            animation: glow 8s ease-in-out infinite alternate;
-        }
-
-        @keyframes glow {
-            0% { opacity: 0.3; }
-            100% { opacity: 0.6; }
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.3), 
-                        0 0 0 1px rgba(255, 255, 255, 0.1),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.8);
-            overflow: hidden;
-            width: 100%;
-            max-width: 440px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #b8860b 0%, #daa520 50%, #ffd700 100%);
-            color: #1a1a2e;
-            padding: 48px 40px 40px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -50%;
-            width: 200%;
-            height: 100%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: rotate(45deg);
-            animation: shine 3s infinite;
-        }
-
-        @keyframes shine {
-            0% { transform: translateX(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) rotate(45deg); }
-        }
-
-        .lion-container {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .lion-icon {
-            font-size: 56px;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-            position: relative;
-            z-index: 2;
-        }
-
-        .header h1 {
-            font-size: 36px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            position: relative;
-            z-index: 2;
-        }
-
-        .header p {
-            font-size: 16px;
-            font-weight: 500;
-            opacity: 0.8;
-            position: relative;
-            z-index: 2;
-        }
-
-        .tabs {
-            display: flex;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 20px;
-            text-align: center;
-            background: transparent;
-            border: none;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #64748b;
-            position: relative;
-        }
-
-        .tab::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #b8860b, #daa520);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateX(-50%);
-        }
-
-        .tab.active {
-            background: white;
-            color: #b8860b;
-        }
-
-        .tab.active::after {
-            width: 60%;
-        }
-
-        .tab:hover:not(.active) {
-            background: #f1f5f9;
-            color: #475569;
-        }
-
-        .form-container {
-            padding: 40px;
-            background: white;
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #1e293b;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 16px 20px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #f8fafc;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #daa520;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(218, 165, 32, 0.1),
-                        0 8px 20px rgba(218, 165, 32, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .form-group input::placeholder {
-            color: #94a3b8;
-        }
-
-        .button {
-            width: 100%;
-            background: linear-gradient(135deg, #b8860b 0%, #daa520 50%, #ffd700 100%);
-            color: #1a1a2e;
-            padding: 18px 24px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-top: 16px;
-            position: relative;
-            overflow: hidden;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 8px 20px rgba(218, 165, 32, 0.3);
-        }
-
-        .button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(218, 165, 32, 0.4);
-        }
-
-        .button:hover::before {
-            left: 100%;
-        }
-
-        .button:active {
-            transform: translateY(0);
-        }
-
-        .button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: 0 4px 12px rgba(218, 165, 32, 0.2);
-        }
-
-        .button:disabled:hover {
-            transform: none;
-            box-shadow: 0 4px 12px rgba(218, 165, 32, 0.2);
-        }
-
-        .button-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(26, 26, 46, 0.3);
-            border-radius: 50%;
-            border-top-color: #1a1a2e;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .message {
-            padding: 16px 20px;
-            border-radius: 12px;
-            margin-bottom: 24px;
-            font-weight: 500;
-            font-size: 14px;
-            border: 1px solid;
-            position: relative;
-        }
-
-        .message.success {
-            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-            color: #065f46;
-            border-color: #10b981;
-        }
-
-        .message.error {
-            background: linear-gradient(135deg, #fef2f2, #fecaca);
-            color: #991b1b;
-            border-color: #ef4444;
-        }
-
-        .message.info {
-            background: linear-gradient(135deg, #eff6ff, #dbeafe);
-            color: #1e40af;
-            border-color: #3b82f6;
-        }
-
-        .forgot-link {
-            text-align: center;
-            margin-top: 24px;
-        }
-
-        .forgot-link a {
-            color: #b8860b;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .forgot-link a:hover {
-            color: #daa520;
-            text-decoration: underline;
-        }
-
-        .back-link {
-            position: absolute;
-            top: 24px;
-            left: 24px;
-            color: rgba(26, 26, 46, 0.8);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            z-index: 3;
-        }
-
-        .back-link:hover {
-            color: #1a1a2e;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateX(-2px);
-        }
-
-        .password-hint {
-            color: #64748b;
-            font-size: 12px;
-            margin-top: 4px;
-            font-style: italic;
-        }
-
-        .feature-hint {
-            background: rgba(218, 165, 32, 0.1);
-            border: 1px solid rgba(218, 165, 32, 0.3);
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-top: 20px;
-            font-size: 13px;
-            color: #92400e;
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-            
-            .container {
-                max-width: none;
-                margin: 0;
-            }
-            
-            .form-container {
-                padding: 24px;
-            }
-            
-            .header {
-                padding: 32px 24px 24px;
-            }
-            
-            .lion-icon {
-                font-size: 48px;
-            }
-            
-            .header h1 {
-                font-size: 28px;
-            }
-
-            .tab {
-                padding: 16px;
-                font-size: 14px;
-            }
+            background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <a href="/" class="back-link">← Back to Home</a>
-            <div class="lion-container">
-                <div class="lion-icon">🦁</div>
-            </div>
-            <h1>Aslan</h1>
-            <p>Payment Infrastructure for AI Agents</p>
-        </div>
-
-        <div class="tabs">
-            <button class="tab active" id="signin-tab">Sign In</button>
-            <button class="tab" id="signup-tab">Sign Up</button>
-        </div>
-
-        <div class="form-container">
-            <div id="message-container"></div>
-
-            <!-- Sign In Form -->
-            <div id="signin-form">
-                <form id="login-form">
-                    <div class="form-group">
-                        <label for="login-email">Email Address</label>
-                        <input type="email" id="login-email" placeholder="your@email.com" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="login-password">Password</label>
-                        <input type="password" id="login-password" placeholder="Enter your password" required>
-                    </div>
-
-                    <button type="submit" class="button" id="login-btn">
-                        <div class="button-content">
-                            <span id="login-text">Sign In</span>
-                            <div id="login-loading" class="loading hidden"></div>
-                        </div>
-                    </button>
-                </form>
-
-                <div class="forgot-link">
-                    <a href="#" id="forgot-password-link">Forgot your password?</a>
+<body class="min-h-screen font-sans antialiased">
+    <!-- Navigation -->
+    <nav class="glass-effect border-b border-neutral-200/60">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-neutral-900 font-bold text-xl tracking-tight">ASLAN</a>
                 </div>
-
-                <div class="feature-hint">
-                    💡 <strong>New to Aslan?</strong> Sign up to get instant API keys and start processing payments for your AI agents in minutes.
+                <div class="flex items-center space-x-6">
+                    <a href="/" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Back to Home
+                    </a>
                 </div>
             </div>
+        </div>
+    </nav>
 
-            <!-- Sign Up Form -->
-            <div id="signup-form" class="hidden">
-                <form id="register-form">
-                    <div class="form-group">
-                        <label for="register-name">Full Name</label>
-                        <input type="text" id="register-name" placeholder="John Doe" required>
-                    </div>
+    <div class="flex items-center justify-center min-h-[calc(100vh-4rem)] py-12 px-6 lg:px-8">
+        <div class="w-full max-w-md">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-elegant">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl lg:text-4xl font-bold text-neutral-900 mb-3">Welcome to Aslan</h1>
+                <p class="text-neutral-600 text-lg">Payment infrastructure for AI agents</p>
+            </div>
 
-                    <div class="form-group">
-                        <label for="register-email">Email Address</label>
-                        <input type="email" id="register-email" placeholder="john@company.com" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="register-password">Password</label>
-                        <input type="password" id="register-password" placeholder="Create a strong password" required minlength="8">
-                        <div class="password-hint">Must be at least 8 characters long</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="register-organization">Organization Name</label>
-                        <input type="text" id="register-organization" placeholder="Your Company (Optional)">
-                    </div>
-
-                    <button type="submit" class="button" id="register-btn">
-                        <div class="button-content">
-                            <span id="register-text">Create Account</span>
-                            <div id="register-loading" class="loading hidden"></div>
-                        </div>
+            <!-- Auth Container -->
+            <div class="bg-white rounded-2xl shadow-elegant p-8">
+                <!-- Tab Navigation -->
+                <div class="flex bg-neutral-50 rounded-xl p-1 mb-8">
+                    <button id="signin-tab" class="flex-1 py-3 px-4 text-sm font-semibold rounded-lg transition-colors bg-white text-neutral-900 shadow-soft">
+                        Sign In
                     </button>
-                </form>
+                    <button id="signup-tab" class="flex-1 py-3 px-4 text-sm font-semibold rounded-lg transition-colors text-neutral-600 hover:text-neutral-900">
+                        Sign Up
+                    </button>
+                </div>
 
-                <div class="feature-hint">
-                    🚀 <strong>Instant Setup:</strong> Your account comes with production-ready API keys, documentation, and $100 in free credits to get started.
+                <!-- Message Container -->
+                <div id="message-container" class="mb-6"></div>
+
+                <!-- Sign In Form -->
+                <div id="signin-form">
+                    <form id="login-form" class="space-y-6">
+                        <div>
+                            <label for="login-email" class="block text-sm font-semibold text-neutral-900 mb-2">Email address</label>
+                            <input 
+                                type="email" 
+                                id="login-email" 
+                                placeholder="you@company.com" 
+                                required
+                                class="w-full px-4 py-3 border border-neutral-300 rounded-xl text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                            >
+                        </div>
+                        
+                        <div>
+                            <label for="login-password" class="block text-sm font-semibold text-neutral-900 mb-2">Password</label>
+                            <input 
+                                type="password" 
+                                id="login-password" 
+                                placeholder="Enter your password" 
+                                required
+                                class="w-full px-4 py-3 border border-neutral-300 rounded-xl text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                            >
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            id="login-btn"
+                            class="w-full gradient-bg text-white py-3 px-4 rounded-xl font-semibold hover:opacity-90 transition-opacity shadow-elegant flex items-center justify-center"
+                        >
+                            <span id="login-text">Sign in to your account</span>
+                            <div id="login-loading" class="hidden ml-2">
+                                <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-6">
+                        <a href="#" id="forgot-password-link" class="text-primary hover:text-primary-dark transition-colors text-sm font-medium">
+                            Forgot your password?
+                        </a>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        <p class="text-blue-800 text-sm">
+                            <strong>New to Aslan?</strong> Sign up to get instant API keys and start processing payments for your AI agents in minutes.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Sign Up Form -->
+                <div id="signup-form" class="hidden">
+                    <form id="register-form" class="space-y-6">
+                        <div>
+                            <label for="register-name" class="block text-sm font-semibold text-neutral-900 mb-2">Full name</label>
+                            <input 
+                                type="text" 
+                                id="register-name" 
+                                placeholder="John Doe" 
+                                required
+                                class="w-full px-4 py-3 border border-neutral-300 rounded-xl text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="register-email" class="block text-sm font-semibold text-neutral-900 mb-2">Email address</label>
+                            <input 
+                                type="email" 
+                                id="register-email" 
+                                placeholder="john@company.com" 
+                                required
+                                class="w-full px-4 py-3 border border-neutral-300 rounded-xl text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                            >
+                        </div>
+                        
+                        <div>
+                            <label for="register-password" class="block text-sm font-semibold text-neutral-900 mb-2">Password</label>
+                            <input 
+                                type="password" 
+                                id="register-password" 
+                                placeholder="Create a strong password" 
+                                required 
+                                minlength="8"
+                                class="w-full px-4 py-3 border border-neutral-300 rounded-xl text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                            >
+                            <p class="text-neutral-500 text-sm mt-2">Must be at least 8 characters long</p>
+                        </div>
+
+                        <div>
+                            <label for="register-organization" class="block text-sm font-semibold text-neutral-900 mb-2">Organization name <span class="text-neutral-400 font-normal">(optional)</span></label>
+                            <input 
+                                type="text" 
+                                id="register-organization" 
+                                placeholder="Your Company" 
+                                class="w-full px-4 py-3 border border-neutral-300 rounded-xl text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                            >
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            id="register-btn"
+                            class="w-full gradient-bg text-white py-3 px-4 rounded-xl font-semibold hover:opacity-90 transition-opacity shadow-elegant flex items-center justify-center"
+                        >
+                            <span id="register-text">Create your account</span>
+                            <div id="register-loading" class="hidden ml-2">
+                                <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </button>
+                    </form>
+
+                    <div class="mt-6 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                        <p class="text-emerald-800 text-sm">
+                            <strong>Get started instantly</strong> with our Sandbox plan - 750 free transactions per month to test your AI agents.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -517,8 +265,11 @@
         const signupForm = document.getElementById('signup-form');
 
         function switchToSignin() {
-            signinTab.classList.add('active');
-            signupTab.classList.remove('active');
+            // Update tab styling
+            signinTab.className = 'flex-1 py-3 px-4 text-sm font-semibold rounded-lg transition-colors bg-white text-neutral-900 shadow-soft';
+            signupTab.className = 'flex-1 py-3 px-4 text-sm font-semibold rounded-lg transition-colors text-neutral-600 hover:text-neutral-900';
+            
+            // Show/hide forms
             signinForm.classList.remove('hidden');
             signupForm.classList.add('hidden');
             hideMessage();
@@ -526,8 +277,11 @@
         }
 
         function switchToSignup() {
-            signupTab.classList.add('active');
-            signinTab.classList.remove('active');
+            // Update tab styling
+            signupTab.className = 'flex-1 py-3 px-4 text-sm font-semibold rounded-lg transition-colors bg-white text-neutral-900 shadow-soft';
+            signinTab.className = 'flex-1 py-3 px-4 text-sm font-semibold rounded-lg transition-colors text-neutral-600 hover:text-neutral-900';
+            
+            // Show/hide forms
             signupForm.classList.remove('hidden');
             signinForm.classList.add('hidden');
             hideMessage();
@@ -540,7 +294,19 @@
         // Message management
         function showMessage(text, type = 'info') {
             const container = document.getElementById('message-container');
-            container.innerHTML = `<div class="message ${type}">${text}</div>`;
+            let bgColor = 'bg-blue-50 border-blue-200 text-blue-800';
+            
+            if (type === 'success') {
+                bgColor = 'bg-emerald-50 border-emerald-200 text-emerald-800';
+            } else if (type === 'error') {
+                bgColor = 'bg-red-50 border-red-200 text-red-800';
+            }
+            
+            container.innerHTML = `
+                <div class="p-4 rounded-xl border ${bgColor}">
+                    <p class="text-sm">${text}</p>
+                </div>
+            `;
             container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
@@ -549,7 +315,7 @@
             container.innerHTML = '';
         }
 
-        // Loading state management - FIXED VERSION
+        // Loading state management
         function setLoading(formType, loading) {
             const textEl = document.getElementById(`${formType}-text`);
             const loadingEl = document.getElementById(`${formType}-loading`);
@@ -559,11 +325,13 @@
                 textEl.textContent = 'Processing...';
                 loadingEl.classList.remove('hidden');
                 btnEl.disabled = true;
+                btnEl.classList.add('opacity-75');
             } else {
                 // Reset to original text
-                textEl.textContent = formType === 'login' ? 'Sign In' : 'Create Account';
+                textEl.textContent = formType === 'login' ? 'Sign in to your account' : 'Create your account';
                 loadingEl.classList.add('hidden');
                 btnEl.disabled = false;
+                btnEl.classList.remove('opacity-75');
             }
         }
 
