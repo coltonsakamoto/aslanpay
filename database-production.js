@@ -315,7 +315,7 @@ class ProductionDatabase {
                 return null;
             }
 
-            // ⚡ CREATE TENANT OBJECT from user subscription data
+            // ⚡ CREATE TENANT OBJECT from user subscription data (this is what authorize route expects!)
             const user = keyData.user;
             const isVerified = user.emailVerified;
             const planLimits = {
