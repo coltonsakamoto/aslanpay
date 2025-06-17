@@ -262,19 +262,54 @@ console.log('🚀 PERFORMANCE-OPTIMIZED API routes mounted');
 
 // NOTE: Middleware already loaded at top
 
-// ESSENTIAL: Adding back core routes without heavy middleware
-let authRoutes, apiKeyRoutes;
+// CRITICAL: Load ALL routes with proper error handling
+let authRoutes, apiKeyRoutes, authorizeRoutes;
 try {
     authRoutes = require('./routes/auth');
-    apiKeyRoutes = require('./routes/api-keys');
-    console.log('✅ Essential routes loaded');
-    
-    // Mount essential routes
-    app.use('/api/auth', authRoutes);
-    app.use('/api/keys', apiKeyRoutes);
+    console.log('✅ Auth routes loaded');
 } catch (error) {
-    console.error('⚠️ Some routes unavailable:', error.message);
+    console.error('❌ Failed to load auth routes:', error.message);
+    authRoutes = require('express').Router();
 }
+
+try {
+    apiKeyRoutes = require('./routes/api-keys');
+    console.log('✅ API key routes loaded');
+} catch (error) {
+    console.error('❌ Failed to load API key routes:', error.message);
+    apiKeyRoutes = require('express').Router();
+}
+
+try {
+    authorizeRoutes = require('./routes/authorize');
+    console.log('✅ Authorize routes loaded');
+} catch (error) {
+    console.error('❌ Failed to load authorize routes:', error.message);
+    authorizeRoutes = require('express').Router();
+}
+
+// CRITICAL: Add session middleware for auth routes
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
+
+app.use('/api/auth', cookieParser());
+app.use('/api/auth', session({
+    secret: process.env.SESSION_SECRET || 'demo-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false, // Allow HTTP for now
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000
+    }
+}));
+
+// Mount ALL essential routes
+app.use('/api/auth', authRoutes);
+app.use('/api/keys', apiKeyRoutes);
+app.use('/api/v1', authorizeRoutes);
+
+console.log('✅ ALL ROUTES MOUNTED - Auth, API keys, Authorize');
 
 // Static files
 app.use(express.static('public', {
@@ -317,6 +352,27 @@ app.get('/demo', (req, res) => {
     } catch (error) {
         res.json({ message: 'AslanPay Demo - File Error', error: error.message });
     }
+});
+
+// ESSENTIAL ROUTES FOR SIGN-IN/AUTH
+app.get('/auth', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+});
+
+app.get('/pricing', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+app.get('/api', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'api.html'));
+});
+
+app.get('/docs', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'docs.html'));
 });
 
 // Enhanced status endpoint with performance metrics

@@ -1,0 +1,34 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server-performance-optimized.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/v1/authorize",
+      "dest": "/server-performance-optimized.js"
+    },
+    {
+      "src": "/api/keys/spending-controls",
+      "dest": "/server-performance-optimized.js"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/server-performance-optimized.js"
+    },
+    {
+      "src": "/health",
+      "dest": "/server-performance-optimized.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/server-performance-optimized.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+} 
