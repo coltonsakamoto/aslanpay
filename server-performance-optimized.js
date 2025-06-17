@@ -32,53 +32,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// ULTRA-FAST: Priority endpoints with working body parsing
-app.post('/api/v1/authorize', (req, res) => {
-    res.json({
-        approved: true,
-        amount: req.body?.amount || 10,
-        service: req.body?.service || 'ultra',
-        approvalId: 'ultra_' + Date.now(),
-        latency: '0ms',
-        message: 'ULTRA_FAST_FIXED',
-        timestamp: Date.now()
-    });
-});
-
-// SPENDING CONTROLS: Use in-memory storage for demo
-let spendingConfig = {
-    dailyLimit: 500,  // Higher default limit
-    demoLimit: 50,    // Higher demo limit  
-    spentToday: 0,
-    transactionCount: 0,
-    emergencyStop: false
-};
-
-app.get('/api/keys/spending-controls', (req, res) => {
-    res.json({
-        ...spendingConfig,
-        latency: '0ms',
-        message: 'CONTROLS_LIVE_DATA'
-    });
-});
-
-app.put('/api/keys/spending-controls', (req, res) => {
-    // Update the actual config
-    if (req.body.dailyLimit) spendingConfig.dailyLimit = req.body.dailyLimit;
-    if (req.body.demoLimit) spendingConfig.demoLimit = req.body.demoLimit;
-    if (req.body.spentToday !== undefined) spendingConfig.spentToday = req.body.spentToday;
-    if (req.body.transactionCount !== undefined) spendingConfig.transactionCount = req.body.transactionCount;
-    if (req.body.emergencyStop !== undefined) spendingConfig.emergencyStop = req.body.emergencyStop;
-    
-    res.json({
-        success: true,
-        updated: req.body,
-        newConfig: spendingConfig,
-        latency: '0ms',
-        message: 'CONTROLS_ACTUALLY_UPDATED'
-    });
-});
-
 // PERFORMANCE: Ultra-fast API endpoints FIRST (before heavy middleware)
 const cors = require('cors');
 const path = require('path');
@@ -182,82 +135,6 @@ function validateApiKeyMiddleware(req, res, next) {
         });
 }
 
-// PERFORMANCE: Ultra-fast authorize endpoint
-app.post('/api/v1/authorize', validateApiKeyMiddleware, (req, res) => {
-    const requestStart = Date.now();
-    
-    try {
-        const { amount, service = 'unknown', description } = req.body;
-        
-        // Basic validation
-        if (!amount || amount <= 0) {
-            return res.status(400).json({
-                error: 'Invalid amount',
-                latency: (Date.now() - requestStart) + 'ms'
-            });
-        }
-        
-        // Ultra-fast approval logic
-        const approved = amount <= 100; // Simple rule for demo
-        const approvalId = `auth_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-        
-        const totalLatency = Date.now() - requestStart;
-        
-        res.json({
-            approved,
-            amount,
-            service,
-            description,
-            approvalId,
-            tenant: req.tenant,
-            latency: totalLatency + 'ms',
-            validationLatency: req.validationLatency + 'ms',
-            timestamp: Date.now()
-        });
-        
-        console.log(`⚡ AUTHORIZE: ${totalLatency}ms (validation: ${req.validationLatency}ms)`);
-        
-    } catch (error) {
-        const totalLatency = Date.now() - requestStart;
-        console.error('Authorize error:', error);
-        res.status(500).json({
-            error: 'Internal server error',
-            latency: totalLatency + 'ms'
-        });
-    }
-});
-
-// PERFORMANCE: Fast test endpoint
-app.get('/api/v1/test', validateApiKeyMiddleware, (req, res) => {
-    const latency = Date.now() - req.startTime;
-    res.json({
-        status: 'FAST_API_WORKING',
-        tenant: req.tenant,
-        latency: latency + 'ms',
-        timestamp: Date.now()
-    });
-});
-
-// PERFORMANCE: Spending controls endpoints for demo
-app.get('/api/keys/spending-controls', validateApiKeyMiddleware, (req, res) => {
-    res.json({
-        dailyLimit: 100,
-        demoLimit: 10,
-        spentToday: 0,
-        transactionCount: 0,
-        emergencyStop: false
-    });
-});
-
-app.put('/api/keys/spending-controls', validateApiKeyMiddleware, (req, res) => {
-    // In demo mode, just return success
-    res.json({
-        success: true,
-        updated: req.body,
-        latency: '< 50ms'
-    });
-});
-
 console.log('🚀 PERFORMANCE-OPTIMIZED API routes mounted');
 
 // NOTE: Middleware already loaded at top
@@ -321,22 +198,6 @@ app.use(express.static('public', {
     }
 }));
 
-// ULTRA-FAST: Emergency demo endpoint (no API key required)
-app.post('/api/v1/authorize-demo', (req, res) => {
-    const startTime = Date.now();
-    res.json({
-        approved: true,
-        amount: req.body.amount || 10,
-        service: req.body.service || 'demo',
-        approvalId: 'demo_' + Date.now(),
-        latency: (Date.now() - startTime) + 'ms',
-        message: 'ULTRA_FAST_DEMO',
-        timestamp: Date.now()
-    });
-});
-
-// NOTE: Ultra-fast endpoints moved to top of file before middleware
-
 // Routes
 app.get('/', (req, res) => {
     try {
@@ -393,6 +254,8 @@ app.get('/api/status', (req, res) => {
         timestamp: Date.now()
     });
 });
+
+// NOTE: Ultra-fast endpoints moved to top of file before middleware
 
 // Error handling
 app.use((error, req, res, next) => {
