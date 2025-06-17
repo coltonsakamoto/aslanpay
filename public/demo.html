@@ -504,22 +504,48 @@ function_call: "auto"</code></pre>
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Update payment controls display
-        function updatePaymentControlsDisplay() {
-            const status = spendingTracker.getDemoStatus();
-            
-            document.getElementById('spent-today').textContent = `$${status.spentToday.toFixed(2)}`;
-            document.getElementById('emergency-status').textContent = status.isEmergencyStop ? 'ACTIVE' : 'Disabled';
-            document.getElementById('spending-progress').style.width = `${status.spentPercentage}%`;
-            
-            // Update progress bar color based on percentage
-            const progressBar = document.getElementById('spending-progress');
-            if (status.spentPercentage > 75) {
-                progressBar.className = 'bg-red-600 h-2 rounded-full transition-all duration-300';
-            } else if (status.spentPercentage > 50) {
-                progressBar.className = 'bg-yellow-600 h-2 rounded-full transition-all duration-300';
-            } else {
-                progressBar.className = 'bg-orange-600 h-2 rounded-full transition-all duration-300';
+        // Update payment controls display with REAL server data
+        async function updatePaymentControlsDisplay() {
+            try {
+                // Fetch REAL data from server
+                const response = await fetch('/api/keys/spending-controls');
+                const serverData = await response.json();
+                
+                // Use server data, not local data
+                const spentPercentage = (serverData.spentToday / serverData.dailyLimit) * 100;
+                
+                document.getElementById('spent-today').textContent = `$${serverData.spentToday.toFixed(2)}`;
+                document.getElementById('daily-limit').textContent = `$${serverData.dailyLimit}`;
+                document.getElementById('demo-limit').textContent = `${serverData.demoLimit} tx`;
+                document.getElementById('emergency-status').textContent = serverData.emergencyStop ? 'ACTIVE' : 'Disabled';
+                document.getElementById('spending-progress').style.width = `${spentPercentage}%`;
+                
+                // Update progress bar color based on percentage
+                const progressBar = document.getElementById('spending-progress');
+                if (spentPercentage > 75) {
+                    progressBar.className = 'bg-red-600 h-2 rounded-full transition-all duration-300';
+                } else if (spentPercentage > 50) {
+                    progressBar.className = 'bg-yellow-600 h-2 rounded-full transition-all duration-300';
+                } else {
+                    progressBar.className = 'bg-orange-600 h-2 rounded-full transition-all duration-300';
+                }
+                
+                // Update local DEMO_CONFIG to match server
+                DEMO_CONFIG.demoUser.dailyLimit = serverData.dailyLimit;
+                DEMO_CONFIG.maxDemoTransactions = serverData.demoLimit;
+                DEMO_CONFIG.demoUser.spentToday = serverData.spentToday;
+                DEMO_CONFIG.demoUser.transactionCount = serverData.transactionCount;
+                
+                console.log('✅ Updated display with server data:', serverData);
+                
+            } catch (error) {
+                console.error('❌ Failed to fetch server spending data:', error);
+                // Fallback to local data
+                const status = spendingTracker.getDemoStatus();
+                
+                document.getElementById('spent-today').textContent = `$${status.spentToday.toFixed(2)}`;
+                document.getElementById('emergency-status').textContent = status.isEmergencyStop ? 'ACTIVE' : 'Disabled';
+                document.getElementById('spending-progress').style.width = `${status.spentPercentage}%`;
             }
         }
 
@@ -984,7 +1010,7 @@ function_call: "auto"</code></pre>
         }
 
         // Add transaction to log
-        function addTransaction(transaction) {
+        async function addTransaction(transaction) {
             transactionCount++;
             totalAmount += transaction.amount;
             latencies.push(transaction.latency || 200);
@@ -1016,8 +1042,8 @@ function_call: "auto"</code></pre>
             document.getElementById('total-amount').textContent = `$${totalAmount.toFixed(2)}`;
             document.getElementById('avg-latency').textContent = `${Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)}ms`;
             
-            // Update payment controls display
-            updatePaymentControlsDisplay();
+                            // Update payment controls display with fresh server data
+                await updatePaymentControlsDisplay();
         }
 
         // Simulate AI agent purchase with payment controls
@@ -1051,11 +1077,49 @@ function_call: "auto"</code></pre>
                 amount = parseFloat(amountMatch[1]);
             }
 
-            // ⭐ PAYMENT VALIDATION - This is the key addition!
+            // ⭐ PAYMENT VALIDATION - Using REAL server data!
             addMessage('🛡️ Validating spending limits and controls...', false);
             await new Promise(resolve => setTimeout(resolve, 400));
             
-            const validation = spendingTracker.validateTransaction(amount, service, userMessage);
+            // Fetch current server limits for validation
+            let validation;
+            try {
+                const serverData = await fetch('/api/keys/spending-controls').then(r => r.json());
+                
+                // Validate against SERVER limits, not local ones
+                validation = {
+                    approved: false,
+                    reason: '',
+                    warnings: []
+                };
+                
+                // Check daily limit against server data
+                const newTotal = serverData.spentToday + amount;
+                if (newTotal > serverData.dailyLimit) {
+                    validation.reason = `Would exceed daily limit of $${serverData.dailyLimit} (currently spent: $${serverData.spentToday})`;
+                } else if (serverData.transactionCount >= serverData.demoLimit) {
+                    validation.reason = `Demo limited to ${serverData.demoLimit} transactions (current: ${serverData.transactionCount})`;
+                } else if (serverData.emergencyStop) {
+                    validation.reason = 'Emergency stop activated. All transactions blocked.';
+                } else {
+                    validation.approved = true;
+                    
+                    // Add warnings for approaching limits
+                    const spentPercentage = (newTotal / serverData.dailyLimit) * 100;
+                    if (spentPercentage > 75) {
+                        validation.warnings.push(`⚠️ You've spent ${spentPercentage.toFixed(1)}% of your daily limit`);
+                    } else if (spentPercentage > 50) {
+                        validation.warnings.push(`📊 You've spent ${spentPercentage.toFixed(1)}% of your daily limit`);
+                    }
+                }
+                
+                console.log('✅ Validation using server data:', { serverData, validation });
+                
+            } catch (error) {
+                console.error('❌ Failed to fetch server data for validation, using local:', error);
+                // Fallback to local validation
+                validation = spendingTracker.validateTransaction(amount, service, userMessage);
+            }
             
             if (!validation.approved) {
                 const errorMessage = `❌ Transaction blocked: ${validation.reason}`;
@@ -1097,7 +1161,28 @@ function_call: "auto"</code></pre>
                 // Process payment through card system
                 const paymentResult = await paymentProcessor.processPayment(amount, service);
                 
-                // Record the transaction
+                // Record the transaction on SERVER (not just locally)
+                try {
+                    // Update server spending data
+                    const currentData = await fetch('/api/keys/spending-controls').then(r => r.json());
+                    const newSpentToday = currentData.spentToday + amount;
+                    const newTransactionCount = currentData.transactionCount + 1;
+                    
+                    await fetch('/api/keys/spending-controls', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            spentToday: newSpentToday,
+                            transactionCount: newTransactionCount
+                        })
+                    });
+                    
+                    console.log(`✅ Server updated: $${newSpentToday} spent, ${newTransactionCount} transactions`);
+                } catch (error) {
+                    console.error('❌ Failed to update server:', error);
+                }
+                
+                // Also record locally as backup
                 const recordedTransaction = spendingTracker.recordTransaction(amount, service);
                 
                 const transaction = {
@@ -1109,7 +1194,7 @@ function_call: "auto"</code></pre>
                 };
 
                 // Add to transaction log
-                addTransaction(transaction);
+                await addTransaction(transaction);
 
                 // AI response with enhanced security messaging
                 let response = '';
