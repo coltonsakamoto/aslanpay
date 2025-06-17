@@ -1,7 +1,40 @@
 const express = require('express');
 const router = express.Router();
 const database = require('../database-production.js');
-const { validateSession } = require('../middleware/auth');
+
+// Import the working validateSession from the main server
+const jwt = require('jsonwebtoken');
+
+function getJWTSecret() {
+    return process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
+}
+
+async function validateSession(req, res, next) {
+    const token = req.cookies?.agentpay_session;
+    if (!token) {
+        return res.status(401).json({ error: 'No session token', code: 'NO_SESSION' });
+    }
+    
+    try {
+        const decoded = jwt.verify(token, getJWTSecret());
+        const session = await database.getSession(decoded.sessionId);
+        if (!session) {
+            return res.status(401).json({ error: 'Session expired', code: 'SESSION_EXPIRED' });
+        }
+        
+        const user = await database.getUserById(session.userId);
+        if (!user) {
+            return res.status(401).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
+        }
+        
+        req.session = session;
+        req.user = user;
+        next();
+    } catch (error) {
+        return res.status(401).json({ error: 'Invalid session', code: 'INVALID_SESSION' });
+    }
+}
+
 const SecureRandom = require('../utils/secure-random');
 
 // Helper function to mask API keys
@@ -163,14 +196,12 @@ router.delete('/:keyId', validateSession, async (req, res) => {
     }
 });
 
-// Rotate API key - PRODUCTION FIXED VERSION
+// Rotate API key
 router.post('/:keyId/rotate', validateSession, async (req, res) => {
     try {
         const { keyId } = req.params;
         
         console.log(`🔄 Rotate API key request: ${keyId} by user ${req.user.id}`);
-        
-        // Use production database methods
         
         // Get user's API keys
         const userApiKeys = await database.getApiKeysByUserId(req.user.id);

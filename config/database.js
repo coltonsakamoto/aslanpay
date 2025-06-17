@@ -21,8 +21,8 @@ const usePostgreSQL = !isDevelopment || hasPostgreSQLUrl;
 
 // Choose database based on environment and URL presence
 const database = usePostgreSQL
-    ? require('../database-production') // PostgreSQL database
-    : require('../database');           // In-memory database
+    ? require('../database-sync-wrapper') // Sync wrapper for PostgreSQL
+    : require('../database');             // In-memory database
 
 console.log(`🔗 Using ${usePostgreSQL ? 'PostgreSQL' : 'in-memory'} database`);
 
