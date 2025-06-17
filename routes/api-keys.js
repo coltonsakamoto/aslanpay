@@ -357,4 +357,143 @@ router.get('/:keyId/usage', validateSession, async (req, res) => {
     }
 });
 
+// 🚨 EMERGENCY: Add spending controls update routes (missing from demo)
+// GET /api/keys/spending-controls - Get current spending limits
+router.get('/spending-controls', validateSession, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const user = await database.getUserById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Get user's current plan and verification status
+        const plan = user.subscriptionPlan || 'sandbox';
+        const isVerified = user.emailVerified;
+        
+        const planLimits = {
+            sandbox: { transaction: 10000, daily: 50000 },
+            builder: { transaction: 100000, daily: 500000 },
+            team: { transaction: 1000000, daily: 5000000 }
+        };
+        
+        const limits = planLimits[plan] || planLimits.sandbox;
+        
+        const currentLimits = {
+            dailyLimit: (isVerified ? limits.daily : 20000) / 100, // Convert to dollars
+            transactionLimit: (isVerified ? limits.transaction : 5000) / 100,
+            plan: plan,
+            verified: isVerified,
+            status: 'active'
+        };
+
+        res.json({
+            success: true,
+            limits: currentLimits,
+            info: {
+                plan: plan,
+                verified: isVerified,
+                upgradeAvailable: plan === 'sandbox'
+            }
+        });
+        
+    } catch (error) {
+        console.error('Get spending controls error:', error);
+        res.status(500).json({ 
+            error: 'Failed to get spending controls',
+            details: error.message 
+        });
+    }
+});
+
+// PUT /api/keys/spending-controls - Update spending limits
+router.put('/spending-controls', validateSession, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const { dailyLimit, transactionLimit, emergencyStop } = req.body;
+        
+        const user = await database.getUserById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Validate limits based on user's plan and verification
+        const plan = user.subscriptionPlan || 'sandbox';
+        const isVerified = user.emailVerified;
+        
+        const planLimits = {
+            sandbox: { maxDaily: 500, maxTransaction: 100 },
+            builder: { maxDaily: 5000, maxTransaction: 1000 },
+            team: { maxDaily: 50000, maxTransaction: 10000 }
+        };
+        
+        const maxLimits = planLimits[plan] || planLimits.sandbox;
+        
+        // Apply verification limits
+        const actualMaxDaily = isVerified ? maxLimits.maxDaily : 200;
+        const actualMaxTransaction = isVerified ? maxLimits.maxTransaction : 50;
+        
+        // Validate requested limits
+        if (dailyLimit && (dailyLimit < 0 || dailyLimit > actualMaxDaily)) {
+            return res.status(400).json({
+                error: `Daily limit must be between $0 and $${actualMaxDaily}`,
+                maxAllowed: actualMaxDaily,
+                plan: plan,
+                verified: isVerified
+            });
+        }
+        
+        if (transactionLimit && (transactionLimit < 0 || transactionLimit > actualMaxTransaction)) {
+            return res.status(400).json({
+                error: `Transaction limit must be between $0 and $${actualMaxTransaction}`,
+                maxAllowed: actualMaxTransaction,
+                plan: plan,
+                verified: isVerified
+            });
+        }
+
+        // For demo purposes, we'll store these in user metadata
+        // In a real system, this would update the tenant settings
+        const updateData = {};
+        if (dailyLimit !== undefined) {
+            updateData.dailyLimitOverride = dailyLimit * 100; // Store in cents
+        }
+        if (transactionLimit !== undefined) {
+            updateData.transactionLimitOverride = transactionLimit * 100;
+        }
+        if (emergencyStop !== undefined) {
+            updateData.emergencyStop = emergencyStop;
+        }
+
+        // Update user with new limits (this is a simplified demo implementation)
+        const updatedUser = await database.updateUser(userId, updateData);
+        
+        console.log(`✅ Spending controls updated for user ${userId}:`, {
+            dailyLimit: dailyLimit || 'unchanged',
+            transactionLimit: transactionLimit || 'unchanged',
+            emergencyStop: emergencyStop || 'unchanged'
+        });
+
+        res.json({
+            success: true,
+            message: 'Spending controls updated successfully',
+            limits: {
+                dailyLimit: dailyLimit || (isVerified ? maxLimits.maxDaily : 200),
+                transactionLimit: transactionLimit || (isVerified ? maxLimits.maxTransaction : 50),
+                emergencyStop: emergencyStop || false
+            },
+            plan: plan,
+            verified: isVerified
+        });
+        
+    } catch (error) {
+        console.error('Update spending controls error:', error);
+        res.status(500).json({ 
+            error: 'Failed to update spending controls',
+            details: error.message 
+        });
+    }
+});
+
 module.exports = router; 
