@@ -64,10 +64,28 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Simple test endpoint - also bulletproof
-app.get('/test', (req, res) => {
-    res.send('✅ Aslan server is running! Time: ' + new Date().toISOString());
+// BULLETPROOF test endpoint - FIRST, before anything else can fail
+app.get('/test-emergency', (req, res) => {
+    res.status(200).json({ 
+        status: 'SERVER ALIVE', 
+        timestamp: new Date().toISOString(),
+        message: 'Emergency test endpoint working'
+    });
 });
+
+// Simple authorize test endpoint to bypass all middleware
+app.post('/api/v1/authorize-test', (req, res) => {
+    res.status(200).json({
+        status: 'AUTHORIZE ROUTE WORKING',
+        method: req.method,
+        path: req.path,
+        headers: req.headers,
+        body: req.body,
+        timestamp: new Date().toISOString()
+    });
+});
+
+console.log('🚨 Emergency test endpoints added: /test-emergency and /api/v1/authorize-test');
 
 console.log('🏥 Health endpoints initialized');
 
