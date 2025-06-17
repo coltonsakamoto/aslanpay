@@ -48,6 +48,7 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
+            scriptSrcAttr: ["'unsafe-inline'"], // CRITICAL: Allow inline event handlers like onclick
             styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
             imgSrc: ["'self'", "data:", "https:"],
             connectSrc: ["'self'", "https:"],
