@@ -240,55 +240,51 @@ class ProductionDatabase {
     }
 
     async validateApiKey(apiKey) {
-        console.log('🔍 VALIDATING API KEY:', apiKey.substring(0, 20) + '...');
+        const startTime = Date.now();
+        // Reduced logging for performance - only log every 10th request
+        const shouldLog = Math.random() < 0.1;
+        
+        if (shouldLog) {
+            console.log('🔍 VALIDATING API KEY:', apiKey.substring(0, 20) + '...');
+        }
         
         try {
-            const keyData = await this.prisma.apiKey.findFirst({
+            // ⚡ OPTIMIZED: Use unique index on 'key' field for instant lookup
+            const keyData = await this.prisma.apiKey.findUnique({
                 where: {
-                    key: apiKey,
-                    isActive: true
+                    key: apiKey  // This should use unique index for O(1) lookup
                 },
                 include: {
                     user: true
                 }
             });
             
-            console.log('🔍 Database lookup result:', keyData ? 'FOUND' : 'NOT FOUND');
+            const latency = Date.now() - startTime;
             
-            if (!keyData) {
-                // Debug: Check if key exists but is inactive
-                const inactiveKey = await this.prisma.apiKey.findFirst({
-                    where: { key: apiKey }
-                });
-                
-                if (inactiveKey) {
-                    console.log('⚠️  Key exists but isActive:', inactiveKey.isActive);
-                } else {
-                    console.log('❌ Key does not exist in database at all');
-                    
-                    // Show recent keys for debugging
-                    const recentKeys = await this.prisma.apiKey.findMany({
-                        take: 3,
-                        orderBy: { createdAt: 'desc' },
-                        select: { key: true, isActive: true, createdAt: true }
-                    });
-                    console.log('🔍 Recent keys in database:');
-                    recentKeys.forEach(k => {
-                        console.log(`   - ${k.key.substring(0, 20)}... (active: ${k.isActive}) (created: ${k.createdAt})`);
-                    });
+            // Early return if not found or inactive
+            if (!keyData || !keyData.isActive) {
+                if (shouldLog) {
+                    console.log(`🔍 Database lookup result: ${keyData ? 'INACTIVE' : 'NOT FOUND'} (${latency}ms)`);
                 }
-                
                 return null;
             }
 
-            console.log('✅ Key validation successful for user:', keyData.user.email);
+            if (shouldLog) {
+                console.log(`✅ Key validation successful for user: ${keyData.user.email} (${latency}ms)`);
+            }
 
-            // Update usage statistics
-            await this.prisma.apiKey.update({
-                where: { id: keyData.id },
-                data: {
-                    lastUsed: new Date(),
-                    usageCount: { increment: 1 }
+            // ⚡ PERFORMANCE: Update usage statistics asynchronously (non-blocking)
+            setImmediate(async () => {
+                try {
+                    await this.prisma.apiKey.update({
+                        where: { id: keyData.id },
+                        data: {
+                            lastUsed: new Date(),
+                            usageCount: { increment: 1 }
+                        }
+                    });
+                } catch (updateError) {
+                    console.error('❌ Background usage update error:', updateError);
                 }
             });
             
@@ -296,11 +292,17 @@ class ProductionDatabase {
                 keyId: keyData.id,
                 userId: keyData.userId,
                 user: this.sanitizeUser(keyData.user),
-                permissions: keyData.permissions ? keyData.permissions.split(',') : []
+                permissions: keyData.permissions ? keyData.permissions.split(',') : [],
+                // Performance debug info
+                __performance: {
+                    latency: `${latency}ms`,
+                    optimized: true
+                }
             };
             
         } catch (error) {
-            console.error('❌ API key validation database error:', error);
+            const latency = Date.now() - startTime;
+            console.error(`❌ API key validation database error (${latency}ms):`, error);
             throw error;
         }
     }

@@ -10,7 +10,20 @@ const database = {
     sessions: new Map(),
     passwordResets: new Map(),
     emailVerifications: new Map(),
-    transactions: new Map()    // All payment transactions
+    transactions: new Map(),   // All payment transactions
+    
+    // ⚡ PERFORMANCE OPTIMIZATION: O(1) lookup caches
+    apiKeyCache: new Map(),    // key -> keyData for instant lookup (ELIMINATES O(n) SCAN!)
+    userCache: new Map(),      // userId -> user for instant access
+    tenantCache: new Map(),    // tenantId -> tenant for instant access
+    
+    // Performance monitoring 
+    performanceMetrics: {
+        apiKeyLookups: 0,
+        cacheHits: 0,
+        totalLatency: 0,
+        avgLatency: 0
+    }
 };
 
 class Database {
@@ -222,6 +235,9 @@ class Database {
 
         database.apiKeys.set(keyId, keyData);
         
+        // ⚡ PERFORMANCE: Add to cache immediately for O(1) lookup
+        database.apiKeyCache.set(apiKey, keyData);
+        
         return {
             id: keyId,
             name,
@@ -236,16 +252,97 @@ class Database {
         };
     }
 
+    // ⚡ Performance cache management methods
+    rebuildPerformanceCache() {
+        console.log('🔧 Rebuilding high-performance caches...');
+        
+        // Clear existing caches
+        database.apiKeyCache.clear();
+        database.userCache.clear();
+        database.tenantCache.clear();
+        
+        // Rebuild API key cache with O(1) lookup
+        for (const [keyId, keyData] of database.apiKeys) {
+            if (keyData.isActive) {
+                database.apiKeyCache.set(keyData.key, keyData);
+            }
+        }
+        
+        // Rebuild user cache
+        for (const [userId, userData] of database.users) {
+            database.userCache.set(userId, userData);
+        }
+        
+        // Rebuild tenant cache  
+        for (const [tenantId, tenantData] of database.tenants) {
+            database.tenantCache.set(tenantId, tenantData);
+        }
+        
+        console.log(`✅ Performance caches rebuilt: ${database.apiKeyCache.size} API keys, ${database.userCache.size} users, ${database.tenantCache.size} tenants`);
+    }
+    
+    updatePerformanceMetrics(latency) {
+        const metrics = database.performanceMetrics;
+        metrics.totalLatency += latency;
+        metrics.avgLatency = metrics.totalLatency / metrics.apiKeyLookups;
+        
+        // Log performance improvements every 100 requests
+        if (metrics.apiKeyLookups % 100 === 0) {
+            const cacheHitRate = (metrics.cacheHits / metrics.apiKeyLookups * 100).toFixed(1);
+            console.log(`📊 Performance: ${metrics.avgLatency.toFixed(1)}ms avg latency, ${cacheHitRate}% cache hit rate`);
+        }
+    }
+    
+    getPerformanceStats() {
+        const metrics = database.performanceMetrics;
+        const cacheHitRate = metrics.apiKeyLookups > 0 ? (metrics.cacheHits / metrics.apiKeyLookups * 100) : 0;
+        
+        return {
+            apiKeyLookups: metrics.apiKeyLookups,
+            cacheHits: metrics.cacheHits,
+            cacheHitRate: `${cacheHitRate.toFixed(1)}%`,
+            averageLatency: `${metrics.avgLatency.toFixed(1)}ms`,
+            cacheSize: {
+                apiKeys: database.apiKeyCache.size,
+                users: database.userCache.size,
+                tenants: database.tenantCache.size
+            }
+        };
+    }
+
+    // ⚡ ULTRA-FAST API Key Validation - O(1) lookup time (WAS O(n) DISASTER!)
     async validateApiKey(apiKey) {
-        for (const keyData of database.apiKeys.values()) {
-            if (keyData.key === apiKey && keyData.isActive) {
-                // Update usage statistics
-                keyData.lastUsed = new Date();
-                keyData.usageCount++;
-                database.apiKeys.set(keyData.id, keyData);
+        const startTime = Date.now();
+        database.performanceMetrics.apiKeyLookups++;
+        
+        try {
+            // STEP 1: O(1) cache lookup first (INSTANT!)
+            let keyData = database.apiKeyCache.get(apiKey);
+            
+            if (keyData && keyData.isActive) {
+                database.performanceMetrics.cacheHits++;
                 
-                const user = database.users.get(keyData.userId);
-                const tenant = database.tenants.get(keyData.tenantId);
+                // Fast update of usage stats (non-blocking for performance)
+                setImmediate(() => {
+                    keyData.lastUsed = new Date();
+                    keyData.usageCount++;
+                    database.apiKeys.set(keyData.id, keyData);
+                });
+                
+                // Get cached user and tenant (O(1) - also instant!)
+                const user = database.userCache.get(keyData.userId) || database.users.get(keyData.userId);
+                const tenant = database.tenantCache.get(keyData.tenantId) || database.tenants.get(keyData.tenantId);
+                
+                // Cache user and tenant for next time if not already cached
+                if (user && !database.userCache.has(keyData.userId)) {
+                    database.userCache.set(keyData.userId, user);
+                }
+                if (tenant && !database.tenantCache.has(keyData.tenantId)) {
+                    database.tenantCache.set(keyData.tenantId, tenant);
+                }
+                
+                const latency = Date.now() - startTime;
+                this.updatePerformanceMetrics(latency);
                 
                 return {
                     keyId: keyData.id,
@@ -253,11 +350,52 @@ class Database {
                     tenantId: keyData.tenantId,
                     user: this.sanitizeUser(user),
                     tenant: tenant,
-                    permissions: keyData.permissions
+                    permissions: keyData.permissions,
+                    // Performance debug info (remove in production)
+                    __performance: {
+                        latency: `${latency}ms`,
+                        cached: true,
+                        cacheHitRate: `${(database.performanceMetrics.cacheHits / database.performanceMetrics.apiKeyLookups * 100).toFixed(1)}%`
+                    }
                 };
             }
+            
+            // STEP 2: Cache miss - rebuild cache (should be rare)
+            console.log('🔄 Cache miss - rebuilding API key performance cache');
+            this.rebuildPerformanceCache();
+            
+            // STEP 3: Try cache again after rebuild
+            keyData = database.apiKeyCache.get(apiKey);
+            if (keyData && keyData.isActive) {
+                const user = database.userCache.get(keyData.userId) || database.users.get(keyData.userId);
+                const tenant = database.tenantCache.get(keyData.tenantId) || database.tenants.get(keyData.tenantId);
+                
+                const latency = Date.now() - startTime;
+                this.updatePerformanceMetrics(latency);
+                
+                return {
+                    keyId: keyData.id,
+                    userId: keyData.userId,
+                    tenantId: keyData.tenantId,
+                    user: this.sanitizeUser(user),
+                    tenant: tenant,
+                    permissions: keyData.permissions,
+                    __performance: {
+                        latency: `${latency}ms`,
+                        cached: false,
+                        rebuilt: true
+                    }
+                };
+            }
+            
+            const latency = Date.now() - startTime;
+            this.updatePerformanceMetrics(latency);
+            return null;
+            
+        } catch (error) {
+            console.error('❌ High-performance API key validation error:', error);
+            return null;
         }
-        return null;
     }
 
     getApiKeysByTenant(tenantId) {

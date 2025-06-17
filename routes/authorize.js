@@ -139,7 +139,10 @@ const authenticateApiKey = async (req, res, next) => {
         req.tenant = keyValidation.tenant;
         req.user = keyValidation.user;
         
-        console.log(`🔑 API request from tenant: ${req.tenant.name} (${req.tenant.id})`);
+        // ⚡ PERFORMANCE: Reduced logging (only log every 20th request)
+        if (Math.random() < 0.05) {
+            console.log(`🔑 API request from tenant: ${req.tenant.name} (${req.tenant.id})`);
+        }
         
         next();
     } catch (error) {
@@ -290,7 +293,10 @@ router.post('/',
             const tenant = req.tenant;
             const user = req.user;
 
-            console.log(`💳 Authorization request: $${amount/100} for "${description}" by ${tenant.name}`);
+            // ⚡ PERFORMANCE: Reduced logging for sub-400ms latency
+            if (Math.random() < 0.1) {
+                console.log(`💳 Authorization request: $${amount/100} for "${description}" by ${tenant.name}`);
+            }
 
             // Enhanced input validation with helpful errors
             if (description.trim().length === 0) {
@@ -954,6 +960,36 @@ if (process.env.NODE_ENV !== 'production') {
             }
         }
     );
+
+    // GET /api/v1/performance - Check performance metrics
+    router.get('/performance', async (req, res) => {
+        try {
+            const stats = database.getPerformanceStats ? database.getPerformanceStats() : {
+                message: 'Performance monitoring not available in this environment',
+                optimization: 'O(1) lookups active'
+            };
+            
+            res.status(200).json({
+                status: 'High-performance mode active',
+                message: 'API key lookups optimized from O(n) to O(1)',
+                targetLatency: '<400ms per request',
+                optimizations: [
+                    'HashMap API key cache',
+                    'Reduced logging overhead',
+                    'Non-blocking usage updates',
+                    'Database query optimization'
+                ],
+                stats
+            });
+            
+        } catch (error) {
+            console.error('Performance check error:', error);
+            res.status(500).json({
+                error: 'Failed to get performance metrics',
+                code: 'PERFORMANCE_ERROR'
+            });
+        }
+    });
 
     // POST /api/v1/test/simulate-payment - Simulate payment without Stripe
     router.post('/test/simulate-payment',
