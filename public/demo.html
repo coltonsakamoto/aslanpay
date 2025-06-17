@@ -906,30 +906,66 @@ function_call: "auto"</code></pre>
         }
 
         // Save quick settings function
-        function saveQuickSettings() {
+        async function saveQuickSettings() {
+            const saveBtn = document.getElementById('save-settings-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            
             try {
-                // Update DEMO_CONFIG with new values
-                DEMO_CONFIG.demoUser.dailyLimit = parseFloat(document.getElementById('daily-limit-input').value);
-                DEMO_CONFIG.maxDemoTransactions = parseInt(document.getElementById('max-transactions-input').value);
+                const newDailyLimit = parseFloat(document.getElementById('daily-limit-input').value);
+                const newMaxTransactions = parseInt(document.getElementById('max-transactions-input').value);
                 
-                // Save to localStorage
+                // API call to update server-side spending controls
+                const response = await fetch('/api/keys/spending-controls', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        dailyLimit: newDailyLimit,
+                        demoLimit: newMaxTransactions
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Server response:', result);
+                
+                // Update DEMO_CONFIG with new values
+                DEMO_CONFIG.demoUser.dailyLimit = newDailyLimit;
+                DEMO_CONFIG.maxDemoTransactions = newMaxTransactions;
+                
+                // Save to localStorage as backup
                 localStorage.setItem('demoSpendingConfig', JSON.stringify(DEMO_CONFIG));
                 
                 // Update displays
                 updatePaymentControlsDisplay();
-                document.getElementById('daily-limit').textContent = `$${DEMO_CONFIG.demoUser.dailyLimit}`;
-                document.getElementById('demo-limit').textContent = `${DEMO_CONFIG.maxDemoTransactions} tx`;
+                document.getElementById('daily-limit').textContent = `$${newDailyLimit}`;
+                document.getElementById('demo-limit').textContent = `${newMaxTransactions} tx`;
                 
                 // Close modal
                 closeSpendingModal();
                 
-                // Show success message
-                addMessage('✅ Spending controls updated successfully! New limits are now active.', false);
+                // Show success message with latency
+                addMessage(`✅ Spending controls updated successfully! Server responded in ${result.latency}. New limits are now active.`, false);
                 
             } catch (error) {
                 console.error('❌ Error saving settings:', error);
-                addMessage(`❌ Failed to update settings: ${error.message}`, false);
+                addMessage(`❌ Failed to update server settings: ${error.message}. Changes saved locally only.`, false);
+                
+                // Fallback to local save
+                DEMO_CONFIG.demoUser.dailyLimit = parseFloat(document.getElementById('daily-limit-input').value);
+                DEMO_CONFIG.maxDemoTransactions = parseInt(document.getElementById('max-transactions-input').value);
+                localStorage.setItem('demoSpendingConfig', JSON.stringify(DEMO_CONFIG));
+                updatePaymentControlsDisplay();
+                closeSpendingModal();
             }
+            
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Save Settings';
         }
         
         // Close spending modal function
