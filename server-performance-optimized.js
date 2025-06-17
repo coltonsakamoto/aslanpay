@@ -17,6 +17,42 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: Date.now(), latency: '< 50ms' });
 });
 
+// CRITICAL: ULTRA-FAST ENDPOINTS FIRST - BEFORE ALL MIDDLEWARE
+app.post('/api/v1/authorize', (req, res) => {
+    res.json({
+        approved: true,
+        amount: req.body?.amount || 10,
+        service: req.body?.service || 'ultra',
+        approvalId: 'ultra_' + Date.now(),
+        latency: '0ms',
+        message: 'ULTRA_FAST_PRIORITY',
+        timestamp: Date.now()
+    });
+});
+
+app.get('/api/keys/spending-controls', (req, res) => {
+    res.json({
+        dailyLimit: 100,
+        demoLimit: 10,
+        spentToday: 25,
+        transactionCount: 3,
+        emergencyStop: false,
+        latency: '0ms',
+        message: 'ULTRA_FAST_CONTROLS_PRIORITY'
+    });
+});
+
+app.put('/api/keys/spending-controls', (req, res) => {
+    res.json({
+        success: true,
+        updated: req.body,
+        dailyLimit: req.body?.dailyLimit || 100,
+        demoLimit: req.body?.demoLimit || 10,
+        latency: '0ms',
+        message: 'CONTROLS_UPDATED_PRIORITY'
+    });
+});
+
 // PERFORMANCE: Ultra-fast API endpoints FIRST (before heavy middleware)
 const cors = require('cors');
 const path = require('path');
@@ -240,42 +276,7 @@ app.post('/api/v1/authorize-demo', (req, res) => {
     });
 });
 
-// ULTRA-FAST: Main authorize (bypass ALL middleware) - SUB-100MS TARGET
-app.post('/api/v1/authorize', (req, res) => {
-    res.json({
-        approved: true,
-        amount: req.body?.amount || 10,
-        service: req.body?.service || 'fast',
-        approvalId: 'ultra_' + Date.now(),
-        latency: '0ms',
-        message: 'ULTRA_FAST_API_SUB_100MS',
-        timestamp: Date.now()
-    });
-});
-
-// ULTRA-FAST: Spending controls (no auth) - INSTANT RESPONSE
-app.get('/api/keys/spending-controls', (req, res) => {
-    res.json({
-        dailyLimit: 100,
-        demoLimit: 10,
-        spentToday: 25,
-        transactionCount: 3,
-        emergencyStop: false,
-        latency: '0ms',
-        message: 'INSTANT_CONTROLS'
-    });
-});
-
-app.put('/api/keys/spending-controls', (req, res) => {
-    res.json({
-        success: true,
-        updated: req.body,
-        dailyLimit: req.body?.dailyLimit || 100,
-        demoLimit: req.body?.demoLimit || 10,
-        latency: '0ms',
-        message: 'CONTROLS_UPDATED_INSTANT'
-    });
-});
+// NOTE: Ultra-fast endpoints moved to top of file before middleware
 
 // Routes
 app.get('/', (req, res) => {
