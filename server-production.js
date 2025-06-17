@@ -44,20 +44,7 @@ process.on('unhandledRejection', (reason, promise) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
-            scriptSrcAttr: ["'unsafe-inline'"], // CRITICAL: Allow inline event handlers like onclick
-            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
-            imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https:"],
-            fontSrc: ["'self'", "https:", "data:"],
-            objectSrc: ["'none'"],
-            mediaSrc: ["'self'"],
-            frameSrc: ["'self'"],
-        },
-    },
+    contentSecurityPolicy: false, // EMERGENCY: Disable CSP completely to fix buttons
 }));
 app.use(cors());
 
