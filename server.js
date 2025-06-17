@@ -253,12 +253,20 @@ app.use(security.securityHeaders());
 // app.use('/api/', limiter);
 
 // New endpoint-specific rate limiting
+console.log('🔧 Setting up rate limiting...');
+console.log('   - rateLimiter available:', !!rateLimiter);
+console.log('   - rateLimiter.getMiddleware available:', !!rateLimiter?.getMiddleware);
 app.use('/api/auth/login', rateLimiter.getMiddleware('login'));
 app.use('/api/auth/register', rateLimiter.compound('login', 'public'));
 app.use('/api/auth/forgot-password', rateLimiter.getMiddleware('passwordReset'));
 app.use('/api/auth/reset-password', rateLimiter.getMiddleware('passwordReset'));
 app.use('/api/keys', rateLimiter.getMiddleware('apiKeyCreation'));
-app.use('/api/v1/authorize', rateLimiter.getMiddleware('paymentAuth'));
+try {
+    app.use('/api/v1/authorize', rateLimiter.getMiddleware('paymentAuth'));
+    console.log('✅ Rate limiting for /api/v1/authorize set up successfully');
+} catch (error) {
+    console.error('❌ Rate limiting setup failed for /api/v1/authorize:', error);
+}
 app.use('/api/webhook', rateLimiter.getMiddleware('webhook'));
 app.use('/api/', rateLimiter.getMiddleware('api'));
 
@@ -311,9 +319,23 @@ app.use(CSRFProtection.validateRequest());
 app.get('/api/csrf-token', CSRFProtection.getTokenEndpoint());
 
 // API Routes (after CSRF but exempted from validation)
-app.use('/api/v1/authorize', authorizeRoutes);
+console.log('🔧 Mounting API routes...');
+console.log('   - authorizeRoutes type:', typeof authorizeRoutes);
+console.log('   - authorizeRoutes methods:', Object.getOwnPropertyNames(authorizeRoutes));
+app.use('/api/v1/authorize', (req, res, next) => {
+    console.log(`🔍 AUTHORIZE REQUEST: ${req.method} ${req.path} from ${req.ip}`);
+    next();
+}, authorizeRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/keys', apiKeyRoutes);
+console.log('✅ API routes mounted successfully');
+
+// Test if routes are actually mounted
+app._router.stack.forEach((middleware, index) => {
+    if (middleware.regexp.source.includes('authorize')) {
+        console.log(`📍 Found authorize route at index ${index}:`, middleware.regexp.source);
+    }
+});
 
 // Static files (with security headers)
 app.use(express.static('public', {
