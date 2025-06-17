@@ -266,9 +266,29 @@ class ProductionDatabase {
 
     async validateApiKey(apiKey) {
         const startTime = Date.now();
+        this.performanceMetrics.totalQueries++;
         
         try {
-            // ⚡ ULTRA-FAST: Minimal query with only required fields
+            // ⚡ STEP 1: Check cache first (instant lookup)
+            const cacheKey = `key:${apiKey}`;
+            const cached = this.apiKeyCache.get(cacheKey);
+            
+            if (cached && (Date.now() - cached.timestamp) < this.cacheTimeout) {
+                this.performanceMetrics.cacheHits++;
+                const latency = Date.now() - startTime;
+                
+                return {
+                    ...cached.data,
+                    __performance: {
+                        latency: `${latency}ms`,
+                        cached: true,
+                        cacheAge: `${Date.now() - cached.timestamp}ms`
+                    }
+                };
+            }
+            
+            // ⚡ STEP 2: Cache miss - query database with minimal data
+            this.performanceMetrics.cacheMisses++;
             const keyData = await this.prisma.apiKey.findUnique({
                 where: { key: apiKey },
                 select: {
@@ -281,41 +301,101 @@ class ProductionDatabase {
                             id: true,
                             email: true,
                             name: true,
-                            emailVerified: true
+                            emailVerified: true,
+                            subscriptionPlan: true,
+                            subscriptionStatus: true,
+                            createdAt: true
                         }
                     }
                 }
             });
             
-            // ⚡ INSTANT RETURN - No logging overhead
+            // ⚡ INSTANT RETURN for invalid keys
             if (!keyData || !keyData.isActive) {
                 return null;
             }
 
-            const latency = Date.now() - startTime;
+            // ⚡ CREATE TENANT OBJECT from user subscription data
+            const user = keyData.user;
+            const isVerified = user.emailVerified;
+            const planLimits = {
+                sandbox: { transaction: 10000, daily: 50000 }, // $100 transaction, $500 daily
+                builder: { transaction: 100000, daily: 500000 }, // $1000 transaction, $5000 daily
+                team: { transaction: 1000000, daily: 5000000 } // $10000 transaction, $50000 daily
+            };
             
-            // ⚡ SKIP USAGE UPDATE for maximum speed (can track separately)
+            const plan = user.subscriptionPlan || 'sandbox';
+            const limits = planLimits[plan] || planLimits.sandbox;
             
-            return {
+            const mockTenant = {
+                id: user.id, // Use user ID as tenant ID
+                name: user.name || user.email,
+                plan: plan,
+                createdAt: user.createdAt,
+                settings: {
+                    transactionLimit: isVerified ? limits.transaction : 5000, // $50 unverified
+                    dailyLimit: isVerified ? limits.daily : 20000, // $200 unverified  
+                    riskLevel: isVerified ? 'trusted' : 'new',
+                    velocityCap: isVerified ? 100 : 10
+                },
+                usage: {
+                    dailySpent: 0, // TODO: Calculate from today's transactions
+                    dailyAuthCount: 0 // TODO: Calculate from today's authorizations
+                }
+            };
+
+            const result = {
                 keyId: keyData.id,
                 userId: keyData.userId,
                 user: {
-                    id: keyData.user.id,
-                    email: keyData.user.email,
-                    name: keyData.user.name,
-                    emailVerified: keyData.user.emailVerified
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    emailVerified: user.emailVerified
                 },
-                permissions: keyData.permissions ? keyData.permissions.split(',') : [],
+                tenant: mockTenant,
+                permissions: keyData.permissions ? keyData.permissions.split(',') : []
+            };
+            
+            // ⚡ STEP 3: Cache the result for future requests
+            this.apiKeyCache.set(cacheKey, {
+                data: result,
+                timestamp: Date.now()
+            });
+            
+            const latency = Date.now() - startTime;
+            this.updateAverageLatency(latency);
+            
+            return {
+                ...result,
                 __performance: {
                     latency: `${latency}ms`,
+                    cached: false,
                     ultraOptimized: true
                 }
             };
             
         } catch (error) {
-            // ⚡ MINIMAL ERROR HANDLING
+            // ⚡ MINIMAL ERROR HANDLING - no logging in production
             return null;
         }
+    }
+    
+    // ⚡ Performance tracking
+    updateAverageLatency(latency) {
+        const current = this.performanceMetrics.averageLatency;
+        const count = this.performanceMetrics.totalQueries;
+        this.performanceMetrics.averageLatency = ((current * (count - 1)) + latency) / count;
+    }
+    
+    getPerformanceMetrics() {
+        const hitRate = ((this.performanceMetrics.cacheHits / this.performanceMetrics.totalQueries) * 100).toFixed(1);
+        return {
+            ...this.performanceMetrics,
+            cacheHitRate: `${hitRate}%`,
+            averageLatency: `${this.performanceMetrics.averageLatency.toFixed(1)}ms`,
+            cacheSize: this.apiKeyCache.size
+        };
     }
 
     // Email Verification
