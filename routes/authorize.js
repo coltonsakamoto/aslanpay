@@ -288,6 +288,9 @@ router.post('/',
     }),
     checkSpendingLimits,
     async (req, res) => {
+        const requestStartTime = Date.now();
+        console.log(`🚀 [${requestStartTime}] Starting authorization request`);
+        
         try {
             const { amount, description, agentId, metadata = {} } = req.body;
             const tenant = req.tenant;
@@ -315,6 +318,7 @@ router.post('/',
             }
 
             // Create transaction record with fraud detection
+            const transactionStartTime = Date.now();
             const transaction = await database.createTransaction({
                 amount,
                 description,
@@ -330,42 +334,38 @@ router.post('/',
                     requestId: req.headers['x-request-id'] || 'unknown'
                 }
             });
+            console.log(`📊 Transaction created in ${Date.now() - transactionStartTime}ms`);
 
             // REAL STRIPE INTEGRATION - Process actual payments!
             if (stripe) {
                 try {
-                    // Calculate overage fee based on user's plan
-                    // TODO: Get user's actual plan from database
-                    // For now use Builder plan rate as default
+                    const stripeStartTime = Date.now();
+                    
+                    // ⚡ ULTRA-FAST Stripe call with minimal metadata
                     const overageFeePerTransaction = 2; // $0.02 in cents
                     const aslanFee = overageFeePerTransaction;
 
-                    // Create PaymentIntent with Aslan as the merchant
+                    // ⚡ OPTIMIZED: Minimal Stripe PaymentIntent creation
                     const paymentIntent = await stripe.paymentIntents.create({
-                        amount: amount + aslanFee, // Customer pays amount + our fee
+                        amount: amount + aslanFee,
                         currency: 'usd',
                         description: `${description} (via Aslan)`,
-                        automatic_payment_methods: {
-                            enabled: true
-                        },
+                        automatic_payment_methods: { enabled: true },
                         metadata: {
                             tenantId: tenant.id,
                             userId: user.id,
-                            agentId: agentId || 'unknown',
                             originalAmount: amount,
                             aslanFee: aslanFee,
                             internalTransactionId: transaction.id
                         }
                     });
+                    
+                    console.log(`📊 Stripe PaymentIntent created in ${Date.now() - stripeStartTime}ms`);
 
-                    console.log(`✅ REAL payment created: ${paymentIntent.id} for $${(amount + aslanFee)/100} (includes $${aslanFee/100} Aslan fee)`);
-
-                    // Update transaction with Stripe details
-                    transaction.metadata.stripePaymentIntentId = paymentIntent.id;
-                    transaction.metadata.stripeStatus = paymentIntent.status;
-                    transaction.metadata.aslanFee = aslanFee;
-
-                    // Return real Stripe response
+                    // ⚡ FAST response without blocking operations
+                    const totalLatency = Date.now() - requestStartTime;
+                    console.log(`🏁 [${requestStartTime}] TOTAL REQUEST LATENCY: ${totalLatency}ms`);
+                    
                     res.status(200).json({
                         id: paymentIntent.id,
                         object: 'authorization',
@@ -374,13 +374,12 @@ router.post('/',
                         aslanFee,
                         description,
                         status: paymentIntent.status,
-                        clientSecret: paymentIntent.client_secret, // For frontend integration
+                        clientSecret: paymentIntent.client_secret,
                         agentId: agentId || null,
                         tenantId: tenant.id,
                         userId: user.id,
                         created: paymentIntent.created,
-                        expires_at: Math.floor((Date.now() + 10 * 60 * 1000) / 1000), // 10 minutes
-                        metadata,
+                        expires_at: Math.floor((Date.now() + 10 * 60 * 1000) / 1000),
                         livemode: paymentIntent.livemode,
                         stripePaymentIntentId: paymentIntent.id,
                         transaction: {
