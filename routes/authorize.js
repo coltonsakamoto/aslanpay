@@ -125,7 +125,7 @@ const authenticateApiKey = async (req, res, next) => {
         // Validate API key and get tenant context
         const keyValidation = await database.validateApiKey(apiKey);
         
-        if (!keyValidation) {
+        if (!keyValidation || !keyValidation.valid) {
             return res.status(401).json(createErrorResponse(
                 'INVALID_API_KEY',
                 ERROR_RESPONSES.INVALID_API_KEY.message,

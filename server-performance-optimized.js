@@ -38,15 +38,19 @@ const path = require('path');
 
 // NOTE: Middleware moved to top of file
 
-// PERFORMANCE: Load database optimized
+// ⚡ PERFORMANCE: Lazy load database - don't block startup
 let database;
-try {
-    // Use production database if available, otherwise fallback
-    database = require('./database-production.js');
-    console.log('✅ Using optimized production database');
-} catch (error) {
-    console.log('⚠️ Production DB unavailable, using config database');
-    database = require('./config/database');
+function getDatabase() {
+    if (!database) {
+        try {
+            database = require('./database-production.js');
+            console.log('✅ Using optimized production database');
+        } catch (error) {
+            console.log('⚠️ Production DB unavailable, using config database');
+            database = require('./config/database');
+        }
+    }
+    return database;
 }
 
 // PERFORMANCE: Cached API key validation
@@ -63,7 +67,8 @@ async function validateApiKeyFast(apiKey) {
     // Fast database lookup
     const startTime = Date.now();
     try {
-        const result = await database.validateApiKey(apiKey);
+        const db = getDatabase();
+        const result = await db.validateApiKey(apiKey);
         const latency = Date.now() - startTime;
         
         // FIX: Ensure we always return a proper object
@@ -80,10 +85,13 @@ async function validateApiKeyFast(apiKey) {
             });
         }
         
-        console.log(`🔑 API key validation: ${latency}ms`);
+        // ⚡ PERFORMANCE: Reduced logging (only log slow queries)
+        if (latency > 100) {
+            console.log(`🔑 API key validation: ${latency}ms`);
+        }
         return result;
     } catch (error) {
-        console.error('❌ API key validation failed:', error.message);
+        // ⚡ PERFORMANCE: Minimal error logging
         return { valid: false, error: error.message };
     }
 }
@@ -139,101 +147,79 @@ console.log('🚀 PERFORMANCE-OPTIMIZED API routes mounted');
 
 // NOTE: Middleware already loaded at top
 
-// CRITICAL: Load ALL routes with proper error handling
-let authRoutes, apiKeyRoutes, authorizeRoutes;
-try {
-    authRoutes = require('./routes/auth');
-    console.log('✅ Auth routes loaded');
-} catch (error) {
-    console.error('❌ Failed to load auth routes:', error.message);
-    authRoutes = require('express').Router();
+// ⚡ PERFORMANCE: Lazy load routes - only load when needed
+const routeCache = new Map();
+
+function lazyLoadRoute(routePath) {
+    if (routeCache.has(routePath)) {
+        return routeCache.get(routePath);
+    }
+    
+    try {
+        const route = require(routePath);
+        routeCache.set(routePath, route);
+        return route;
+    } catch (error) {
+        console.error(`Failed to load ${routePath}:`, error.message);
+        const fallbackRouter = require('express').Router();
+        fallbackRouter.all('*', (req, res) => {
+            res.status(503).json({ error: 'Service temporarily unavailable' });
+        });
+        routeCache.set(routePath, fallbackRouter);
+        return fallbackRouter;
+    }
 }
 
-try {
-    apiKeyRoutes = require('./routes/api-keys');
-    console.log('✅ API key routes loaded');
-} catch (error) {
-    console.error('❌ Failed to load API key routes:', error.message);
-    apiKeyRoutes = require('express').Router();
-}
-
-try {
-    authorizeRoutes = require('./routes/authorize');
-    console.log('✅ Authorize routes loaded');
-} catch (error) {
-    console.error('❌ Failed to load authorize routes:', error.message);
-    authorizeRoutes = require('express').Router();
-}
-
-// CRITICAL: Add session middleware for auth routes
+// ⚡ PERFORMANCE: Minimal session middleware only for auth routes
 const session = require('express-session');
-const cookieParser = require('cookie-parser');
 
-app.use('/api/auth', cookieParser());
+// Mount essential routes with lazy loading
+app.use('/api/v1', (req, res, next) => {
+    const authorizeRoutes = lazyLoadRoute('./routes/authorize');
+    authorizeRoutes(req, res, next);
+});
+
 app.use('/api/auth', session({
     secret: process.env.SESSION_SECRET || 'demo-secret',
     resave: false,
     saveUninitialized: false,
-    cookie: {
-        secure: false, // Allow HTTP for now
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000
-    }
-}));
+    cookie: { secure: false, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }
+}), (req, res, next) => {
+    const authRoutes = lazyLoadRoute('./routes/auth');
+    authRoutes(req, res, next);
+});
 
-// Mount ALL essential routes
-app.use('/api/auth', authRoutes);
-app.use('/api/keys', apiKeyRoutes);
-app.use('/api/v1', authorizeRoutes);
+app.use('/api/keys', (req, res, next) => {
+    const apiKeyRoutes = lazyLoadRoute('./routes/api-keys');
+    apiKeyRoutes(req, res, next);
+});
 
-console.log('✅ ALL ROUTES MOUNTED - Auth, API keys, Authorize');
+console.log('✅ PERFORMANCE-OPTIMIZED routes configured');
 
-// Static files
+// ⚡ PERFORMANCE: Optimized static files with aggressive caching
 app.use(express.static('public', {
-    maxAge: '1d', // Shorter cache for demo
-    setHeaders: (res, path) => {
-        if (path.endsWith('.html')) {
-            res.setHeader('Cache-Control', 'no-cache');
-        }
-    }
+    maxAge: '1h',
+    etag: false,
+    lastModified: false,
+    index: false // Disable directory indexing for speed
 }));
 
-// Routes
-app.get('/', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    } catch (error) {
-        res.json({ message: 'AslanPay Home - File Error', error: error.message });
-    }
-});
+// ⚡ PERFORMANCE: Minimal route handlers for better latency
+const staticRoutes = ['/', '/demo', '/auth', '/pricing', '/dashboard', '/api', '/docs'];
+const staticFiles = {
+    '/': 'index.html',
+    '/demo': 'demo.html', 
+    '/auth': 'auth.html',
+    '/pricing': 'pricing.html',
+    '/dashboard': 'dashboard.html',
+    '/api': 'api.html',
+    '/docs': 'docs.html'
+};
 
-app.get('/demo', (req, res) => {
-    try {
-        res.sendFile(path.join(__dirname, 'public', 'demo.html'));
-    } catch (error) {
-        res.json({ message: 'AslanPay Demo - File Error', error: error.message });
-    }
-});
-
-// ESSENTIAL ROUTES FOR SIGN-IN/AUTH
-app.get('/auth', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'auth.html'));
-});
-
-app.get('/pricing', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'pricing.html'));
-});
-
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
-});
-
-app.get('/api', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'api.html'));
-});
-
-app.get('/docs', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'docs.html'));
+staticRoutes.forEach(route => {
+    app.get(route, (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', staticFiles[route]));
+    });
 });
 
 // Enhanced status endpoint with performance metrics

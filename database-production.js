@@ -312,7 +312,7 @@ class ProductionDatabase {
             
             // ⚡ INSTANT RETURN for invalid keys
             if (!keyData || !keyData.isActive) {
-                return null;
+                return { valid: false, error: 'API key not found or inactive' };
             }
 
             // ⚡ CREATE TENANT OBJECT from user subscription data (this is what authorize route expects!)
@@ -345,6 +345,7 @@ class ProductionDatabase {
             };
 
             const result = {
+                valid: true,
                 keyId: keyData.id,
                 userId: keyData.userId,
                 user: {
@@ -377,7 +378,7 @@ class ProductionDatabase {
             
         } catch (error) {
             // ⚡ MINIMAL ERROR HANDLING - no logging in production
-            return null;
+            return { valid: false, error: 'Database validation failed' };
         }
     }
     
