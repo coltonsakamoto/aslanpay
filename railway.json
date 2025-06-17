@@ -6,8 +6,13 @@
   "deploy": {
     "startCommand": "npm start",
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3,
+    "restartPolicyMaxRetries": 10,
     "healthcheckPath": "/health",
-    "healthcheckTimeout": 60
+    "healthcheckTimeout": 30,
+    "healthcheckInterval": 10
+  },
+  "variables": {
+    "NODE_ENV": "production",
+    "PORT": "$PORT"
   }
 } 
