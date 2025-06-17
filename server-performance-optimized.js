@@ -97,8 +97,17 @@ function validateApiKeyMiddleware(req, res, next) {
 
     validateApiKeyFast(apiKey)
         .then(result => {
-            // FIX: Handle null/undefined result properly
-            if (!result || !result.valid) {
+            // BULLETPROOF: Complete null safety
+            if (!result) {
+                console.error('❌ Null result from validateApiKeyFast');
+                return res.status(401).json({ 
+                    error: 'API key validation failed',
+                    latency: (Date.now() - startTime) + 'ms'
+                });
+            }
+            
+            if (!result.valid) {
+                console.log('🔑 Invalid API key result');
                 return res.status(401).json({ 
                     error: 'Invalid API key',
                     latency: (Date.now() - startTime) + 'ms'
@@ -261,13 +270,43 @@ app.use(express.static('public', {
     }
 }));
 
+// BULLETPROOF: Emergency demo endpoint (no API key required)
+app.post('/api/v1/authorize-demo', (req, res) => {
+    const startTime = Date.now();
+    try {
+        res.json({
+            approved: true,
+            amount: req.body.amount || 10,
+            service: req.body.service || 'demo',
+            approvalId: 'demo_' + Date.now(),
+            latency: (Date.now() - startTime) + 'ms',
+            message: 'DEMO_ENDPOINT_WORKING',
+            timestamp: Date.now()
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: 'Demo endpoint error',
+            message: error.message,
+            latency: (Date.now() - startTime) + 'ms'
+        });
+    }
+});
+
 // Routes
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    } catch (error) {
+        res.json({ message: 'AslanPay Home - File Error', error: error.message });
+    }
 });
 
 app.get('/demo', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+    try {
+        res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+    } catch (error) {
+        res.json({ message: 'AslanPay Demo - File Error', error: error.message });
+    }
 });
 
 // Enhanced status endpoint with performance metrics
