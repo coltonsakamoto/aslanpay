@@ -2,13 +2,14 @@ const express = require('express');
 const router = express.Router();
 const database = require('../database-production.js');
 
-// Import the working validateSession from the main server
+// Use the validateSession from server-production.js by requiring it through middleware
 const jwt = require('jsonwebtoken');
 
 function getJWTSecret() {
     return process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 }
 
+// Simple validateSession that matches server-production.js exactly
 async function validateSession(req, res, next) {
     const token = req.cookies?.agentpay_session;
     if (!token) {
@@ -34,8 +35,6 @@ async function validateSession(req, res, next) {
         return res.status(401).json({ error: 'Invalid session', code: 'INVALID_SESSION' });
     }
 }
-
-const SecureRandom = require('../utils/secure-random');
 
 // Helper function to mask API keys
 function maskApiKey(key) {
