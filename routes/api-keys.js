@@ -2,39 +2,8 @@ const express = require('express');
 const router = express.Router();
 const database = require('../database-production.js');
 
-// Use the validateSession from server-production.js by requiring it through middleware
-const jwt = require('jsonwebtoken');
-
-function getJWTSecret() {
-    return process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
-}
-
-// Simple validateSession that matches server-production.js exactly
-async function validateSession(req, res, next) {
-    const token = req.cookies?.agentpay_session;
-    if (!token) {
-        return res.status(401).json({ error: 'No session token', code: 'NO_SESSION' });
-    }
-    
-    try {
-        const decoded = jwt.verify(token, getJWTSecret());
-        const session = await database.getSession(decoded.sessionId);
-        if (!session) {
-            return res.status(401).json({ error: 'Session expired', code: 'SESSION_EXPIRED' });
-        }
-        
-        const user = await database.getUserById(session.userId);
-        if (!user) {
-            return res.status(401).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
-        }
-        
-        req.session = session;
-        req.user = user;
-        next();
-    } catch (error) {
-        return res.status(401).json({ error: 'Invalid session', code: 'INVALID_SESSION' });
-    }
-}
+// Import validateSession from middleware (which should work with production database)
+const { validateSession } = require('../middleware/auth');
 
 // Helper function to mask API keys
 function maskApiKey(key) {
