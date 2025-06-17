@@ -59,6 +59,12 @@ async function validateApiKeyFast(apiKey) {
         const result = await database.validateApiKey(apiKey);
         const latency = Date.now() - startTime;
         
+        // FIX: Ensure we always return a proper object
+        if (!result) {
+            console.log(`🔑 API key validation: ${latency}ms - null result`);
+            return { valid: false, error: 'API key not found' };
+        }
+        
         // Cache successful results
         if (result && result.valid) {
             apiKeyCache.set(apiKey, {
@@ -91,7 +97,8 @@ function validateApiKeyMiddleware(req, res, next) {
 
     validateApiKeyFast(apiKey)
         .then(result => {
-            if (!result.valid) {
+            // FIX: Handle null/undefined result properly
+            if (!result || !result.valid) {
                 return res.status(401).json({ 
                     error: 'Invalid API key',
                     latency: (Date.now() - startTime) + 'ms'
