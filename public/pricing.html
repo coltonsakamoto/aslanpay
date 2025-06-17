@@ -28,293 +28,325 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
     <meta name="theme-color" content="#daa520">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'aslan-orange': '#daa520',
-                        'aslan-gold': '#b8860b',
-                        'aslan-dark': '#1a1a1a',
-                        'aslan-gray': '#6B7280'
+                        'primary': '#FF6B35',
+                        'primary-dark': '#E55A2B',
+                        'secondary': '#F7931E',
+                        'neutral-950': '#0A0A0A',
+                        'neutral-900': '#1A1A1A',
+                        'neutral-800': '#2A2A2A',
+                        'neutral-700': '#3A3A3A',
+                        'neutral-600': '#525252',
+                        'neutral-500': '#737373',
+                        'neutral-400': '#A3A3A3',
+                        'neutral-300': '#D4D4D4',
+                        'neutral-200': '#E5E5E5',
+                        'neutral-100': '#F5F5F5',
+                        'neutral-50': '#FAFAFA'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
                     }
                 }
             }
         }
     </script>
+    
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glass-effect {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .shadow-soft {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        .shadow-elegant {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+    </style>
 </head>
-<body class="bg-white">
+<body class="bg-white font-sans antialiased">
     <!-- Navigation -->
-    <nav class="border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
+    <nav class="sticky top-0 z-50 glass-effect border-b border-neutral-200/60">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <span class="text-neutral-900 font-bold text-xl tracking-tight">ASLAN</span>
                 </div>
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
-                    <a href="/docs" class="text-aslan-gray hover:text-aslan-dark transition-colors">Documentation</a>
-                    <a href="/api" class="text-aslan-gray hover:text-aslan-dark transition-colors">API</a>
-                    <a href="/comparison" class="text-aslan-gray hover:text-aslan-dark transition-colors">vs Stripe</a>
-                    <a href="/pricing" class="text-aslan-orange font-medium">Pricing</a>
-                    <a href="/security" class="text-aslan-gray hover:text-aslan-dark transition-colors">Security</a>
-                    <a href="/auth" class="text-aslan-gray hover:text-aslan-dark transition-colors">Sign In</a>
-                    <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-aslan-gold transition-colors">
-                        Try Demo
-                    </a>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden lg:flex items-center space-x-8">
+                    <a href="/" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Home</a>
+                    <a href="#features" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Features</a>
+                    <a href="/docs" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Documentation</a>
+                    <a href="/api" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">API</a>
+                    <a href="/comparison" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Compare</a>
+                    <a href="/pricing" class="text-primary font-semibold text-sm">Pricing</a>
+                    <a href="/security" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Security</a>
+                    
+                    <div class="flex items-center space-x-4">
+                        <a href="/auth" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Sign In</a>
+                        <a href="/demo" class="gradient-bg text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-soft">
+                            Try Demo
+                        </a>
+                    </div>
                 </div>
+                
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="pt-16 pb-12">
-        <div class="max-w-4xl mx-auto px-6 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold text-aslan-dark mb-4">
+    <section class="pt-20 pb-16 lg:pt-32 lg:pb-24">
+        <div class="max-w-5xl mx-auto px-6 lg:px-8 text-center">
+            <h1 class="text-4xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-tight">
                 Simple, transparent pricing
             </h1>
-            <p class="text-xl text-aslan-gray mb-8">
+            <p class="text-xl text-neutral-600 mb-8 leading-relaxed max-w-3xl mx-auto">
                 Pay only for successful AI agent authorizations. Start free, scale as you grow.
             </p>
         </div>
     </section>
 
     <!-- Pricing Cards -->
-    <section class="pb-20">
-        <div class="max-w-7xl mx-auto px-6">
+    <section class="pb-20 lg:pb-32">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
             <div class="grid lg:grid-cols-4 gap-8">
-                <!-- Sandbox Plan (Improved) -->
-                <div class="bg-white rounded-xl border border-gray-200 p-8 relative">
+                <!-- Sandbox Plan -->
+                <div class="bg-white rounded-2xl border border-neutral-200 p-8 shadow-soft hover:shadow-elegant transition-shadow">
                     <div class="mb-8">
-                        <h3 class="text-2xl font-bold text-aslan-dark mb-2">Sandbox</h3>
-                        <p class="text-aslan-gray mb-4">Perfect for testing and prototyping</p>
+                        <h3 class="text-2xl font-bold text-neutral-900 mb-2">Sandbox</h3>
+                        <p class="text-neutral-600 mb-6">Perfect for testing and prototyping</p>
                         <div class="mb-4">
-                            <span class="text-4xl font-bold text-aslan-dark">$0</span>
-                            <span class="text-aslan-gray">/month</span>
+                            <span class="text-4xl font-bold text-neutral-900">$0</span>
+                            <span class="text-neutral-500">/month</span>
                         </div>
-                        <div class="text-sm text-aslan-gray">
+                        <div class="text-sm text-neutral-500">
                             750 authorizations included
                         </div>
                     </div>
                     
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">750 successful authorizations/month</span>
+                            <span class="text-neutral-700">750 successful authorizations/month</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">$0.05 per auth after quota</span>
+                            <span class="text-neutral-700">$0.05 per auth after quota</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Test & production environments</span>
+                            <span class="text-neutral-700">Test & production environments</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Community support</span>
+                            <span class="text-neutral-700">Community support</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">All AI spending controls</span>
-                        </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <span class="text-aslan-dark">Perfect for side projects & MVPs</span>
+                            <span class="text-neutral-700">All AI spending controls</span>
                         </li>
                     </ul>
                     
-                    <a href="/auth?plan=sandbox" class="w-full bg-gray-100 text-aslan-dark py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors text-center block">
+                    <a href="/auth?plan=sandbox" class="w-full bg-neutral-100 text-neutral-900 py-3 px-4 rounded-xl font-semibold hover:bg-neutral-200 transition-colors text-center block">
                         Create Free Account
                     </a>
                 </div>
 
-                <!-- Starter Plan (NEW!) -->
-                <div class="bg-white rounded-xl border border-gray-200 p-8 relative">
+                <!-- Starter Plan -->
+                <div class="bg-white rounded-2xl border border-neutral-200 p-8 shadow-soft hover:shadow-elegant transition-shadow">
                     <div class="mb-8">
-                        <h3 class="text-2xl font-bold text-aslan-dark mb-2">Starter</h3>
-                        <p class="text-aslan-gray mb-4">For individual developers and small agents</p>
+                        <h3 class="text-2xl font-bold text-neutral-900 mb-2">Starter</h3>
+                        <p class="text-neutral-600 mb-6">For individual developers and small agents</p>
                         <div class="mb-4">
-                            <span class="text-4xl font-bold text-aslan-dark">$29</span>
-                            <span class="text-aslan-gray">/month</span>
+                            <span class="text-4xl font-bold text-neutral-900">$29</span>
+                            <span class="text-neutral-500">/month</span>
                         </div>
-                        <div class="text-sm text-aslan-gray">
+                        <div class="text-sm text-neutral-500">
                             3,000 authorizations included
                         </div>
                     </div>
                     
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">3,000 successful authorizations/month</span>
+                            <span class="text-neutral-700">3,000 successful authorizations/month</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">$0.03 per auth after quota</span>
+                            <span class="text-neutral-700">$0.03 per auth after quota</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Production environment</span>
+                            <span class="text-neutral-700">Production environment</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Email support</span>
+                            <span class="text-neutral-700">Email support</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Advanced spending controls</span>
-                        </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <span class="text-aslan-dark">Real-time analytics</span>
+                            <span class="text-neutral-700">Advanced spending controls</span>
                         </li>
                     </ul>
                     
-                    <button onclick="startStripeCheckout('starter')" class="w-full bg-aslan-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-aslan-gold transition-colors text-center block">
-                        Start Free Trial - $29/month
+                    <button onclick="startStripeCheckout('starter')" class="w-full gradient-bg text-white py-3 px-4 rounded-xl font-semibold hover:opacity-90 transition-opacity text-center shadow-soft">
+                        Start Free Trial
                     </button>
                 </div>
 
-                <!-- Builder Plan (Updated) -->
-                <div class="bg-white rounded-xl border-2 border-aslan-orange p-8 relative">
+                <!-- Builder Plan (Most Popular) -->
+                <div class="bg-white rounded-2xl border-2 border-primary p-8 shadow-elegant relative">
                     <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                        <span class="bg-aslan-orange text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                        <span class="gradient-bg text-white px-4 py-1 rounded-full text-sm font-semibold">Most Popular</span>
                     </div>
                     
                     <div class="mb-8">
-                        <h3 class="text-2xl font-bold text-aslan-dark mb-2">Builder</h3>
-                        <p class="text-aslan-gray mb-4">For growing businesses and multiple agents</p>
+                        <h3 class="text-2xl font-bold text-neutral-900 mb-2">Builder</h3>
+                        <p class="text-neutral-600 mb-6">For growing businesses and multiple agents</p>
                         <div class="mb-4">
-                            <span class="text-4xl font-bold text-aslan-dark">$129</span>
-                            <span class="text-aslan-gray">/month</span>
+                            <span class="text-4xl font-bold text-neutral-900">$129</span>
+                            <span class="text-neutral-500">/month</span>
                         </div>
-                        <div class="text-sm text-aslan-gray">
+                        <div class="text-sm text-neutral-500">
                             12,000 authorizations included
                         </div>
                     </div>
                     
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">12,000 successful authorizations/month</span>
+                            <span class="text-neutral-700">12,000 successful authorizations/month</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">$0.02 per auth after quota</span>
+                            <span class="text-neutral-700">$0.02 per auth after quota</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Multiple environments</span>
+                            <span class="text-neutral-700">Multiple environments</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Priority support</span>
+                            <span class="text-neutral-700">Priority support</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Multi-agent management</span>
-                        </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <span class="text-aslan-dark">Advanced analytics</span>
+                            <span class="text-neutral-700">Multi-agent management</span>
                         </li>
                     </ul>
                     
-                    <button onclick="startStripeCheckout('builder')" class="w-full bg-aslan-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-aslan-gold transition-colors text-center block">
-                        Start Free Trial - $129/month
+                    <button onclick="startStripeCheckout('builder')" class="w-full gradient-bg text-white py-3 px-4 rounded-xl font-semibold hover:opacity-90 transition-opacity text-center shadow-elegant">
+                        Start Free Trial
                     </button>
                 </div>
 
-                <!-- Enterprise Plan (Updated) -->
-                <div class="bg-gray-50 rounded-xl border border-gray-200 p-8 relative">
+                <!-- Enterprise Plan -->
+                <div class="bg-neutral-50 rounded-2xl border border-neutral-200 p-8 shadow-soft hover:shadow-elegant transition-shadow">
                     <div class="mb-8">
-                        <h3 class="text-2xl font-bold text-aslan-dark mb-2">Enterprise</h3>
-                        <p class="text-aslan-gray mb-4">For large organizations with custom needs</p>
+                        <h3 class="text-2xl font-bold text-neutral-900 mb-2">Enterprise</h3>
+                        <p class="text-neutral-600 mb-6">For large organizations with custom needs</p>
                         <div class="mb-4">
-                            <span class="text-4xl font-bold text-aslan-dark">Custom</span>
+                            <span class="text-4xl font-bold text-neutral-900">Custom</span>
                         </div>
-                        <div class="text-sm text-aslan-gray">
+                        <div class="text-sm text-neutral-500">
                             Starting at $1,000/month minimum
                         </div>
                     </div>
                     
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Custom authorization quotas</span>
+                            <span class="text-neutral-700">Custom authorization quotas</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">$0.005-0.01 per auth (tiered pricing)</span>
+                            <span class="text-neutral-700">$0.005-0.01 per auth (tiered pricing)</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Dedicated infrastructure</span>
+                            <span class="text-neutral-700">Dedicated infrastructure</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">24/7 dedicated support</span>
+                            <span class="text-neutral-700">24/7 dedicated support</span>
                         </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li class="flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-aslan-dark">Custom integrations</span>
-                        </li>
-                        <li class="flex items-center space-x-3">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <span class="text-aslan-dark">SLA guarantees</span>
+                            <span class="text-neutral-700">Custom integrations</span>
                         </li>
                     </ul>
                     
-                    <a href="mailto:support@aslanpay.xyz?subject=Enterprise Plan Inquiry&body=Hi! I'm interested in learning more about the Enterprise plan for Aslan." class="w-full bg-aslan-dark text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors text-center block">
+                    <a href="mailto:support@aslanpay.xyz?subject=Enterprise Plan Inquiry&body=Hi! I'm interested in learning more about the Enterprise plan for Aslan." class="w-full bg-neutral-900 text-white py-3 px-4 rounded-xl font-semibold hover:bg-neutral-800 transition-colors text-center block">
                         Contact Sales
                     </a>
                 </div>
@@ -323,120 +355,122 @@
     </section>
 
     <!-- FAQ Section -->
-    <section class="py-20 bg-gray-50">
-        <div class="max-w-4xl mx-auto px-6">
-            <h2 class="text-3xl font-bold text-aslan-dark text-center mb-12">Frequently asked questions</h2>
+    <section class="py-20 lg:py-32 bg-neutral-50">
+        <div class="max-w-4xl mx-auto px-6 lg:px-8">
+            <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 text-center mb-16">Frequently asked questions</h2>
             
             <div class="space-y-8">
-                <div>
-                    <h3 class="text-lg font-semibold text-aslan-dark mb-2">How does Aslan compare to Stripe for small agents?</h3>
-                    <p class="text-aslan-gray">For small agents (750-3000 transactions/month), Aslan costs ~$0.01-0.04 per transaction vs Stripe's ~$0.30-0.82. You get 750 FREE transactions monthly with Sandbox, then just $29/month for 3,000 more. AI-specific controls, spending limits, and multi-agent management that Stripe doesn't offer.</p>
+                <div class="bg-white rounded-2xl p-8 shadow-soft">
+                    <h3 class="text-xl font-bold text-neutral-900 mb-4">How does Aslan compare to Stripe for small agents?</h3>
+                    <p class="text-neutral-600 leading-relaxed">For small agents (750-3000 transactions/month), Aslan costs ~$0.01-0.04 per transaction vs Stripe's ~$0.30-0.82. You get 750 FREE transactions monthly with Sandbox, then just $29/month for 3,000 more. AI-specific controls, spending limits, and multi-agent management that Stripe doesn't offer.</p>
                 </div>
                 
-                <div>
-                    <h3 class="text-lg font-semibold text-aslan-dark mb-2">What counts as a successful authorization?</h3>
-                    <p class="text-aslan-gray">A successful authorization is when your AI agent requests permission to spend and our system approves it based on your spending controls. Failed authorizations (due to limits, restrictions, etc.) don't count against your quota.</p>
+                <div class="bg-white rounded-2xl p-8 shadow-soft">
+                    <h3 class="text-xl font-bold text-neutral-900 mb-4">What counts as a successful authorization?</h3>
+                    <p class="text-neutral-600 leading-relaxed">A successful authorization is when your AI agent requests permission to spend and our system approves it based on your spending controls. Failed authorizations (due to limits, restrictions, etc.) don't count against your quota.</p>
                 </div>
                 
-                <div>
-                    <h3 class="text-lg font-semibold text-aslan-dark mb-2">How does overage pricing work?</h3>
-                    <p class="text-aslan-gray">If you exceed your monthly authorization quota, you'll be charged the per-authorization rate ($0.02-0.05 depending on plan). Much cheaper than traditional payment processing for AI agents with frequent small transactions.</p>
+                <div class="bg-white rounded-2xl p-8 shadow-soft">
+                    <h3 class="text-xl font-bold text-neutral-900 mb-4">How does overage pricing work?</h3>
+                    <p class="text-neutral-600 leading-relaxed">If you exceed your monthly authorization quota, you'll be charged the per-authorization rate ($0.02-0.05 depending on plan). Much cheaper than traditional payment processing for AI agents with frequent small transactions.</p>
                 </div>
                 
-                <div>
-                    <h3 class="text-lg font-semibold text-aslan-dark mb-2">Can I change plans anytime?</h3>
-                    <p class="text-aslan-gray">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any billing adjustments. Start with Sandbox (free), upgrade to Starter ($19), then Builder ($79) as you grow.</p>
+                <div class="bg-white rounded-2xl p-8 shadow-soft">
+                    <h3 class="text-xl font-bold text-neutral-900 mb-4">Can I change plans anytime?</h3>
+                    <p class="text-neutral-600 leading-relaxed">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any billing adjustments. Start with Sandbox (free), upgrade to Starter ($29), then Builder ($129) as you grow.</p>
                 </div>
                 
-                <div>
-                    <h3 class="text-lg font-semibold text-aslan-dark mb-2">Is there a free trial?</h3>
-                    <p class="text-aslan-gray">The Sandbox plan is free forever with 750 authorizations per month - enough for real projects! For paid plans, we offer a 14-day free trial with full access to all features. Perfect for testing your AI agents before committing.</p>
+                <div class="bg-white rounded-2xl p-8 shadow-soft">
+                    <h3 class="text-xl font-bold text-neutral-900 mb-4">Is there a free trial?</h3>
+                    <p class="text-neutral-600 leading-relaxed">The Sandbox plan is free forever with 750 authorizations per month - enough for real projects! For paid plans, we offer a 14-day free trial with full access to all features. Perfect for testing your AI agents before committing.</p>
                 </div>
                 
-                <div>
-                    <h3 class="text-lg font-semibold text-aslan-dark mb-2">Why choose Aslan over traditional payment processors?</h3>
-                    <p class="text-aslan-gray">AI agents make frequent micro-authorizations that traditional processors charge $0.30+ each for. Aslan is designed for AI workflows with bulk authorization pricing, intelligent spending controls, and multi-agent management - all at a fraction of the cost.</p>
+                <div class="bg-white rounded-2xl p-8 shadow-soft">
+                    <h3 class="text-xl font-bold text-neutral-900 mb-4">Why choose Aslan over traditional payment processors?</h3>
+                    <p class="text-neutral-600 leading-relaxed">AI agents make frequent micro-authorizations that traditional processors charge $0.30+ each for. Aslan is designed for AI workflows with bulk authorization pricing, intelligent spending controls, and multi-agent management - all at a fraction of the cost.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="py-20">
-        <div class="max-w-4xl mx-auto px-6 text-center">
-            <h2 class="text-3xl font-bold text-aslan-dark mb-4">
+    <section class="py-20 lg:py-32 bg-white">
+        <div class="max-w-5xl mx-auto px-6 lg:px-8 text-center">
+            <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-6">
                 Finally, affordable AI agent payments
             </h2>
-            <p class="text-xl text-aslan-gray mb-8">
-                Start with 750 FREE transactions, then just $29/month for 3,000 more.<br/>
-                <span class="text-sm text-aslan-gray">That's $0.01 per transaction vs Stripe's $0.30-0.82 — <strong>30x cheaper!</strong></span>
+            <p class="text-xl text-neutral-600 mb-4 leading-relaxed max-w-3xl mx-auto">
+                Start with 750 FREE transactions, then just $29/month for 3,000 more.
             </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/auth?plan=sandbox" class="bg-aslan-orange text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-aslan-gold transition-colors">
+            <p class="text-lg text-neutral-500 mb-12">
+                That's $0.01 per transaction vs Stripe's $0.30-0.82 — <span class="font-semibold text-neutral-700">30x cheaper!</span>
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                <a href="/auth?plan=sandbox" class="gradient-bg text-white px-8 py-4 rounded-xl text-lg font-semibold hover:opacity-90 transition-opacity shadow-elegant">
                     Start Free (750 transactions)
                 </a>
-                <button onclick="startStripeCheckout('starter')" class="border border-aslan-orange text-aslan-orange px-8 py-4 rounded-lg text-lg font-medium hover:bg-orange-50 transition-colors">
+                <button onclick="startStripeCheckout('starter')" class="bg-white border border-primary text-primary px-8 py-4 rounded-xl text-lg font-semibold hover:bg-orange-50 transition-colors shadow-soft">
                     Try Starter ($29/month)
                 </button>
             </div>
-            <p class="text-sm text-aslan-gray mt-4">
-                💡 Perfect for food delivery, shopping, booking, and other transactional AI agents
+            <p class="text-neutral-500">
+                Perfect for food delivery, shopping, booking, and other transactional AI agents
             </p>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="border-t border-gray-200 py-12">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid md:grid-cols-4 gap-8">
-                <div>
-                    <div class="flex items-center justify-center space-x-3 mb-4">
-                        <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
+    <footer class="bg-white border-t border-neutral-200">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 py-16">
+            <div class="grid md:grid-cols-4 gap-8 lg:gap-12">
+                <div class="md:col-span-1">
+                    <div class="mb-6">
+                        <span class="text-neutral-900 font-bold text-xl tracking-tight">ASLAN</span>
                     </div>
-                    <p class="text-aslan-gray text-sm">
-                        Payment infrastructure for AI agents
+                    <p class="text-neutral-600 mb-6 leading-relaxed">
+                        Payment infrastructure for AI agents. Enable autonomous commerce with enterprise-grade security.
                     </p>
                 </div>
                 
                 <div>
-                    <h4 class="font-semibold text-aslan-dark mb-3">Product</h4>
-                    <ul class="space-y-2 text-sm text-aslan-gray">
-                        <li><a href="index.html#features" class="hover:text-aslan-dark transition-colors">Features</a></li>
-                        <li><a href="demo.html" class="hover:text-aslan-dark transition-colors">Demo</a></li>
-                        <li><a href="#pricing" class="hover:text-aslan-dark transition-colors">Pricing</a></li>
-                        <li><a href="#security" class="hover:text-aslan-dark transition-colors">Security</a></li>
+                    <h4 class="font-semibold text-neutral-900 mb-4">Product</h4>
+                    <ul class="space-y-3 text-neutral-600">
+                        <li><a href="/#features" class="hover:text-neutral-900 transition-colors">Features</a></li>
+                        <li><a href="/demo" class="hover:text-neutral-900 transition-colors">Demo</a></li>
+                        <li><a href="/pricing" class="hover:text-neutral-900 transition-colors">Pricing</a></li>
+                        <li><a href="/security" class="hover:text-neutral-900 transition-colors">Security</a></li>
                     </ul>
                 </div>
                 
                 <div>
-                    <h4 class="font-semibold text-aslan-dark mb-3">Developers</h4>
-                    <ul class="space-y-2 text-sm text-aslan-gray">
-                        <li><a href="docs.html" class="hover:text-aslan-dark transition-colors">Documentation</a></li>
-                        <li><a href="api.html" class="hover:text-aslan-dark transition-colors">API Reference</a></li>
-                        <li><a href="https://github.com/coltonsakamoto/aslanpay" class="hover:text-aslan-dark transition-colors">GitHub</a></li>
-                        <li><a href="status.html" class="hover:text-aslan-dark transition-colors">Status</a></li>
+                    <h4 class="font-semibold text-neutral-900 mb-4">Developers</h4>
+                    <ul class="space-y-3 text-neutral-600">
+                        <li><a href="/docs" class="hover:text-neutral-900 transition-colors">Documentation</a></li>
+                        <li><a href="/api" class="hover:text-neutral-900 transition-colors">API Reference</a></li>
+                        <li><a href="https://github.com/coltonsakamoto/aslanpay" class="hover:text-neutral-900 transition-colors">GitHub</a></li>
+                        <li><a href="/status" class="hover:text-neutral-900 transition-colors">Status</a></li>
                     </ul>
                 </div>
                 
                 <div>
-                    <h4 class="font-semibold text-aslan-dark mb-3">Company</h4>
-                    <ul class="space-y-2 text-sm text-aslan-gray">
-                        <li><a href="#about" class="hover:text-aslan-dark transition-colors">About</a></li>
-                        <li><a href="#blog" class="hover:text-aslan-dark transition-colors">Blog</a></li>
-                        <li><a href="#careers" class="hover:text-aslan-dark transition-colors">Careers</a></li>
-                        <li><a href="mailto:support@aslanpay.xyz" class="hover:text-aslan-dark transition-colors">Contact</a></li>
+                    <h4 class="font-semibold text-neutral-900 mb-4">Company</h4>
+                    <ul class="space-y-3 text-neutral-600">
+                        <li><a href="#about" class="hover:text-neutral-900 transition-colors">About</a></li>
+                        <li><a href="#blog" class="hover:text-neutral-900 transition-colors">Blog</a></li>
+                        <li><a href="#careers" class="hover:text-neutral-900 transition-colors">Careers</a></li>
+                        <li><a href="mailto:support@aslanpay.xyz" class="hover:text-neutral-900 transition-colors">Contact</a></li>
                     </ul>
                 </div>
             </div>
             
-            <div class="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-                <p class="text-aslan-gray text-sm">
+            <div class="border-t border-neutral-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-neutral-500 text-sm">
                     © 2024 Aslan Technologies. All rights reserved.
                 </p>
                 <div class="flex space-x-6 mt-4 md:mt-0">
-                    <a href="#privacy" class="text-aslan-gray text-sm hover:text-aslan-dark transition-colors">Privacy</a>
-                    <a href="#terms" class="text-aslan-gray text-sm hover:text-aslan-dark transition-colors">Terms</a>
-                    <a href="#security" class="text-aslan-gray text-sm hover:text-aslan-dark transition-colors">Security</a>
+                    <a href="#privacy" class="text-neutral-500 text-sm hover:text-neutral-900 transition-colors">Privacy</a>
+                    <a href="#terms" class="text-neutral-500 text-sm hover:text-neutral-900 transition-colors">Terms</a>
+                    <a href="/security" class="text-neutral-500 text-sm hover:text-neutral-900 transition-colors">Security</a>
                 </div>
             </div>
         </div>

@@ -29,64 +29,122 @@
     <link rel="manifest" href="/site.webmanifest">
     <meta name="theme-color" content="#daa520">
     
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'aslan-orange': '#FF6B35',
-                        'aslan-gold': '#F7931E',
-                        'aslan-dark': '#1a1a1a',
-                        'aslan-gray': '#6B7280'
+                        'primary': '#FF6B35',
+                        'primary-dark': '#E55A2B',
+                        'secondary': '#F7931E',
+                        'neutral-950': '#0A0A0A',
+                        'neutral-900': '#1A1A1A',
+                        'neutral-800': '#2A2A2A',
+                        'neutral-700': '#3A3A3A',
+                        'neutral-600': '#525252',
+                        'neutral-500': '#737373',
+                        'neutral-400': '#A3A3A3',
+                        'neutral-300': '#D4D4D4',
+                        'neutral-200': '#E5E5E5',
+                        'neutral-100': '#F5F5F5',
+                        'neutral-50': '#FAFAFA'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                        'mono': ['JetBrains Mono', 'Menlo', 'Monaco', 'Consolas', 'monospace']
                     }
                 }
             }
         }
     </script>
+    
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glass-effect {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .shadow-soft {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        .shadow-elegant {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        .prose code {
+            background: #f1f5f9;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875em;
+        }
+        .prose pre {
+            background: #0f172a;
+            border-radius: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
 </head>
-<body class="bg-white overflow-x-hidden">
+<body class="bg-white font-sans antialiased">
     <!-- Navigation -->
-    <nav class="border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
+    <nav class="sticky top-0 z-50 glass-effect border-b border-neutral-200/60">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <span class="text-neutral-900 font-bold text-xl tracking-tight">ASLAN</span>
                 </div>
                 
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
-                    <a href="/docs" class="text-aslan-orange font-medium">Documentation</a>
-                    <a href="/api" class="text-aslan-gray hover:text-aslan-dark transition-colors">API</a>
-                    <a href="/comparison" class="text-aslan-gray hover:text-aslan-dark transition-colors">vs Stripe</a>
-                    <a href="/pricing" class="text-aslan-gray hover:text-aslan-dark transition-colors">Pricing</a>
-                    <a href="/security" class="text-aslan-gray hover:text-aslan-dark transition-colors">Security</a>
-                    <a href="/auth" class="text-aslan-gray hover:text-aslan-dark transition-colors">Sign In</a>
-                    <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
-                        Try Demo
-                    </a>
+                <!-- Desktop Navigation -->
+                <div class="hidden lg:flex items-center space-x-8">
+                    <a href="/" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Home</a>
+                    <a href="/docs" class="text-primary font-semibold text-sm">Documentation</a>
+                    <a href="/api" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">API</a>
+                    <a href="/comparison" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Compare</a>
+                    <a href="/pricing" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Pricing</a>
+                    <a href="/security" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Security</a>
+                    
+                    <div class="flex items-center space-x-4">
+                        <a href="/auth" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Sign In</a>
+                        <a href="/demo" class="gradient-bg text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-soft">
+                            Try Demo
+                        </a>
+                    </div>
                 </div>
                 
                 <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-aslan-gray hover:text-aslan-dark hover:bg-gray-100">
+                <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
             </div>
             
             <!-- Mobile Menu -->
-            <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
+            <div id="mobile-menu" class="hidden lg:hidden pb-6 pt-4 border-t border-neutral-200/60">
                 <div class="flex flex-col space-y-4">
-                    <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
-                    <a href="/docs" class="text-aslan-orange font-medium">Documentation</a>
-                    <a href="/api" class="text-aslan-gray hover:text-aslan-dark transition-colors">API</a>
-                    <a href="/comparison" class="text-aslan-gray hover:text-aslan-dark transition-colors">vs Stripe</a>
-                    <a href="/pricing" class="text-aslan-gray hover:text-aslan-dark transition-colors">Pricing</a>
-                    <a href="/security" class="text-aslan-gray hover:text-aslan-dark transition-colors">Security</a>
-                    <a href="/auth" class="text-aslan-gray hover:text-aslan-dark transition-colors">Sign In</a>
-                    <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-center">
+                    <a href="/" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Home</a>
+                    <a href="/docs" class="text-primary font-semibold text-sm">Documentation</a>
+                    <a href="/api" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">API</a>
+                    <a href="/comparison" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Compare</a>
+                    <a href="/pricing" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Pricing</a>
+                    <a href="/security" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Security</a>
+                    <a href="/auth" class="text-neutral-600 hover:text-neutral-900 transition-colors text-sm font-medium">Sign In</a>
+                    <a href="/demo" class="gradient-bg text-white px-4 py-2.5 rounded-lg text-sm font-medium text-center shadow-soft">
                         Try Demo
                     </a>
                 </div>
@@ -94,36 +152,36 @@
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div class="grid lg:grid-cols-4 gap-8">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8 lg:py-12">
+        <div class="grid lg:grid-cols-4 gap-8 lg:gap-12">
             <!-- Sidebar -->
             <div class="lg:col-span-1">
-                <div class="sticky top-8 space-y-6">
-                    <div>
-                        <h3 class="text-lg font-semibold text-aslan-dark mb-3">Getting Started</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li><a href="#introduction" class="text-aslan-orange font-medium">Introduction</a></li>
-                            <li><a href="#installation" class="text-aslan-gray hover:text-aslan-dark">Installation</a></li>
-                            <li><a href="#quickstart" class="text-aslan-gray hover:text-aslan-dark">Quick Start</a></li>
+                <div class="sticky top-24 space-y-8">
+                    <div class="bg-white rounded-2xl p-6 shadow-soft border border-neutral-200">
+                        <h3 class="text-lg font-bold text-neutral-900 mb-4">Getting Started</h3>
+                        <ul class="space-y-3 text-sm">
+                            <li><a href="#introduction" class="text-primary font-semibold">Introduction</a></li>
+                            <li><a href="#installation" class="text-neutral-600 hover:text-neutral-900 transition-colors">Installation</a></li>
+                            <li><a href="#quickstart" class="text-neutral-600 hover:text-neutral-900 transition-colors">Quick Start</a></li>
                         </ul>
                     </div>
                     
-                    <div>
-                        <h3 class="text-lg font-semibold text-aslan-dark mb-3">Integration</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li><a href="#openai" class="text-aslan-gray hover:text-aslan-dark">OpenAI</a></li>
-                            <li><a href="#anthropic" class="text-aslan-gray hover:text-aslan-dark">Anthropic</a></li>
-                            <li><a href="#langchain" class="text-aslan-gray hover:text-aslan-dark">LangChain</a></li>
-                            <li><a href="#crewai" class="text-aslan-gray hover:text-aslan-dark">CrewAI</a></li>
+                    <div class="bg-white rounded-2xl p-6 shadow-soft border border-neutral-200">
+                        <h3 class="text-lg font-bold text-neutral-900 mb-4">Integration</h3>
+                        <ul class="space-y-3 text-sm">
+                            <li><a href="#openai" class="text-neutral-600 hover:text-neutral-900 transition-colors">OpenAI</a></li>
+                            <li><a href="#anthropic" class="text-neutral-600 hover:text-neutral-900 transition-colors">Anthropic</a></li>
+                            <li><a href="#langchain" class="text-neutral-600 hover:text-neutral-900 transition-colors">LangChain</a></li>
+                            <li><a href="#crewai" class="text-neutral-600 hover:text-neutral-900 transition-colors">CrewAI</a></li>
                         </ul>
                     </div>
                     
-                    <div>
-                        <h3 class="text-lg font-semibold text-aslan-dark mb-3">Security</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li><a href="#authentication" class="text-aslan-gray hover:text-aslan-dark">Authentication</a></li>
-                            <li><a href="#spending-limits" class="text-aslan-gray hover:text-aslan-dark">Spending Limits</a></li>
-                            <li><a href="#audit-trails" class="text-aslan-gray hover:text-aslan-dark">Audit Trails</a></li>
+                    <div class="bg-white rounded-2xl p-6 shadow-soft border border-neutral-200">
+                        <h3 class="text-lg font-bold text-neutral-900 mb-4">Security</h3>
+                        <ul class="space-y-3 text-sm">
+                            <li><a href="#authentication" class="text-neutral-600 hover:text-neutral-900 transition-colors">Authentication</a></li>
+                            <li><a href="#spending-limits" class="text-neutral-600 hover:text-neutral-900 transition-colors">Spending Limits</a></li>
+                            <li><a href="#audit-trails" class="text-neutral-600 hover:text-neutral-900 transition-colors">Audit Trails</a></li>
                         </ul>
                     </div>
                 </div>
@@ -131,51 +189,60 @@
             
             <!-- Main Content -->
             <div class="lg:col-span-3">
-                <div class="prose prose-lg max-w-none">
-                    <h1 id="introduction" class="text-3xl sm:text-4xl font-bold text-aslan-dark mb-6">Aslan Documentation</h1>
+                <div class="max-w-none">
+                    <h1 id="introduction" class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-8">Aslan Documentation</h1>
                     
-                    <p class="text-lg text-aslan-gray mb-8">
+                    <p class="text-xl text-neutral-600 mb-12 leading-relaxed">
                         Aslan is the universal payment infrastructure for AI agents. Enable any AI agent to make autonomous purchases 
                         with enterprise-grade security, real-time spending controls, and sub-400ms authorization.
                     </p>
 
                     <!-- Getting Started -->
-                    <section id="getting-started" class="mb-12">
-                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Getting Started</h2>
+                    <section id="getting-started" class="mb-16">
+                        <h2 class="text-3xl font-bold text-neutral-900 mb-8">Getting Started</h2>
                         
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                            <h3 class="text-lg font-semibold text-blue-900 mb-2">Quick Start</h3>
-                            <p class="text-blue-800 mb-4">Get your AI agent making purchases in under 5 minutes.</p>
-                            <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors">
-                                Try Interactive Demo
-                            </a>
+                        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-8 mb-12">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-blue-900 mb-3">Quick Start</h3>
+                                    <p class="text-blue-800 mb-6 leading-relaxed">Get your AI agent making purchases in under 5 minutes.</p>
+                                    <a href="/demo" class="gradient-bg text-white px-6 py-3 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-soft">
+                                        Try Interactive Demo
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
                     <!-- Installation -->
-                    <section id="installation" class="mb-12">
-                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Installation</h2>
+                    <section id="installation" class="mb-16">
+                        <h2 class="text-3xl font-bold text-neutral-900 mb-8">Installation</h2>
                         
-                        <div class="bg-gray-900 rounded-lg p-4 sm:p-6 text-white overflow-hidden mb-6">
-                            <div class="flex items-center space-x-2 mb-4">
+                        <div class="bg-neutral-900 rounded-2xl p-6 lg:p-8 text-white mb-8 shadow-elegant">
+                            <div class="flex items-center space-x-2 mb-6">
                                 <div class="w-3 h-3 bg-red-500 rounded-full"></div>
                                 <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
                                 <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                                <span class="text-gray-400 text-sm ml-2">terminal</span>
+                                <span class="text-neutral-400 text-sm ml-3 font-mono">terminal</span>
                             </div>
                             <div class="overflow-x-auto">
-                                <pre class="text-sm whitespace-pre min-w-0"><code><span class="text-gray-400"># Install Aslan SDK</span>
-<span class="text-green-400">npm install</span> @aslanpay/sdk
+                                <pre class="text-sm font-mono leading-relaxed"><code><span class="text-neutral-400"># Install Aslan SDK</span>
+<span class="text-emerald-400">npm install</span> @aslanpay/sdk
 
-<span class="text-gray-400"># Or using yarn</span>
-<span class="text-green-400">yarn add</span> @aslanpay/sdk</code></pre>
+<span class="text-neutral-400"># Or using yarn</span>
+<span class="text-emerald-400">yarn add</span> @aslanpay/sdk</code></pre>
                             </div>
                         </div>
 
-                        <h3 class="text-xl font-semibold text-aslan-dark mb-4">Basic Setup</h3>
-                        <div class="bg-gray-100 rounded-lg p-4 overflow-hidden mb-6">
+                        <h3 class="text-2xl font-bold text-neutral-900 mb-6">Basic Setup</h3>
+                        <div class="bg-neutral-50 rounded-2xl p-6 lg:p-8 mb-8 border border-neutral-200">
                             <div class="overflow-x-auto">
-                                <pre class="text-sm whitespace-pre min-w-0"><code>const { Aslan } = require('@aslanpay/sdk');
+                                <pre class="text-sm font-mono leading-relaxed text-neutral-800"><code>const { Aslan } = require('@aslanpay/sdk');
 
 const aslan = new Aslan({
   apiKey: process.env.ASLAN_API_KEY,
@@ -197,33 +264,42 @@ async function enableAIPurchases() {
                     </section>
 
                     <!-- Authentication -->
-                    <section id="authentication" class="mb-12">
-                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Authentication</h2>
+                    <section id="authentication" class="mb-16">
+                        <h2 class="text-3xl font-bold text-neutral-900 mb-8">Authentication</h2>
                         
-                        <p class="text-aslan-gray mb-6">
+                        <p class="text-neutral-600 mb-8 text-lg leading-relaxed">
                             Aslan uses API keys for authentication. You can get your API key from the 
-                            <a href="/auth" class="text-aslan-orange hover:underline">dashboard</a>.
+                            <a href="/auth" class="text-primary hover:underline font-semibold">dashboard</a>.
                         </p>
 
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-                            <h4 class="font-semibold text-yellow-900 mb-2">🔒 Keep your API keys secure</h4>
-                            <ul class="text-yellow-800 text-sm space-y-1">
-                                <li>• Never commit API keys to version control</li>
-                                <li>• Use environment variables in production</li>
-                                <li>• Rotate keys regularly</li>
-                                <li>• Use different keys for development and production</li>
-                            </ul>
+                        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-8 mb-8">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-amber-900 mb-3">Keep your API keys secure</h4>
+                                    <ul class="text-amber-800 space-y-2 leading-relaxed">
+                                        <li>• Never commit API keys to version control</li>
+                                        <li>• Use environment variables in production</li>
+                                        <li>• Rotate keys regularly</li>
+                                        <li>• Use different keys for development and production</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
                     <!-- API Reference -->
                     <section id="api-reference" class="mb-12">
-                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">API Reference</h2>
+                        <h2 class="text-3xl font-bold text-neutral-900 mb-6">API Reference</h2>
                         
                         <div class="space-y-8">
                             <div class="border border-gray-200 rounded-lg p-6">
-                                <h3 class="text-xl font-semibold text-aslan-dark mb-4">authorize()</h3>
-                                <p class="text-aslan-gray mb-4">Authorize a payment for an AI agent.</p>
+                                <h3 class="text-xl font-semibold text-neutral-900 mb-4">authorize()</h3>
+                                <p class="text-neutral-600 mb-4">Authorize a payment for an AI agent.</p>
                                 
                                 <div class="bg-gray-50 rounded-lg p-4 mb-4">
                                     <div class="overflow-x-auto">
@@ -236,7 +312,7 @@ async function enableAIPurchases() {
                                     </div>
                                 </div>
 
-                                <h4 class="font-semibold text-aslan-dark mb-2">Response</h4>
+                                <h4 class="font-semibold text-neutral-900 mb-2">Response</h4>
                                 <div class="bg-gray-50 rounded-lg p-4">
                                     <div class="overflow-x-auto">
                                         <pre class="text-sm min-w-0"><code>{
@@ -251,8 +327,8 @@ async function enableAIPurchases() {
                             </div>
 
                             <div class="border border-gray-200 rounded-lg p-6">
-                                <h3 class="text-xl font-semibold text-aslan-dark mb-4">confirm()</h3>
-                                <p class="text-aslan-gray mb-4">Confirm and execute an authorized payment.</p>
+                                <h3 class="text-xl font-semibold text-neutral-900 mb-4">confirm()</h3>
+                                <p class="text-neutral-600 mb-4">Confirm and execute an authorized payment.</p>
                                 
                                 <div class="bg-gray-50 rounded-lg p-4 mb-4">
                                     <div class="overflow-x-auto">
@@ -264,8 +340,8 @@ async function enableAIPurchases() {
                             </div>
 
                             <div class="border border-gray-200 rounded-lg p-6">
-                                <h3 class="text-xl font-semibold text-aslan-dark mb-4">refund()</h3>
-                                <p class="text-aslan-gray mb-4">Refund a completed payment.</p>
+                                <h3 class="text-xl font-semibold text-neutral-900 mb-4">refund()</h3>
+                                <p class="text-neutral-600 mb-4">Refund a completed payment.</p>
                                 
                                 <div class="bg-gray-50 rounded-lg p-4 mb-4">
                                     <div class="overflow-x-auto">
@@ -282,12 +358,12 @@ async function enableAIPurchases() {
 
                     <!-- Examples -->
                     <section id="examples" class="mb-12">
-                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Examples</h2>
+                        <h2 class="text-3xl font-bold text-neutral-900 mb-6">Examples</h2>
                         
                         <div class="space-y-8">
                             <div>
-                                <h3 class="text-xl font-semibold text-aslan-dark mb-4">OpenAI Integration</h3>
-                                <div class="bg-aslan-dark rounded-lg p-6 text-white overflow-hidden">
+                                <h3 class="text-xl font-semibold text-neutral-900 mb-4">OpenAI Integration</h3>
+                                <div class="bg-neutral-800 rounded-lg p-6 text-white overflow-hidden">
                                     <div class="overflow-x-auto">
                                         <pre class="text-sm min-w-0"><code>import OpenAI from 'openai'
 import { Aslan } from '@aslanpay/sdk'
@@ -326,8 +402,8 @@ if (completion.choices[0].message.tool_calls) {
                             </div>
 
                             <div>
-                                <h3 class="text-xl font-semibold text-aslan-dark mb-4">LangChain Integration</h3>
-                                <div class="bg-aslan-dark rounded-lg p-6 text-white overflow-hidden">
+                                <h3 class="text-xl font-semibold text-neutral-900 mb-4">LangChain Integration</h3>
+                                <div class="bg-neutral-800 rounded-lg p-6 text-white overflow-hidden">
                                     <div class="overflow-x-auto">
                                         <pre class="text-sm min-w-0"><code>from langchain.tools import Tool
 from aslanpay import Aslan
@@ -354,38 +430,38 @@ purchase = Tool(
 
                     <!-- Integrations -->
                     <section id="integrations" class="mb-12">
-                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Integrations</h2>
+                        <h2 class="text-3xl font-bold text-neutral-900 mb-6">Integrations</h2>
                         
                         <div class="grid md:grid-cols-2 gap-6">
                             <div class="border border-gray-200 rounded-lg p-6">
-                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">OpenAI</h3>
-                                <p class="text-aslan-gray text-sm mb-4">Integrate with GPT-4, function calling, and assistants.</p>
-                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/openai" class="text-aslan-orange hover:underline text-sm">View Example →</a>
+                                <h3 class="text-lg font-semibold text-neutral-900 mb-3">OpenAI</h3>
+                                <p class="text-neutral-600 text-sm mb-4">Integrate with GPT-4, function calling, and assistants.</p>
+                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/openai" class="text-primary hover:underline text-sm">View Example →</a>
                             </div>
                             
                             <div class="border border-gray-200 rounded-lg p-6">
-                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">LangChain</h3>
-                                <p class="text-aslan-gray text-sm mb-4">Add payment tools to LangChain agents.</p>
-                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/langchain" class="text-aslan-orange hover:underline text-sm">View Example →</a>
+                                <h3 class="text-lg font-semibold text-neutral-900 mb-3">LangChain</h3>
+                                <p class="text-neutral-600 text-sm mb-4">Add payment tools to LangChain agents.</p>
+                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/langchain" class="text-primary hover:underline text-sm">View Example →</a>
                             </div>
                             
                             <div class="border border-gray-200 rounded-lg p-6">
-                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">CrewAI</h3>
-                                <p class="text-aslan-gray text-sm mb-4">Enable multi-agent teams to make purchases.</p>
-                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/crewai" class="text-aslan-orange hover:underline text-sm">View Example →</a>
+                                <h3 class="text-lg font-semibold text-neutral-900 mb-3">CrewAI</h3>
+                                <p class="text-neutral-600 text-sm mb-4">Enable multi-agent teams to make purchases.</p>
+                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/crewai" class="text-primary hover:underline text-sm">View Example →</a>
                             </div>
                             
                             <div class="border border-gray-200 rounded-lg p-6">
-                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">Custom Frameworks</h3>
-                                <p class="text-aslan-gray text-sm mb-4">REST API works with any framework.</p>
-                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/custom" class="text-aslan-orange hover:underline text-sm">View Example →</a>
+                                <h3 class="text-lg font-semibold text-neutral-900 mb-3">Custom Frameworks</h3>
+                                <p class="text-neutral-600 text-sm mb-4">REST API works with any framework.</p>
+                                <a href="https://github.com/coltonsakamoto/aslanpay/tree/main/examples/custom" class="text-primary hover:underline text-sm">View Example →</a>
                             </div>
                         </div>
                     </section>
 
                     <!-- Security -->
                     <section id="security" class="mb-12">
-                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Security</h2>
+                        <h2 class="text-3xl font-bold text-neutral-900 mb-6">Security</h2>
                         
                         <div class="space-y-6">
                             <div class="bg-green-50 border border-green-200 rounded-lg p-6">
@@ -400,7 +476,7 @@ purchase = Tool(
                             </div>
 
                             <div>
-                                <h3 class="text-lg font-semibold text-aslan-dark mb-3">Spending Controls</h3>
+                                <h3 class="text-lg font-semibold text-neutral-900 mb-3">Spending Controls</h3>
                                 <div class="bg-gray-50 rounded-lg p-4 overflow-hidden">
                                     <div class="overflow-x-auto">
                                         <pre class="text-sm min-w-0"><code>const aslan = new Aslan({
@@ -422,15 +498,15 @@ purchase = Tool(
 
                     <!-- Support -->
                     <section class="bg-gray-50 rounded-lg p-8">
-                        <h2 class="text-2xl font-bold text-aslan-dark mb-4">Need Help?</h2>
-                        <p class="text-aslan-gray mb-6">
+                        <h2 class="text-2xl font-bold text-neutral-900 mb-4">Need Help?</h2>
+                        <p class="text-neutral-600 mb-6">
                             Get support from our team of AI and payments experts.
                         </p>
                         <div class="flex flex-col sm:flex-row gap-4">
-                            <a href="mailto:support@aslanpay.xyz" class="bg-aslan-orange text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors text-center">
+                            <a href="mailto:support@aslanpay.xyz" class="bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-dark transition-colors text-center">
                                 Contact Support
                             </a>
-                            <a href="https://github.com/coltonsakamoto/aslanpay" class="border border-gray-300 text-aslan-dark px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center">
+                            <a href="https://github.com/coltonsakamoto/aslanpay" class="border border-gray-300 text-neutral-900 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center">
                                 View on GitHub
                             </a>
                         </div>
