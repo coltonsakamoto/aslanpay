@@ -91,7 +91,7 @@ app.get('/api/keys*', (req, res) => {
             {
                 id: 'key_demo_001',
                 name: 'Production API Key',
-                key: 'demo_prod_' + Date.now(),
+                key: '•'.repeat(48), // Hidden for security
                 createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
                 lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
                 status: 'active'
@@ -99,7 +99,7 @@ app.get('/api/keys*', (req, res) => {
             {
                 id: 'key_demo_002', 
                 name: 'Test Environment Key',
-                key: 'demo_test_' + (Date.now() + 1000),
+                key: '•'.repeat(42), // Hidden for security
                 createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
                 lastUsed: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
                 status: 'active'

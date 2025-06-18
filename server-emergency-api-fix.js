@@ -47,20 +47,20 @@ app.get('/health', (req, res) => {
 
 // 🚨 EMERGENCY FIX: API Keys endpoint with CORRECT format
 app.get('/api/keys', (req, res) => {
-    // Dashboard expects this EXACT format - generate safe demo keys
+    // Dashboard expects this EXACT format - NO demo keys to avoid GitHub scanning
     const demoApiKeys = [
         {
             id: 'key_demo_001',
             name: 'Production API Key',
-            key: 'demo_production_key_' + Date.now(),
+            key: '•'.repeat(50), // Masked for security
             createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
             lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
             status: 'active'
         },
         {
             id: 'key_demo_002', 
-            name: 'Test Environment Key',
-            key: 'demo_testing_key_' + (Date.now() + 1000),
+            name: 'Test Environment Key', 
+            key: '•'.repeat(45), // Masked for security
             createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
             lastUsed: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
             status: 'active'
