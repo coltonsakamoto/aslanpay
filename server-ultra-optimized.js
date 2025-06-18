@@ -33,7 +33,64 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: Date.now() });
 });
 
-// ⚡ ULTRA-PERFORMANCE: Static files (CRITICAL - for demo page)
+// ⚡ ULTRA-PERFORMANCE: API routes FIRST (before static files)
+// This ensures /api/* endpoints are handled before static file serving
+
+// ⚡ ULTRA-PERFORMANCE: Ultra-fast spending controls (demo only)
+app.get('/api/keys/spending-controls', (req, res) => {
+    res.json({
+        dailyLimit: 100,
+        spentToday: Math.random() * 50, // Random for demo variety
+        transactionCount: Math.floor(Math.random() * 10),
+        demoLimit: 20,
+        emergencyStop: false,
+        latency: 0
+    });
+});
+
+app.put('/api/keys/spending-controls', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Demo settings updated',
+        latency: 0,
+        timestamp: Date.now()
+    });
+});
+
+// ⚡ ULTRA-PERFORMANCE: All other potential demo endpoints (instant responses)
+app.get('/api/keys*', (req, res) => {
+    res.json({ success: true, data: [], latency: 0 });
+});
+
+app.post('/api/keys*', (req, res) => {
+    res.json({ success: true, message: 'Created', latency: 0 });
+});
+
+app.put('/api/keys*', (req, res) => {
+    res.json({ success: true, message: 'Updated', latency: 0 });
+});
+
+app.get('/api/auth*', (req, res) => {
+    res.json({ authenticated: true, user: { id: 'demo' }, latency: 0 });
+});
+
+app.post('/api/auth*', (req, res) => {
+    res.json({ success: true, token: 'demo-token', latency: 0 });
+});
+
+// ⚡ CATCH ALL API endpoints for instant demo responses
+app.all('/api/*', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: 'Demo endpoint - instant response',
+        method: req.method,
+        path: req.path,
+        latency: 0,
+        timestamp: Date.now()
+    });
+});
+
+// ⚡ ULTRA-PERFORMANCE: Static files (AFTER API routes)
 const path = require('path');
 const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath, { maxAge: '1h', etag: false }));
@@ -251,60 +308,6 @@ app.get('/api/status', (req, res) => {
             'In-memory caching',
             'No file system operations'
         ],
-        timestamp: Date.now()
-    });
-});
-
-// ⚡ ULTRA-PERFORMANCE: Ultra-fast spending controls (demo only)
-app.get('/api/keys/spending-controls', (req, res) => {
-    res.json({
-        dailyLimit: 100,
-        spentToday: Math.random() * 50, // Random for demo variety
-        transactionCount: Math.floor(Math.random() * 10),
-        demoLimit: 20,
-        emergencyStop: false,
-        latency: 0
-    });
-});
-
-app.put('/api/keys/spending-controls', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Demo settings updated',
-        latency: 0,
-        timestamp: Date.now()
-    });
-});
-
-// ⚡ ULTRA-PERFORMANCE: All other potential demo endpoints (instant responses)
-app.get('/api/keys*', (req, res) => {
-    res.json({ success: true, data: [], latency: 0 });
-});
-
-app.post('/api/keys*', (req, res) => {
-    res.json({ success: true, message: 'Created', latency: 0 });
-});
-
-app.put('/api/keys*', (req, res) => {
-    res.json({ success: true, message: 'Updated', latency: 0 });
-});
-
-app.get('/api/auth*', (req, res) => {
-    res.json({ authenticated: true, user: { id: 'demo' }, latency: 0 });
-});
-
-app.post('/api/auth*', (req, res) => {
-    res.json({ success: true, token: 'demo-token', latency: 0 });
-});
-
-// ⚡ CATCH ALL API endpoints for instant demo responses
-app.all('/api/*', (req, res) => {
-    res.json({ 
-        success: true, 
-        message: 'Demo endpoint - instant response',
-        method: req.method,
-        path: req.path,
-        latency: 0,
         timestamp: Date.now()
     });
 });
