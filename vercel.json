@@ -2,30 +2,30 @@
   "version": 2,
   "builds": [
     {
-      "src": "server-performance-optimized.js",
+      "src": "server-unified-fix.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/v1/authorize",
-      "dest": "/server-performance-optimized.js"
+      "dest": "/server-unified-fix.js"
     },
     {
       "src": "/api/keys/spending-controls",
-      "dest": "/server-performance-optimized.js"
+      "dest": "/server-unified-fix.js"
     },
     {
       "src": "/api/(.*)",
-      "dest": "/server-performance-optimized.js"
+      "dest": "/server-unified-fix.js"
     },
     {
       "src": "/health",
-      "dest": "/server-performance-optimized.js"
+      "dest": "/server-unified-fix.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/server-performance-optimized.js"
+      "dest": "/server-unified-fix.js"
     }
   ],
   "env": {
