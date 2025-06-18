@@ -173,37 +173,30 @@ const path = require('path');
 const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath, { maxAge: '1h', etag: false }));
 
-// ⚡ ULTRA-PERFORMANCE: Essential routes with error handling
-app.get('/', (req, res) => {
-    try {
-        res.sendFile(path.join(publicPath, 'index.html'));
-    } catch (error) {
-        res.status(404).json({error: 'Page not found', debug: 'index.html missing'});
-    }
-});
+// ⚡ CRITICAL: ALL ESSENTIAL ROUTES (RESTORED)
+const staticRoutes = {
+    '/': 'index.html',
+    '/demo': 'demo.html',
+    '/auth': 'auth.html',
+    '/dashboard': 'dashboard.html',
+    '/pricing': 'pricing.html',
+    '/docs': 'docs.html',
+    '/api-docs': 'api.html',
+    '/checkout': 'checkout.html',
+    '/comparison': 'comparison.html',
+    '/security': 'security.html',
+    '/status': 'status.html',
+    '/signup': 'signup.html'
+};
 
-app.get('/demo', (req, res) => {
-    try {
-        res.sendFile(path.join(publicPath, 'demo.html'));
-    } catch (error) {
-        res.status(404).json({error: 'Demo page not found', debug: 'demo.html missing'});
-    }
-});
-
-app.get('/auth', (req, res) => {
-    try {
-        res.sendFile(path.join(publicPath, 'auth.html'));
-    } catch (error) {
-        res.status(404).json({error: 'Auth page not found'});
-    }
-});
-
-app.get('/dashboard', (req, res) => {
-    try {
-        res.sendFile(path.join(publicPath, 'dashboard.html'));
-    } catch (error) {
-        res.status(404).json({error: 'Dashboard page not found'});
-    }
+Object.entries(staticRoutes).forEach(([route, file]) => {
+    app.get(route, (req, res) => {
+        try {
+            res.sendFile(path.join(publicPath, file));
+        } catch (error) {
+            res.status(404).json({error: `${file} not found`});
+        }
+    });
 });
 
 // ⚡ ULTRA-PERFORMANCE: Pure mock database (NO PRISMA)

@@ -371,6 +371,184 @@ function_call: "auto"</code></pre>
         let cardManager;
         let paymentProcessor;
 
+        // ⚡ ULTRA-FAST DEMO CLASSES (ALL INSTANT PROCESSING)
+        
+        // ⚡ INSTANT Demo configuration
+        const DEMO_CONFIG = {
+            demoUser: {
+                dailyLimit: 100,
+                spentToday: 0
+            },
+            maxDemoTransactions: 10,
+            currentTransactions: 0
+        };
+        
+        // ⚡ INSTANT DemoSpendingTracker class
+        class DemoSpendingTracker {
+            constructor() {
+                this.config = DEMO_CONFIG;
+                this.transactions = [];
+                this.emergencyStop = false;
+            }
+            
+            getDemoStatus() {
+                const spent = this.transactions.reduce((sum, tx) => sum + tx.amount, 0);
+                const percentage = (spent / this.config.demoUser.dailyLimit * 100).toFixed(1);
+                const txPercentage = (this.transactions.length / this.config.maxDemoTransactions * 100).toFixed(1);
+                
+                return {
+                    spentToday: spent,
+                    dailyLimit: this.config.demoUser.dailyLimit,
+                    spentPercentage: percentage,
+                    transactionCount: this.transactions.length,
+                    maxTransactions: this.config.maxDemoTransactions,
+                    transactionPercentage: txPercentage,
+                    remainingTransactions: this.config.maxDemoTransactions - this.transactions.length,
+                    isEmergencyStop: this.emergencyStop
+                };
+            }
+            
+            recordTransaction(amount, service) {
+                const transaction = {
+                    amount: amount,
+                    service: service,
+                    timestamp: Date.now(),
+                    id: `tx_${Date.now()}`
+                };
+                this.transactions.push(transaction);
+                return transaction;
+            }
+            
+            resetEmergencyStop() {
+                this.emergencyStop = false;
+            }
+        }
+        
+        // ⚡ INSTANT CardManagementDemo class
+        class CardManagementDemo {
+            constructor() {
+                this.cards = [];
+                this.selectedCardId = null;
+                this.initDefaultCard();
+            }
+            
+            initDefaultCard() {
+                const defaultCard = {
+                    id: 'card_demo_default',
+                    nickname: 'Demo Visa Card',
+                    brand: 'visa',
+                    last4: '4242',
+                    expMonth: '12',
+                    expYear: '28',
+                    isDefault: true
+                };
+                this.cards.push(defaultCard);
+                this.selectedCardId = defaultCard.id;
+            }
+            
+            getAllCards() {
+                return this.cards;
+            }
+            
+            getSelectedCard() {
+                return this.cards.find(card => card.id === this.selectedCardId) || this.cards[0];
+            }
+            
+            setDefaultCard(cardId) {
+                this.cards.forEach(card => card.isDefault = false);
+                const selectedCard = this.cards.find(card => card.id === cardId);
+                if (selectedCard) {
+                    selectedCard.isDefault = true;
+                    this.selectedCardId = cardId;
+                }
+            }
+            
+            removeCard(cardId) {
+                this.cards = this.cards.filter(card => card.id !== cardId);
+                if (this.selectedCardId === cardId && this.cards.length > 0) {
+                    this.selectedCardId = this.cards[0].id;
+                    this.cards[0].isDefault = true;
+                }
+            }
+            
+            async simulateCardAdding(cardNumber, expMonth, expYear, cvc, nickname) {
+                // ⚡ INSTANT: Validate and add card instantly
+                if (cardNumber.length < 13) {
+                    throw new Error('Invalid card number');
+                }
+                
+                const brand = this.detectCardBrand(cardNumber);
+                const newCard = {
+                    id: `card_${Date.now()}`,
+                    nickname: nickname || `${brand.toUpperCase()} Card`,
+                    brand: brand,
+                    last4: cardNumber.slice(-4),
+                    expMonth: expMonth,
+                    expYear: expYear,
+                    isDefault: this.cards.length === 0
+                };
+                
+                this.cards.push(newCard);
+                if (newCard.isDefault) {
+                    this.selectedCardId = newCard.id;
+                }
+                
+                return newCard;
+            }
+            
+            detectCardBrand(cardNumber) {
+                const first4 = cardNumber.substring(0, 4);
+                if (first4.startsWith('4')) return 'visa';
+                if (first4.startsWith('5') || first4.startsWith('2')) return 'mastercard';
+                if (first4.startsWith('3')) return 'amex';
+                if (first4.startsWith('6')) return 'discover';
+                return 'unknown';
+            }
+            
+            getTestCards() {
+                return [
+                    { name: 'Visa Test Card', description: 'Standard Visa', number: '4242424242424242', brand: 'visa' },
+                    { name: 'Mastercard Test', description: 'Standard Mastercard', number: '5555555555554444', brand: 'mastercard' },
+                    { name: 'Amex Test Card', description: 'American Express', number: '378282246310005', brand: 'amex' },
+                    { name: 'Discover Test', description: 'Discover Card', number: '6011111111111117', brand: 'discover' }
+                ];
+            }
+        }
+        
+        // ⚡ ULTRA-FAST PaymentProcessingDemo class (INSTANT processing)
+        class PaymentProcessingDemo {
+            constructor(cardManager) {
+                this.cardManager = cardManager;
+            }
+            
+            // ⚡ INSTANT: Process payment with zero delay
+            async processPayment(amount, service) {
+                const startTime = Date.now();
+                
+                // ⚡ INSTANT: Get selected card (no validation delay)
+                const selectedCard = this.cardManager.getSelectedCard();
+                if (!selectedCard) {
+                    throw new Error('No payment method available');
+                }
+                
+                // ⚡ INSTANT: Generate transaction ID instantly
+                const transactionId = `aslan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                
+                // ⚡ INSTANT: Return success immediately (no network calls, no delays)
+                return {
+                    success: true,
+                    transactionId: transactionId,
+                    card: {
+                        brand: selectedCard.brand,
+                        last4: selectedCard.last4
+                    },
+                    amount: amount,
+                    service: service,
+                    latency: Date.now() - startTime // Will be 0-1ms
+                };
+            }
+        }
+
         const chatMessages = document.getElementById('chat-messages');
         const chatInput = document.getElementById('chat-input');
         const sendBtn = document.getElementById('send-btn');
