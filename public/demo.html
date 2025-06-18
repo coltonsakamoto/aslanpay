@@ -175,7 +175,7 @@
         // ⚡ WORKING DEMO - GUARANTEED TO FUNCTION
         console.log('🚀 Demo starting...');
         
-                 // Demo data and state
+                 // Demo data and state - INITIALIZE PROPERLY
         let transactions = [];
         let totalSpent = 0;
         let transactionCount = 0;
@@ -222,19 +222,28 @@
                 const response = await fetch('/api/demo/spending-status');
                 const data = await response.json();
                 
-                // Update local state with server state
-                totalSpent = data.totalSpent;
-                transactionCount = data.transactionCount;
-                spendingLimits.dailyLimit = data.dailyLimit;
-                spendingLimits.maxTransactions = data.maxTransactions;
-                spendingLimits.emergencyStop = data.emergencyStop;
+                // Update local state with server state - PREVENT UNDEFINED ERRORS
+                totalSpent = data.totalSpent || 0;
+                transactionCount = data.transactionCount || 0;
+                spendingLimits.dailyLimit = data.dailyLimit || 100;
+                spendingLimits.maxTransactions = data.maxTransactions || 10;
+                spendingLimits.emergencyStop = data.emergencyStop || false;
                 
                 updateSpendingControls();
                 updateStats();
                 
-                console.log('✅ Spending status loaded from server');
+                console.log('✅ Spending status loaded from server:', {
+                    totalSpent,
+                    transactionCount,
+                    dailyLimit: spendingLimits.dailyLimit
+                });
             } catch (error) {
                 console.error('❌ Failed to load spending status:', error);
+                // Use defaults if server fails
+                totalSpent = 0;
+                transactionCount = 0;
+                updateSpendingControls();
+                updateStats();
             }
         }
         
@@ -427,13 +436,19 @@
                 }
                 
                 if (result.success) {
-                    // Transaction approved and processed
-                    totalSpent = result.spendingStatus.totalSpent;
-                    transactionCount = result.spendingStatus.transactionCount;
+                    // Transaction approved and processed - UPDATE LOCAL STATE SAFELY
+                    if (result.spendingStatus) {
+                        totalSpent = result.spendingStatus.totalSpent || 0;
+                        transactionCount = result.spendingStatus.transactionCount || 0;
+                    } else {
+                        // Fallback - update manually if no spending status
+                        totalSpent += amount;
+                        transactionCount++;
+                    }
                     
                     addMessage(`✅ SUCCESS! Purchased ${service} for $${amount} using ${demoCard.nickname} (••••${demoCard.last4})`, false);
                     addMessage(`⚡ Transaction completed in ${latency}ms`, false);
-                    addMessage(`📊 Remaining limit: $${result.spendingStatus.remainingLimit}`, false);
+                    addMessage(`📊 Remaining limit: $${result.spendingStatus?.remainingLimit || (spendingLimits.dailyLimit - totalSpent)}`, false);
                     
                     // Add to transaction log
                     addTransaction({ 
@@ -504,17 +519,21 @@
             const statusEl = document.getElementById('limit-status');
             const progressEl = document.getElementById('spending-progress');
             
-            if (dailyLimitEl) dailyLimitEl.textContent = `$${spendingLimits.dailyLimit}`;
-            if (spentEl) spentEl.textContent = `$${totalSpent.toFixed(2)}`;
-            if (remainingEl) remainingEl.textContent = `$${(spendingLimits.dailyLimit - totalSpent).toFixed(2)}`;
+            // SAFE UPDATES - HANDLE UNDEFINED VALUES
+            const safeSpent = totalSpent || 0;
+            const safeDailyLimit = spendingLimits?.dailyLimit || 100;
             
-            const spentPercentage = (totalSpent / spendingLimits.dailyLimit) * 100;
+            if (dailyLimitEl) dailyLimitEl.textContent = `$${safeDailyLimit}`;
+            if (spentEl) spentEl.textContent = `$${safeSpent.toFixed(2)}`;
+            if (remainingEl) remainingEl.textContent = `$${(safeDailyLimit - safeSpent).toFixed(2)}`;
+            
+            const spentPercentage = (safeSpent / safeDailyLimit) * 100;
             
             if (statusEl) {
-                if (spendingLimits.emergencyStop) {
+                if (spendingLimits?.emergencyStop) {
                     statusEl.textContent = 'EMERGENCY STOP';
                     statusEl.className = 'font-mono text-red-600';
-                } else if (totalSpent >= spendingLimits.dailyLimit) {
+                } else if (safeSpent >= safeDailyLimit) {
                     statusEl.textContent = 'LIMIT REACHED';
                     statusEl.className = 'font-mono text-red-600';
                 } else if (spentPercentage > 75) {
@@ -545,12 +564,17 @@
             const latencyEl = document.getElementById('avg-latency');
             const spentEl = document.getElementById('spent-today');
             
-            if (totalTxEl) totalTxEl.textContent = transactionCount;
-            if (totalAmtEl) totalAmtEl.textContent = `$${totalSpent.toFixed(2)}`;
-            if (spentEl) spentEl.textContent = `$${totalSpent.toFixed(2)}`;
+            // SAFE UPDATES - HANDLE UNDEFINED VALUES
+            const safeTransactionCount = transactionCount || 0;
+            const safeSpent = totalSpent || 0;
+            const safeTransactions = transactions || [];
             
-            if (latencyEl && transactions.length > 0) {
-                const avgLatency = transactions.reduce((sum, tx) => sum + tx.latency, 0) / transactions.length;
+            if (totalTxEl) totalTxEl.textContent = safeTransactionCount;
+            if (totalAmtEl) totalAmtEl.textContent = `$${safeSpent.toFixed(2)}`;
+            if (spentEl) spentEl.textContent = `$${safeSpent.toFixed(2)}`;
+            
+            if (latencyEl && safeTransactions.length > 0) {
+                const avgLatency = safeTransactions.reduce((sum, tx) => sum + (tx.latency || 0), 0) / safeTransactions.length;
                 latencyEl.textContent = `${Math.round(avgLatency)}ms`;
             }
         }
@@ -616,24 +640,31 @@
         function showCurrentLimits() {
             addMessage('📊 Checking current spending status...', false);
             
+            // SAFE VARIABLE ACCESS
+            const safeSpent = totalSpent || 0;
+            const safeTransactionCount = transactionCount || 0;
+            const safeDailyLimit = spendingLimits?.dailyLimit || 100;
+            const safeMaxTransactions = spendingLimits?.maxTransactions || 10;
+            const safeEmergencyStop = spendingLimits?.emergencyStop || false;
+            
             const status = `
 📈 Current Spending Status:
-• Daily Limit: $${spendingLimits.dailyLimit}
-• Spent Today: $${totalSpent.toFixed(2)}
-• Remaining: $${(spendingLimits.dailyLimit - totalSpent).toFixed(2)}
-• Transactions: ${transactionCount}/${spendingLimits.maxTransactions}
-• Emergency Stop: ${spendingLimits.emergencyStop ? 'ACTIVE 🛑' : 'Disabled ✅'}
+• Daily Limit: $${safeDailyLimit}
+• Spent Today: $${safeSpent.toFixed(2)}
+• Remaining: $${(safeDailyLimit - safeSpent).toFixed(2)}
+• Transactions: ${safeTransactionCount}/${safeMaxTransactions}
+• Emergency Stop: ${safeEmergencyStop ? 'ACTIVE 🛑' : 'Disabled ✅'}
             `;
             
             addMessage(status, false);
             
-            const spentPercentage = (totalSpent / spendingLimits.dailyLimit) * 100;
+            const spentPercentage = (safeSpent / safeDailyLimit) * 100;
             if (spentPercentage > 75) {
                 addMessage(`⚠️ Warning: ${spentPercentage.toFixed(1)}% of daily limit used`, false);
             }
             
-            if (transactionCount >= spendingLimits.maxTransactions - 2) {
-                addMessage(`⚠️ Warning: Only ${spendingLimits.maxTransactions - transactionCount} transactions remaining`, false);
+            if (safeTransactionCount >= safeMaxTransactions - 2) {
+                addMessage(`⚠️ Warning: Only ${safeMaxTransactions - safeTransactionCount} transactions remaining`, false);
             }
         }
         
@@ -666,9 +697,9 @@
                         <div class="bg-gray-50 rounded-lg p-3">
                             <div class="text-sm font-medium text-gray-700 mb-2">Current Status</div>
                             <div class="text-xs space-y-1">
-                                <div>Spent Today: $${totalSpent.toFixed(2)}/$${spendingLimits.dailyLimit}</div>
-                                <div>Transactions: ${transactionCount}/${spendingLimits.maxTransactions}</div>
-                                <div>Emergency Stop: ${spendingLimits.emergencyStop ? 'ACTIVE' : 'Disabled'}</div>
+                                <div>Spent Today: $${(totalSpent || 0).toFixed(2)}/$${spendingLimits?.dailyLimit || 100}</div>
+                                <div>Transactions: ${transactionCount || 0}/${spendingLimits?.maxTransactions || 10}</div>
+                                <div>Emergency Stop: ${spendingLimits?.emergencyStop ? 'ACTIVE' : 'Disabled'}</div>
                             </div>
                         </div>
                         

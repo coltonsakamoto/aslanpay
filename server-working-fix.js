@@ -530,10 +530,10 @@ function validateDemoSpending(amount, service, description) {
         return result;
     }
     
-    // 2. SPAM DETECTION - Check for repeated identical transactions
+    // 2. SPAM DETECTION - ZERO TOLERANCE FOR DUPLICATES
     const now = Date.now();
     const spamWindow = 30 * 1000; // 30 seconds
-    const maxIdenticalInWindow = 2; // Max 2 identical transactions in 30 seconds
+    const maxIdenticalInWindow = 0; // ZERO duplicates allowed
     const maxRapidTransactions = 5; // Max 5 transactions in 10 seconds (any type)
     
     // Clean old transactions from recent history
@@ -541,7 +541,7 @@ function validateDemoSpending(amount, service, description) {
         tx => now - tx.timestamp < 300000 // Keep last 5 minutes
     );
     
-    // Check for identical transactions in spam window
+    // Check for identical transactions in spam window - ZERO TOLERANCE
     const identicalInWindow = demoState.recentTransactions.filter(tx => {
         return (now - tx.timestamp < spamWindow) &&
                tx.amount === amount &&
@@ -549,8 +549,8 @@ function validateDemoSpending(amount, service, description) {
                tx.description === description;
     });
     
-    if (identicalInWindow.length >= maxIdenticalInWindow) {
-        result.reason = `SPAM DETECTED: Identical transaction repeated ${identicalInWindow.length} times in 30 seconds`;
+    if (identicalInWindow.length > maxIdenticalInWindow) {
+        result.reason = `DUPLICATE BLOCKED: Identical transaction already processed within 30 seconds`;
         result.spamDetected = true;
         return result;
     }
@@ -629,7 +629,7 @@ app.get('/api/demo/spending-status', (req, res) => {
             recentTransactionsCount: recentTransactions.length,
             totalTrackedTransactions: demoState.recentTransactions.length,
             spamDetectionActive: true,
-            maxIdenticalIn30Seconds: 2,
+            maxIdenticalIn30Seconds: 0,
             maxTransactionsIn10Seconds: 5
         }
     });
