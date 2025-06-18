@@ -416,6 +416,240 @@ app.post('/api/v1/refund', validateApiKey, (req, res) => {
     }
 });
 
+// ===== DEMO PURCHASE ENDPOINTS (CRITICAL FOR DEMO FLOW) =====
+// Demo state tracking
+let demoState = {
+    totalSpent: 0,
+    transactionCount: 0,
+    emergencyStop: false,
+    dailyLimit: 100,
+    maxTransactions: 10,
+    recentTransactions: []
+};
+
+// Core demo purchase endpoint
+app.post('/api/demo/purchase', (req, res) => {
+    const { amount, service, description } = req.body;
+    const startTime = Date.now();
+    
+    // Validate spending limits
+    const validation = validateDemoSpending(amount, service, description);
+    
+    if (!validation.approved) {
+        const processingDelay = 25 + Math.random() * 35; // 25-60ms for validation
+        
+        setTimeout(() => {
+            const latency = Date.now() - startTime;
+            
+            res.status(402).json({
+                success: false,
+                blocked: true,
+                reason: validation.reason,
+                currentSpent: demoState.totalSpent,
+                dailyLimit: demoState.dailyLimit,
+                transactionCount: demoState.transactionCount,
+                maxTransactions: demoState.maxTransactions,
+                emergencyStop: demoState.emergencyStop,
+                spamDetected: validation.spamDetected || false,
+                latency: latency,
+                message: '🚨 TRANSACTION BLOCKED BY SPENDING CONTROLS'
+            });
+        }, processingDelay);
+        return;
+    }
+    
+    // Simulate realistic transaction processing time
+    const processingDelay = 45 + Math.random() * 55; // 45-100ms
+    
+    setTimeout(() => {
+        // Process the transaction
+        demoState.totalSpent += amount;
+        demoState.transactionCount++;
+        
+        const transactionId = `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const transaction = {
+            id: transactionId,
+            amount: amount,
+            service: service,
+            description: description,
+            timestamp: Date.now()
+        };
+        
+        // Track recent transactions
+        demoState.recentTransactions.push(transaction);
+        if (demoState.recentTransactions.length > 50) {
+            demoState.recentTransactions = demoState.recentTransactions.slice(-50);
+        }
+        
+        const latency = Date.now() - startTime;
+        
+        res.json({
+            success: true,
+            transactionId: transactionId,
+            amount: amount,
+            service: service,
+            latency: latency,
+            spendingStatus: {
+                totalSpent: demoState.totalSpent,
+                remainingLimit: demoState.dailyLimit - demoState.totalSpent,
+                transactionCount: demoState.transactionCount,
+                remainingTransactions: demoState.maxTransactions - demoState.transactionCount
+            },
+            message: '✅ Transaction approved and processed'
+        });
+    }, processingDelay);
+});
+
+// Demo spending validation function
+function validateDemoSpending(amount, service, description) {
+    const result = {
+        approved: false,
+        reason: '',
+        warnings: [],
+        spamDetected: false
+    };
+    
+    // Emergency stop check
+    if (demoState.emergencyStop) {
+        result.reason = 'Emergency stop is active - all transactions blocked';
+        return result;
+    }
+    
+    // Spam detection
+    const now = Date.now();
+    const spamWindow = 30 * 1000; // 30 seconds
+    
+    // Clean old transactions
+    demoState.recentTransactions = demoState.recentTransactions.filter(
+        tx => now - tx.timestamp < 300000 // Keep last 5 minutes
+    );
+    
+    // Check for identical transactions - ZERO tolerance
+    const identicalInWindow = demoState.recentTransactions.filter(tx => {
+        return (now - tx.timestamp < spamWindow) &&
+               tx.amount === amount &&
+               tx.service === service &&
+               tx.description === description;
+    });
+    
+    if (identicalInWindow.length > 0) {
+        result.reason = `DUPLICATE BLOCKED: Identical transaction already processed within 30 seconds`;
+        result.spamDetected = true;
+        return result;
+    }
+    
+    // Check for rapid-fire transactions
+    const rapidWindow = 10 * 1000; // 10 seconds
+    const rapidTransactions = demoState.recentTransactions.filter(tx => {
+        return now - tx.timestamp < rapidWindow;
+    });
+    
+    if (rapidTransactions.length >= 5) {
+        result.reason = `VELOCITY SPAM DETECTED: ${rapidTransactions.length} transactions in 10 seconds (max 5)`;
+        result.spamDetected = true;
+        return result;
+    }
+    
+    // Daily limit check
+    const newTotal = demoState.totalSpent + amount;
+    if (newTotal > demoState.dailyLimit) {
+        result.reason = `Would exceed daily limit of $${demoState.dailyLimit} (attempting $${newTotal})`;
+        return result;
+    }
+    
+    // Transaction count check
+    if (demoState.transactionCount >= demoState.maxTransactions) {
+        result.reason = `Maximum ${demoState.maxTransactions} transactions per day reached`;
+        return result;
+    }
+    
+    result.approved = true;
+    return result;
+}
+
+// Get current spending status
+app.get('/api/demo/spending-status', (req, res) => {
+    const startTime = Date.now();
+    
+    setTimeout(() => {
+        const now = Date.now();
+        const recentTransactions = demoState.recentTransactions.filter(tx => now - tx.timestamp < 60000);
+        const latency = Date.now() - startTime;
+        
+        res.json({
+            totalSpent: demoState.totalSpent,
+            dailyLimit: demoState.dailyLimit,
+            remainingLimit: demoState.dailyLimit - demoState.totalSpent,
+            transactionCount: demoState.transactionCount,
+            maxTransactions: demoState.maxTransactions,
+            remainingTransactions: demoState.maxTransactions - demoState.transactionCount,
+            emergencyStop: demoState.emergencyStop,
+            status: demoState.emergencyStop ? 'EMERGENCY_STOP' : 
+                    (demoState.totalSpent >= demoState.dailyLimit ? 'LIMIT_REACHED' : 'ACTIVE'),
+            spamProtection: {
+                recentTransactionsCount: recentTransactions.length,
+                totalTrackedTransactions: demoState.recentTransactions.length,
+                spamDetectionActive: true,
+                maxIdenticalIn30Seconds: 0,
+                maxTransactionsIn10Seconds: 5
+            },
+            latency: latency
+        });
+    }, 20 + Math.random() * 15); // 20-35ms for status check
+});
+
+// Update spending controls
+app.put('/api/demo/spending-controls', (req, res) => {
+    const { dailyLimit, maxTransactions, emergencyStop } = req.body;
+    const startTime = Date.now();
+    
+    setTimeout(() => {
+        if (dailyLimit !== undefined && dailyLimit > 0) {
+            demoState.dailyLimit = dailyLimit;
+        }
+        if (maxTransactions !== undefined && maxTransactions > 0) {
+            demoState.maxTransactions = maxTransactions;
+        }
+        if (emergencyStop !== undefined) {
+            demoState.emergencyStop = emergencyStop;
+        }
+        
+        const latency = Date.now() - startTime;
+        
+        res.json({
+            success: true,
+            message: 'Spending controls updated',
+            currentState: demoState,
+            latency: latency
+        });
+    }, 40 + Math.random() * 30); // 40-70ms for configuration update
+});
+
+// Reset demo state
+app.post('/api/demo/reset', (req, res) => {
+    const startTime = Date.now();
+    
+    setTimeout(() => {
+        demoState = {
+            totalSpent: 0,
+            transactionCount: 0,
+            emergencyStop: false,
+            dailyLimit: 100,
+            maxTransactions: 10,
+            recentTransactions: []
+        };
+        
+        const latency = Date.now() - startTime;
+        
+        res.json({
+            success: true,
+            message: 'Demo reset successfully',
+            state: demoState,
+            latency: latency
+        });
+    }, 30 + Math.random() * 20); // 30-50ms for reset operation
+});
+
 // ===== AUTH ENDPOINTS =====
 app.post('/api/auth/login', async (req, res) => {
     // Simplified login for demo
