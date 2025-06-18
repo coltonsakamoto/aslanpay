@@ -52,7 +52,7 @@ app.get('/api/keys', (req, res) => {
         {
             id: 'key_demo_001',
             name: 'Production API Key',
-            key: '•'.repeat(50), // Masked for security
+            key: 'aslan_live_demo_' + Date.now().toString().slice(-8) + '_prod',
             createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
             lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
             status: 'active'
@@ -60,7 +60,7 @@ app.get('/api/keys', (req, res) => {
         {
             id: 'key_demo_002', 
             name: 'Test Environment Key', 
-            key: '•'.repeat(45), // Masked for security
+            key: 'aslan_test_demo_' + Date.now().toString().slice(-8) + '_test',
             createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
             lastUsed: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
             status: 'active'
@@ -104,13 +104,60 @@ app.put('/api/keys/spending-controls', (req, res) => {
     });
 });
 
-// ⚡ All other API endpoints
-app.get('/api/keys*', (req, res) => {
-    res.json({ success: true, data: [], latency: 0 });
+// 🔧 FIX: API Key Management Actions
+app.post('/api/keys', (req, res) => {
+    const { name } = req.body;
+    const newKey = {
+        id: 'key_new_' + Date.now(),
+        name: name || 'New API Key',
+        key: 'demo_key_' + Math.random().toString(36).substring(7) + '_' + Date.now(),
+        createdAt: new Date().toISOString(),
+        lastUsed: null,
+        status: 'active'
+    };
+    res.json({ 
+        success: true, 
+        apiKey: newKey,
+        message: 'API key created successfully' 
+    });
 });
 
-app.post('/api/keys*', (req, res) => {
-    res.json({ success: true, message: 'Created', latency: 0 });
+app.post('/api/keys/:keyId/rotate', (req, res) => {
+    const { keyId } = req.params;
+    const rotatedKey = {
+        id: keyId,
+        name: 'Rotated API Key',
+        key: 'demo_rotated_' + Math.random().toString(36).substring(7) + '_' + Date.now(),
+        createdAt: new Date().toISOString(),
+        lastUsed: null,
+        status: 'active'
+    };
+    res.json({ 
+        success: true, 
+        apiKey: rotatedKey,
+        message: 'API key rotated successfully' 
+    });
+});
+
+app.delete('/api/keys/:keyId', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: 'API key revoked successfully' 
+    });
+});
+
+app.post('/api/keys/:keyId/reveal', (req, res) => {
+    const { keyId } = req.params;
+    res.json({ 
+        success: true,
+        key: 'demo_revealed_' + Math.random().toString(36).substring(7) + '_' + Date.now(),
+        warning: 'This is a demo key for testing only'
+    });
+});
+
+// ⚡ Catch remaining key endpoints
+app.get('/api/keys*', (req, res) => {
+    res.json({ success: true, data: [], latency: 0 });
 });
 
 app.get('/api/auth*', (req, res) => {

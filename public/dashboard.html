@@ -6,13 +6,29 @@
     <title>Dashboard - Aslan Payment Infrastructure</title>
     <meta name="description" content="Manage your AI agent payment infrastructure, API keys, and spending controls with Aslan's enterprise-grade platform.">
     
-    <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="manifest" href="/site.webmanifest">
+    <!-- Favicon and App Icons with Cache Busting -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=3">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3">
+    <link rel="manifest" href="/site.webmanifest?v=3">
+    <link rel="shortcut icon" href="/favicon.ico?v=3">
     <meta name="theme-color" content="#FF6B35">
+    
+    <!-- Social Sharing Meta Tags -->
+    <meta property="og:title" content="Dashboard - Aslan Payment Infrastructure">
+    <meta property="og:description" content="Manage your AI agent payment infrastructure, API keys, and spending controls with Aslan's enterprise-grade platform.">
+    <meta property="og:image" content="https://aslanpay.xyz/og-image.png">
+    <meta property="og:url" content="https://aslanpay.xyz/dashboard">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Aslan">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Dashboard - Aslan Payment Infrastructure">
+    <meta name="twitter:description" content="Manage your AI agent payment infrastructure, API keys, and spending controls with Aslan's enterprise-grade platform.">
+    <meta name="twitter:image" content="https://aslanpay.xyz/og-image.png">
+    <meta name="twitter:site" content="@AslanPay">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -429,13 +445,39 @@
             `).join('');
         }
 
-        // Copy to clipboard function
+        // Copy to clipboard function with visual feedback
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                // Simple feedback - could be enhanced with a toast notification
-                const event = new CustomEvent('showToast', { detail: 'API key copied to clipboard!' });
-                document.dispatchEvent(event);
+                showToast('✅ API key copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showToast('❌ Failed to copy API key', 'error');
             });
+        }
+        
+        // Toast notification system
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-elegant text-white font-medium transform transition-all duration-300 translate-x-full opacity-0 ${
+                type === 'success' ? 'bg-emerald-600' : 
+                type === 'error' ? 'bg-red-600' : 'bg-blue-600'
+            }`;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
         }
 
         // Create API key modal
@@ -464,13 +506,14 @@
                 if (response.ok) {
                     document.getElementById('create-key-modal').classList.add('hidden');
                     document.getElementById('key-name').value = '';
+                    showToast('🔑 API key created successfully!', 'success');
                     loadApiKeys(); // Reload the list
                 } else {
                     const data = await response.json();
-                    alert('Error: ' + data.error);
+                    showToast('❌ Failed to create API key: ' + data.error, 'error');
                 }
             } catch (error) {
-                alert('Network error. Please try again.');
+                showToast('❌ Network error. Please try again.', 'error');
             }
         });
 
@@ -487,13 +530,14 @@
                 });
                 
                 if (response.ok) {
+                    showToast('🔄 API key rotated successfully!', 'success');
                     loadApiKeys(); // Reload the list
                 } else {
                     const data = await response.json();
-                    alert('Error: ' + data.error);
+                    showToast('❌ Failed to rotate API key: ' + data.error, 'error');
                 }
             } catch (error) {
-                alert('Network error. Please try again.');
+                showToast('❌ Network error. Please try again.', 'error');
             }
         }
 
@@ -510,13 +554,14 @@
                 });
                 
                 if (response.ok) {
+                    showToast('🗑️ API key revoked successfully!', 'success');
                     loadApiKeys(); // Reload the list
                 } else {
                     const data = await response.json();
-                    alert('Error: ' + data.error);
+                    showToast('❌ Failed to revoke API key: ' + data.error, 'error');
                 }
             } catch (error) {
-                alert('Network error. Please try again.');
+                showToast('❌ Network error. Please try again.', 'error');
             }
         }
 
