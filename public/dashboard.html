@@ -318,13 +318,51 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    apiKeys = data.apiKeys;
+                    
+                    // ✅ CRITICAL: Validate response format to prevent future breakage
+                    if (data && typeof data === 'object') {
+                        // Handle multiple possible response formats
+                        if (Array.isArray(data.apiKeys)) {
+                            apiKeys = data.apiKeys;
+                        } else if (Array.isArray(data.data)) {
+                            apiKeys = data.data; // Fallback format
+                        } else if (Array.isArray(data)) {
+                            apiKeys = data; // Direct array format
+                        } else {
+                            console.warn('⚠️ Unexpected API response format:', data);
+                            apiKeys = []; // Safe fallback
+                        }
+                    } else {
+                        console.error('❌ Invalid API response:', data);
+                        apiKeys = [];
+                    }
+                    
                     renderApiKeys();
                 } else {
-                    document.getElementById('api-keys-list').innerHTML = '<p class="text-red-600">Failed to load API keys</p>';
+                    console.error('❌ API keys fetch failed:', response.status, response.statusText);
+                    document.getElementById('api-keys-list').innerHTML = `
+                        <div class="text-center py-12 text-red-600">
+                            <div class="text-4xl mb-3">⚠️</div>
+                            <div class="text-lg font-medium mb-2">Failed to load API keys</div>
+                            <div class="text-sm mb-4">Server responded with ${response.status}</div>
+                            <button onclick="loadApiKeys()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                Retry
+                            </button>
+                        </div>
+                    `;
                 }
             } catch (error) {
-                document.getElementById('api-keys-list').innerHTML = '<p class="text-red-600">Error loading API keys</p>';
+                console.error('❌ API keys network error:', error);
+                document.getElementById('api-keys-list').innerHTML = `
+                    <div class="text-center py-12 text-red-600">
+                        <div class="text-4xl mb-3">🌐</div>
+                        <div class="text-lg font-medium mb-2">Network Error</div>
+                        <div class="text-sm mb-4">Could not connect to server</div>
+                        <button onclick="loadApiKeys()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            Retry
+                        </button>
+                    </div>
+                `;
             }
         }
 

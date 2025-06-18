@@ -84,6 +84,35 @@ app.put('/api/keys/spending-controls', (req, res) => {
 
 // ⚡ ULTRA-PERFORMANCE: All other potential demo endpoints (instant responses)
 app.get('/api/keys*', (req, res) => {
+    // Handle specific endpoints properly
+    if (req.path === '/api/keys') {
+        // Dashboard expects this exact format with demo keys
+        const demoApiKeys = [
+            {
+                id: 'key_demo_001',
+                name: 'Production API Key',
+                key: 'sk_live_51234567890123456789012345678901234567890123456789012345678901234567890123456789',
+                createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+                lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                status: 'active'
+            },
+            {
+                id: 'key_demo_002', 
+                name: 'Test Environment Key',
+                key: 'sk_test_51234567890123456789012345678901234567890123456789012345678901234567890123456789',
+                createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+                lastUsed: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+                status: 'active'
+            }
+        ];
+        
+        return res.json({ 
+            apiKeys: demoApiKeys, 
+            total: demoApiKeys.length,
+            success: true,
+            latency: 0 
+        });
+    }
     res.json({ success: true, data: [], latency: 0 });
 });
 
