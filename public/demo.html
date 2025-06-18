@@ -630,12 +630,15 @@ function_call: "auto"</code></pre>
                     viewGithubBtn.addEventListener('click', showGitHub);
                 }
                 
-                if (manageCardsBtn) {
-                    manageCardsBtn.addEventListener('click', showCardManager);
-                }
+                // ⚡ INSTANT: Add suggestions immediately (no timeout needed)
+                addSuggestionButtons();
                 
-                // Add suggestions after initialization
-                setTimeout(addSuggestionButtons, 1000);
+                // ⚡ INSTANT: Add manage cards event listener dynamically (since it's created by updatePaymentMethodDisplay)
+                document.addEventListener('click', function(e) {
+                    if (e.target && e.target.id === 'manage-cards-btn') {
+                        showCardManager();
+                    }
+                });
                 
             } catch (error) {
                 console.error('❌ Error initializing components:', error);
@@ -708,13 +711,24 @@ function_call: "auto"</code></pre>
             console.log('⚡ Instantly updated display with local data');
         }
 
-        // Update payment method display
+        // ⚡ INSTANT: Update payment method display (with debug logging)
         function updatePaymentMethodDisplay() {
+            console.log('🔄 Updating payment method display...');
+            
             const cards = cardManager.getAllCards();
             const selectedCard = cardManager.getSelectedCard();
             const display = document.getElementById('payment-method-display');
             
+            console.log(`💳 Found ${cards.length} cards:`, cards);
+            console.log('💳 Selected card:', selectedCard);
+            
+            if (!display) {
+                console.error('❌ payment-method-display element not found!');
+                return;
+            }
+            
             if (cards.length === 0) {
+                console.log('⚠️ No cards found, showing empty state');
                 display.innerHTML = `
                     <div class="text-center text-gray-500 py-2">
                         <div class="text-sm">No payment methods added</div>
@@ -724,6 +738,7 @@ function_call: "auto"</code></pre>
                 return;
             }
             
+            console.log('✅ Displaying selected card:', selectedCard.nickname);
             display.innerHTML = `
                 <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
@@ -738,6 +753,7 @@ function_call: "auto"</code></pre>
                     </div>
                 </div>
             `;
+            console.log('✅ Payment method display updated successfully!');
         }
 
         // Get brand icon
@@ -1418,11 +1434,22 @@ const response = await openai.chat.completions.create({
             document.body.appendChild(modal);
         }
 
-        // Add suggestion buttons
+        // ⚡ INSTANT: Add suggestion buttons (with proper error handling)
         function addSuggestionButtons() {
+            console.log('🚀 Adding suggestion buttons...');
+            
+            const suggestionContainer = document.getElementById('suggestion-buttons');
+            if (!suggestionContainer) {
+                console.error('❌ suggestion-buttons container not found!');
+                return;
+            }
+            
+            // Clear any existing suggestions
+            suggestionContainer.innerHTML = '';
+            
             const suggestions = [
                 "⚙️ Configure your spending controls first",
-                "Buy me a $10 Amazon gift card",
+                "Buy me a $10 Amazon gift card", 
                 "Get me a $50 gift card (test limits)",
                 "Purchase AWS credits for $25",
                 "Register the domain my-ai-startup.com", 
@@ -1431,30 +1458,36 @@ const response = await openai.chat.completions.create({
                 "Check spending status"
             ];
             
-            // Add card management suggestion if no cards
-            if (cardManager.getAllCards().length === 0) {
-                suggestions.unshift("Add a test payment card first");
-            }
+            // ⚡ INSTANT: Always show card management option since demo card exists
+            suggestions.unshift("💳 Manage your payment methods");
+
+            console.log(`✅ Adding ${suggestions.length} suggestion buttons`);
 
             // Add suggestion buttons
-            const suggestionContainer = document.getElementById('suggestion-buttons');
-            
-            suggestions.forEach(suggestion => {
+            suggestions.forEach((suggestion, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'text-xs bg-white text-aslan-700 px-3 py-2 rounded-full hover:bg-aslan-100 transition-colors border border-aslan-200 font-medium';
                 btn.textContent = suggestion;
                 btn.onclick = () => {
+                    console.log(`🖱️ Clicked suggestion: ${suggestion}`);
                     if (suggestion.includes('Configure your spending controls')) {
                         showSpendingSettings();
-                    } else if (suggestion.includes('Add a test payment card')) {
-                        showAddCardForm();
+                    } else if (suggestion.includes('Manage your payment methods')) {
+                        showCardManager();
                     } else {
-                        chatInput.value = suggestion;
-                        sendBtn.click();
+                        const chatInput = document.getElementById('chat-input');
+                        const sendBtn = document.getElementById('send-btn');
+                        if (chatInput && sendBtn) {
+                            chatInput.value = suggestion;
+                            sendBtn.click();
+                        }
                     }
                 };
                 suggestionContainer.appendChild(btn);
+                console.log(`✅ Added suggestion ${index + 1}: ${suggestion}`);
             });
+            
+            console.log('✅ All suggestion buttons added successfully!');
         }
     </script>
 </body>
