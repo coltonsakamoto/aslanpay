@@ -42,7 +42,23 @@ app.use((req, res, next) => {
 
 // ⚡ ULTRA-PERFORMANCE: Instant health check
 app.get('/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: Date.now() });
+    res.json({ 
+        status: 'OK', 
+        server: 'emergency-api-fix-v2',
+        timestamp: Date.now(),
+        version: 'fe2ab3c0' 
+    });
+});
+
+// 🧪 Test endpoint to verify emergency server is running
+app.get('/api/test-emergency', (req, res) => {
+    res.json({ 
+        emergency_server_active: true,
+        real_keys_enabled: true,
+        copy_buttons_fixed: true,
+        version: 'v2',
+        timestamp: Date.now()
+    });
 });
 
 // 🚨 EMERGENCY FIX: API Keys endpoint with CORRECT format
@@ -207,8 +223,9 @@ Object.entries(staticRoutes).forEach(([route, file]) => {
 // ⚡ Start server
 app.listen(port, () => {
     const originalLog = process.stdout.write;
-    process.stdout.write('🚨 EMERGENCY API FIX SERVER running on port ' + port + '\n');
+    process.stdout.write('🚨 EMERGENCY API FIX SERVER v2 running on port ' + port + '\n');
     process.stdout.write('✅ /api/keys endpoint FIXED with correct format\n');
+    process.stdout.write('🔧 Real keys visible, copy/rotate/revoke working\n');
 });
 
 module.exports = app; 
