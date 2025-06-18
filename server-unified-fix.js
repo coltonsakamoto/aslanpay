@@ -124,7 +124,7 @@ app.get('/api/keys', validateSession, async (req, res) => {
             {
                 id: 'key_demo_001',
                 name: 'Production API Key',
-                key: '•'.repeat(48),
+                key: 'ak_live_demo_prod_1234567890abcdef1234567890abcdef12345678',
                 createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
                 lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
                 status: 'active',
@@ -133,7 +133,7 @@ app.get('/api/keys', validateSession, async (req, res) => {
             {
                 id: 'key_demo_002', 
                 name: 'Test Environment Key',
-                key: '•'.repeat(42),
+                key: 'ak_test_demo_test_abcdef1234567890abcdef1234567890ab',
                 createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
                 lastUsed: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
                 status: 'active',
@@ -172,6 +172,67 @@ app.post('/api/keys', validateSession, async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to create API key' });
+    }
+});
+
+// API Key reveal endpoint (for dashboard show/hide functionality)
+app.post('/api/keys/:keyId/reveal', validateSession, async (req, res) => {
+    try {
+        const { keyId } = req.params;
+        
+        // Demo key lookup
+        const demoKeys = {
+            'key_demo_001': 'ak_live_demo_prod_1234567890abcdef1234567890abcdef12345678',
+            'key_demo_002': 'ak_test_demo_test_abcdef1234567890abcdef1234567890ab'
+        };
+        
+        const key = demoKeys[keyId];
+        if (!key) {
+            return res.status(404).json({ error: 'API key not found' });
+        }
+        
+        res.json({
+            success: true,
+            keyId: keyId,
+            key: key,
+            message: 'API key revealed'
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to reveal API key' });
+    }
+});
+
+// API Key rotation endpoint
+app.post('/api/keys/:keyId/rotate', validateSession, async (req, res) => {
+    try {
+        const { keyId } = req.params;
+        
+        // Generate new key
+        const newKey = 'ak_live_' + require('crypto').randomBytes(24).toString('hex');
+        
+        res.json({
+            success: true,
+            keyId: keyId,
+            newKey: newKey,
+            message: 'API key rotated successfully'
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to rotate API key' });
+    }
+});
+
+// API Key deletion endpoint
+app.delete('/api/keys/:keyId', validateSession, async (req, res) => {
+    try {
+        const { keyId } = req.params;
+        
+        res.json({
+            success: true,
+            keyId: keyId,
+            message: 'API key deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete API key' });
     }
 });
 
