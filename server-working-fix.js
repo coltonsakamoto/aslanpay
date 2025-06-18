@@ -65,6 +65,9 @@ app.get('/api/test-emergency', (req, res) => {
 
 // 🚨 EMERGENCY FIX: API Keys endpoint with CORRECT format
 app.get('/api/keys', (req, res) => {
+    // Add realistic latency for better demo
+    const startTime = Date.now();
+    
     // PROFESSIONAL API KEYS - SECURITY BEST PRACTICES
     function generateSecureApiKey(environment = 'live') {
         const prefix = environment === 'live' ? 'ak_live_' : 'ak_test_';
@@ -73,57 +76,71 @@ app.get('/api/keys', (req, res) => {
         return prefix + secureRandom;
     }
     
-    const apiKeys = [
-        {
-            id: 'key_default_001',
-            name: 'Default API Key',
-            key: generateSecureApiKey('live'),
-            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            lastUsed: 'Never',
-            status: 'active'
-        }
-    ];
-    
-    res.json({ 
-        apiKeys: apiKeys, 
-        total: apiKeys.length,
-        success: true,
-        latency: 0,
-        security_compliant: true
-    });
+    // Simulate realistic database query time
+    setTimeout(() => {
+        const apiKeys = [
+            {
+                id: 'key_default_001',
+                name: 'Default API Key',
+                key: generateSecureApiKey('live'),
+                createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+                lastUsed: 'Never',
+                status: 'active'
+            }
+        ];
+        
+        const latency = Date.now() - startTime;
+        
+        res.json({ 
+            apiKeys: apiKeys, 
+            total: apiKeys.length,
+            success: true,
+            latency: latency,
+            security_compliant: true
+        });
+    }, 45 + Math.random() * 30); // 45-75ms realistic latency
 });
 
 // ⚡ ULTRA-PERFORMANCE: Ultra-fast spending controls with timing
 app.get('/api/keys/spending-controls', (req, res) => {
     const t0 = Date.now();
-    const tDone = Date.now();
     
-    res.set('Server-Timing', `get-controls;dur=${tDone-t0};desc="Get spending controls"`);
-    res.json({
-        dailyLimit: 100,
-        spentToday: Math.random() * 50,
-        transactionCount: Math.floor(Math.random() * 10),
-        demoLimit: 20,
-        emergencyStop: false,
-        processing_time: tDone - t0
-    });
+    // Simulate realistic processing time
+    setTimeout(() => {
+        const tDone = Date.now();
+        
+        res.set('Server-Timing', `get-controls;dur=${tDone-t0};desc="Get spending controls"`);
+        res.json({
+            dailyLimit: 100,
+            spentToday: Math.random() * 50,
+            transactionCount: Math.floor(Math.random() * 10),
+            demoLimit: 20,
+            emergencyStop: false,
+            processing_time: tDone - t0
+        });
+    }, 25 + Math.random() * 20); // 25-45ms realistic latency
 });
 
 app.put('/api/keys/spending-controls', (req, res) => {
     const t0 = Date.now();
-    const tDone = Date.now();
     
-    res.json({
-        success: true,
-        message: 'Demo settings updated',
-        processing_time: tDone - t0,
-        timestamp: Date.now()
-    });
+    // Simulate realistic processing time
+    setTimeout(() => {
+        const tDone = Date.now();
+        
+        res.json({
+            success: true,
+            message: 'Demo settings updated',
+            processing_time: tDone - t0,
+            timestamp: Date.now()
+        });
+    }, 35 + Math.random() * 25); // 35-60ms realistic latency
 });
 
-// 🔧 FIX: API Key Management Actions  
+// 🔧 FIX: API Key Management Actions with realistic latency
 app.post('/api/keys', (req, res) => {
     const { name, environment } = req.body;
+    const startTime = Date.now();
     
     function generateSecureApiKey(env = 'live') {
         const prefix = env === 'live' ? 'ak_live_' : 'ak_test_';
@@ -132,23 +149,31 @@ app.post('/api/keys', (req, res) => {
         return prefix + secureRandom;
     }
     
-    const newKey = {
-        id: 'key_' + Date.now(),
-        name: name || 'New API Key',
-        key: generateSecureApiKey(environment),
-        createdAt: new Date().toISOString(),
-        lastUsed: 'Never',
-        status: 'active'
-    };
-    res.json({ 
-        success: true, 
-        apiKey: newKey,
-        message: 'API key created successfully' 
-    });
+    // Simulate database write time
+    setTimeout(() => {
+        const newKey = {
+            id: 'key_' + Date.now(),
+            name: name || 'New API Key',
+            key: generateSecureApiKey(environment),
+            createdAt: new Date().toISOString(),
+            lastUsed: 'Never',
+            status: 'active'
+        };
+        
+        const latency = Date.now() - startTime;
+        
+        res.json({ 
+            success: true, 
+            apiKey: newKey,
+            message: 'API key created successfully',
+            latency: latency
+        });
+    }, 80 + Math.random() * 40); // 80-120ms for database write
 });
 
 app.post('/api/keys/:keyId/rotate', (req, res) => {
     const { keyId } = req.params;
+    const startTime = Date.now();
     
     function generateSecureApiKey(env = 'live') {
         const prefix = env === 'live' ? 'ak_live_' : 'ak_test_';
@@ -157,30 +182,46 @@ app.post('/api/keys/:keyId/rotate', (req, res) => {
         return prefix + secureRandom;
     }
     
-    const rotatedKey = {
-        id: keyId,
-        name: 'Rotated API Key',
-        key: generateSecureApiKey('live'),
-        createdAt: new Date().toISOString(),
-        lastUsed: 'Never',
-        status: 'active'
-    };
-    res.json({ 
-        success: true, 
-        apiKey: rotatedKey,
-        message: 'API key rotated successfully' 
-    });
+    // Simulate database update time
+    setTimeout(() => {
+        const rotatedKey = {
+            id: keyId,
+            name: 'Rotated API Key',
+            key: generateSecureApiKey('live'),
+            createdAt: new Date().toISOString(),
+            lastUsed: 'Never',
+            status: 'active'
+        };
+        
+        const latency = Date.now() - startTime;
+        
+        res.json({ 
+            success: true, 
+            apiKey: rotatedKey,
+            message: 'API key rotated successfully',
+            latency: latency
+        });
+    }, 95 + Math.random() * 50); // 95-145ms for secure rotation
 });
 
 app.delete('/api/keys/:keyId', (req, res) => {
-    res.json({ 
-        success: true, 
-        message: 'API key revoked successfully' 
-    });
+    const startTime = Date.now();
+    
+    // Simulate secure deletion time
+    setTimeout(() => {
+        const latency = Date.now() - startTime;
+        
+        res.json({ 
+            success: true, 
+            message: 'API key revoked successfully',
+            latency: latency
+        });
+    }, 60 + Math.random() * 30); // 60-90ms for secure deletion
 });
 
 app.post('/api/keys/:keyId/reveal', (req, res) => {
     const { keyId } = req.params;
+    const startTime = Date.now();
     
     function generateSecureApiKey(env = 'live') {
         const prefix = env === 'live' ? 'ak_live_' : 'ak_test_';
@@ -189,24 +230,56 @@ app.post('/api/keys/:keyId/reveal', (req, res) => {
         return prefix + secureRandom;
     }
     
-    res.json({ 
-        success: true,
-        key: generateSecureApiKey('live'),
-        warning: 'This key will only be shown once. Please copy it now.'
-    });
+    // Simulate secure key retrieval
+    setTimeout(() => {
+        const latency = Date.now() - startTime;
+        
+        res.json({ 
+            success: true,
+            key: generateSecureApiKey('live'),
+            warning: 'This key will only be shown once. Please copy it now.',
+            latency: latency
+        });
+    }, 40 + Math.random() * 20); // 40-60ms for secure retrieval
 });
 
 // ⚡ Catch remaining key endpoints
 app.get('/api/keys*', (req, res) => {
-    res.json({ success: true, data: [], latency: 0 });
+    setTimeout(() => {
+        res.json({ success: true, data: [], latency: 45 + Math.random() * 20 });
+    }, 45 + Math.random() * 20);
 });
 
-app.get('/api/auth*', (req, res) => {
-    res.json({ authenticated: true, user: { id: 'demo' }, latency: 0 });
+// 🔧 FIX: Proper authentication endpoints with realistic user data
+app.get('/api/auth/me', (req, res) => {
+    const startTime = Date.now();
+    
+    // Simulate authentication check
+    setTimeout(() => {
+        const latency = Date.now() - startTime;
+        
+        res.json({ 
+            authenticated: true, 
+            user: { 
+                id: 'demo_user_123',
+                name: 'Demo User',
+                email: 'demo@aslanpay.xyz',
+                subscriptionPlan: 'sandbox',
+                createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+                lastLogin: new Date().toISOString()
+            },
+            latency: latency
+        });
+    }, 35 + Math.random() * 25); // 35-60ms for auth check
 });
 
 app.post('/api/auth*', (req, res) => {
-    res.json({ success: true, token: 'demo-token', latency: 0 });
+    const startTime = Date.now();
+    
+    setTimeout(() => {
+        const latency = Date.now() - startTime;
+        res.json({ success: true, token: 'demo-token', latency: latency });
+    }, 55 + Math.random() * 30);
 });
 
 // 🛡️ IDEMPOTENCY TRACKING - CRITICAL SPAM PROTECTION
@@ -452,56 +525,70 @@ app.post('/api/demo/purchase', (req, res) => {
     const validation = validateDemoSpending(amount, service, description);
     
     if (!validation.approved) {
-        return res.status(402).json({
-            success: false,
-            blocked: true,
-            reason: validation.reason,
-            currentSpent: demoState.totalSpent,
-            dailyLimit: demoState.dailyLimit,
-            transactionCount: demoState.transactionCount,
-            maxTransactions: demoState.maxTransactions,
-            emergencyStop: demoState.emergencyStop,
-            spamDetected: validation.spamDetected || false,
-            message: '🚨 TRANSACTION BLOCKED BY SPENDING CONTROLS'
+        // Add realistic processing time even for blocked transactions
+        const processingDelay = 25 + Math.random() * 35; // 25-60ms for validation
+        
+        setTimeout(() => {
+            const latency = Date.now() - startTime;
+            
+            res.status(402).json({
+                success: false,
+                blocked: true,
+                reason: validation.reason,
+                currentSpent: demoState.totalSpent,
+                dailyLimit: demoState.dailyLimit,
+                transactionCount: demoState.transactionCount,
+                maxTransactions: demoState.maxTransactions,
+                emergencyStop: demoState.emergencyStop,
+                spamDetected: validation.spamDetected || false,
+                latency: latency,
+                message: '🚨 TRANSACTION BLOCKED BY SPENDING CONTROLS'
+            });
+        }, processingDelay);
+        return;
+    }
+    
+    // Simulate realistic transaction processing time
+    const processingDelay = 45 + Math.random() * 55; // 45-100ms for transaction processing
+    
+    setTimeout(() => {
+        // Process the transaction
+        demoState.totalSpent += amount;
+        demoState.transactionCount++;
+        
+        // Track transaction for spam detection
+        const transactionId = `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const transaction = {
+            id: transactionId,
+            amount: amount,
+            service: service,
+            description: description,
+            timestamp: Date.now()
+        };
+        
+        // Add to recent transactions (keep last 50)
+        demoState.recentTransactions.push(transaction);
+        if (demoState.recentTransactions.length > 50) {
+            demoState.recentTransactions = demoState.recentTransactions.slice(-50);
+        }
+        
+        const latency = Date.now() - startTime;
+        
+        res.json({
+            success: true,
+            transactionId: transactionId,
+            amount: amount,
+            service: service,
+            latency: latency,
+            spendingStatus: {
+                totalSpent: demoState.totalSpent,
+                remainingLimit: demoState.dailyLimit - demoState.totalSpent,
+                transactionCount: demoState.transactionCount,
+                remainingTransactions: demoState.maxTransactions - demoState.transactionCount
+            },
+            message: '✅ Transaction approved and processed'
         });
-    }
-    
-    // Process the transaction
-    demoState.totalSpent += amount;
-    demoState.transactionCount++;
-    
-    // Track transaction for spam detection
-    const transactionId = `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const transaction = {
-        id: transactionId,
-        amount: amount,
-        service: service,
-        description: description,
-        timestamp: Date.now()
-    };
-    
-    // Add to recent transactions (keep last 50)
-    demoState.recentTransactions.push(transaction);
-    if (demoState.recentTransactions.length > 50) {
-        demoState.recentTransactions = demoState.recentTransactions.slice(-50);
-    }
-    
-    const latency = Date.now() - startTime;
-    
-    res.json({
-        success: true,
-        transactionId: transactionId,
-        amount: amount,
-        service: service,
-        latency: latency,
-        spendingStatus: {
-            totalSpent: demoState.totalSpent,
-            remainingLimit: demoState.dailyLimit - demoState.totalSpent,
-            transactionCount: demoState.transactionCount,
-            remainingTransactions: demoState.maxTransactions - demoState.transactionCount
-        },
-        message: '✅ Transaction approved and processed'
-    });
+    }, processingDelay);
 });
 
 // 🛡️ CORE SPENDING VALIDATION LOGIC WITH SPAM PROTECTION
@@ -601,66 +688,88 @@ function validateDemoSpending(amount, service, description) {
 
 // Get current spending status
 app.get('/api/demo/spending-status', (req, res) => {
-    const now = Date.now();
-    const recentTransactions = demoState.recentTransactions.filter(tx => now - tx.timestamp < 60000); // Last minute
+    const startTime = Date.now();
     
-    res.json({
-        totalSpent: demoState.totalSpent,
-        dailyLimit: demoState.dailyLimit,
-        remainingLimit: demoState.dailyLimit - demoState.totalSpent,
-        transactionCount: demoState.transactionCount,
-        maxTransactions: demoState.maxTransactions,
-        remainingTransactions: demoState.maxTransactions - demoState.transactionCount,
-        emergencyStop: demoState.emergencyStop,
-        status: demoState.emergencyStop ? 'EMERGENCY_STOP' : 
-                (demoState.totalSpent >= demoState.dailyLimit ? 'LIMIT_REACHED' : 'ACTIVE'),
-        spamProtection: {
-            recentTransactionsCount: recentTransactions.length,
-            totalTrackedTransactions: demoState.recentTransactions.length,
-            spamDetectionActive: true,
-            maxIdenticalIn30Seconds: 0,
-            maxTransactionsIn10Seconds: 5
-        }
-    });
+    // Simulate realistic database query time
+    setTimeout(() => {
+        const now = Date.now();
+        const recentTransactions = demoState.recentTransactions.filter(tx => now - tx.timestamp < 60000); // Last minute
+        const latency = Date.now() - startTime;
+        
+        res.json({
+            totalSpent: demoState.totalSpent,
+            dailyLimit: demoState.dailyLimit,
+            remainingLimit: demoState.dailyLimit - demoState.totalSpent,
+            transactionCount: demoState.transactionCount,
+            maxTransactions: demoState.maxTransactions,
+            remainingTransactions: demoState.maxTransactions - demoState.transactionCount,
+            emergencyStop: demoState.emergencyStop,
+            status: demoState.emergencyStop ? 'EMERGENCY_STOP' : 
+                    (demoState.totalSpent >= demoState.dailyLimit ? 'LIMIT_REACHED' : 'ACTIVE'),
+            spamProtection: {
+                recentTransactionsCount: recentTransactions.length,
+                totalTrackedTransactions: demoState.recentTransactions.length,
+                spamDetectionActive: true,
+                maxIdenticalIn30Seconds: 0,
+                maxTransactionsIn10Seconds: 5
+            },
+            latency: latency
+        });
+    }, 20 + Math.random() * 15); // 20-35ms for status check
 });
 
 // Update spending controls
 app.put('/api/demo/spending-controls', (req, res) => {
     const { dailyLimit, maxTransactions, emergencyStop } = req.body;
+    const startTime = Date.now();
     
-    if (dailyLimit !== undefined && dailyLimit > 0) {
-        demoState.dailyLimit = dailyLimit;
-    }
-    if (maxTransactions !== undefined && maxTransactions > 0) {
-        demoState.maxTransactions = maxTransactions;
-    }
-    if (emergencyStop !== undefined) {
-        demoState.emergencyStop = emergencyStop;
-    }
-    
-    res.json({
-        success: true,
-        message: 'Spending controls updated',
-        currentState: demoState
-    });
+    // Simulate realistic configuration update time
+    setTimeout(() => {
+        if (dailyLimit !== undefined && dailyLimit > 0) {
+            demoState.dailyLimit = dailyLimit;
+        }
+        if (maxTransactions !== undefined && maxTransactions > 0) {
+            demoState.maxTransactions = maxTransactions;
+        }
+        if (emergencyStop !== undefined) {
+            demoState.emergencyStop = emergencyStop;
+        }
+        
+        const latency = Date.now() - startTime;
+        
+        res.json({
+            success: true,
+            message: 'Spending controls updated',
+            currentState: demoState,
+            latency: latency
+        });
+    }, 40 + Math.random() * 30); // 40-70ms for configuration update
 });
 
 // Reset demo state
 app.post('/api/demo/reset', (req, res) => {
-    demoState = {
-        totalSpent: 0,
-        transactionCount: 0,
-        emergencyStop: false,
-        dailyLimit: 100,
-        maxTransactions: 10,
-        recentTransactions: [] // Track recent transactions for spam detection
-    };
+    const startTime = Date.now();
     
-    res.json({
-        success: true,
-        message: 'Demo reset successfully',
-        state: demoState
-    });
+    // Simulate realistic reset operation time
+    setTimeout(() => {
+        demoState = {
+            totalSpent: 0,
+            transactionCount: 0,
+            emergencyStop: false,
+            dailyLimit: 100,
+            maxTransactions: 10,
+            recentTransactions: [] // Track recent transactions for spam detection
+        };
+        
+        const latency = Date.now() - startTime;
+        
+        res.json({
+            success: true,
+            message: 'Demo reset successfully',
+            state: demoState,
+            latency: latency
+        });
+    }, 30 + Math.random() * 20); // 30-50ms for reset operation
 });
 
 // ⚡ CATCH ALL API endpoints (AT THE END - after all specific routes)

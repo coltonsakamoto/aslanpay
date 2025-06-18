@@ -1,0 +1,94 @@
+{
+  "timestamp": "2025-06-18T21:47:56.807Z",
+  "server": "http://localhost:3000",
+  "totalEndpoints": 14,
+  "passed": 14,
+  "failed": 0,
+  "criticalFailures": 0,
+  "details": [
+    {
+      "success": true,
+      "endpoint": "Health Check",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Test Endpoint",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Homepage",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Demo Page",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Pricing Page",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Dashboard Page",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Documentation",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "API Keys List",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Create API Key",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Pricing Plans",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Price Calculator",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Billing Summary",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "API Key Test",
+      "status": 401,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "Payment Authorization",
+      "status": 401,
+      "responseTime": "N/A"
+    }
+  ]
+}
