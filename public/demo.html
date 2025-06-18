@@ -555,22 +555,54 @@ function_call: "auto"</code></pre>
         const transactionLog = document.getElementById('transaction-log');
         const openaiKeyInput = document.getElementById('openai-key');
 
-        // Initialize components when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 DOM loaded, initializing components...');
+        // ⚡ BACKUP: Initialize immediately (don't wait for DOMContentLoaded)
+        function initializeDemo() {
+            console.log('🚀 Initializing demo components...');
             
             try {
-                spendingTracker = new DemoSpendingTracker();
-                cardManager = new CardManagementDemo();
-                paymentProcessor = new PaymentProcessingDemo(cardManager);
+                // Initialize core objects
+                if (!window.spendingTracker) {
+                    window.spendingTracker = new DemoSpendingTracker();
+                    console.log('✅ spendingTracker initialized');
+                }
                 
-                console.log('✅ All components initialized successfully');
-                console.log('DEMO_CONFIG:', DEMO_CONFIG);
-                console.log('spendingTracker:', spendingTracker);
+                if (!window.cardManager) {
+                    window.cardManager = new CardManagementDemo();
+                    console.log('✅ cardManager initialized'); 
+                }
                 
-                // Initialize displays
+                if (!window.paymentProcessor) {
+                    window.paymentProcessor = new PaymentProcessingDemo(window.cardManager);
+                    console.log('✅ paymentProcessor initialized');
+                }
+                
+                // Update displays
                 updatePaymentControlsDisplay();
                 updatePaymentMethodDisplay();
+                addSuggestionButtons();
+                
+                console.log('✅ Demo initialization complete!');
+                
+            } catch (error) {
+                console.error('❌ Demo initialization error:', error);
+            }
+        }
+        
+        // ⚡ RUN IMMEDIATELY - don't wait for anything
+        setTimeout(initializeDemo, 100);
+        
+        // ⚡ ALSO run on DOMContentLoaded as backup
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM loaded, running backup initialization...');
+            
+            try {
+                // Run initialization again (will use existing objects if already created)
+                initializeDemo();
+                
+                console.log('✅ Backup initialization complete');
+                console.log('DEMO_CONFIG:', DEMO_CONFIG);
+                console.log('spendingTracker:', window.spendingTracker);
+                console.log('cardManager:', window.cardManager);
                 
                 // Initialize event listeners
                 const chatInput = document.getElementById('chat-input');
@@ -688,7 +720,11 @@ function_call: "auto"</code></pre>
         // ⚡ INSTANT: Update payment controls display with mock data (no server calls)
         function updatePaymentControlsDisplay() {
             // ⚡ Use local data only for instant updates
-            const status = spendingTracker.getDemoStatus();
+            if (!window.spendingTracker) {
+                console.log('⏳ spendingTracker not ready yet, skipping display update');
+                return;
+            }
+            const status = window.spendingTracker.getDemoStatus();
             
             // ⚡ Instant DOM updates
             document.getElementById('spent-today').textContent = `$${status.spentToday.toFixed(2)}`;
@@ -715,8 +751,13 @@ function_call: "auto"</code></pre>
         function updatePaymentMethodDisplay() {
             console.log('🔄 Updating payment method display...');
             
-            const cards = cardManager.getAllCards();
-            const selectedCard = cardManager.getSelectedCard();
+            if (!window.cardManager) {
+                console.log('⏳ cardManager not ready yet, skipping payment method display');
+                return;
+            }
+            
+            const cards = window.cardManager.getAllCards();
+            const selectedCard = window.cardManager.getSelectedCard();
             const display = document.getElementById('payment-method-display');
             
             console.log(`💳 Found ${cards.length} cards:`, cards);
@@ -770,11 +811,16 @@ function_call: "auto"</code></pre>
 
         // Show card manager modal
         function showCardManager() {
+            if (!window.cardManager) {
+                console.error('❌ cardManager not available');
+                return;
+            }
+            
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
             modal.id = 'card-manager-modal';
             
-            const cards = cardManager.getAllCards();
+            const cards = window.cardManager.getAllCards();
             const cardList = cards.map(card => `
                 <div class="bg-white rounded-lg p-4 border ${card.isDefault ? 'border-aslan-orange' : 'border-gray-200'} mb-3">
                     <div class="flex items-center justify-between">
@@ -832,11 +878,16 @@ function_call: "auto"</code></pre>
 
         // Show add card form
         function showAddCardForm() {
+            if (!window.cardManager) {
+                console.error('❌ cardManager not available');
+                return;
+            }
+            
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
             modal.id = 'add-card-modal';
             
-            const testCards = cardManager.getTestCards();
+            const testCards = window.cardManager.getTestCards();
             const testCardOptions = testCards.map(card => `
                 <button class="test-card-btn text-left p-3 border rounded-lg hover:bg-gray-50 w-full mb-2" data-card-number="${card.number}" data-brand="${card.brand}">
                     <div class="font-medium">${card.name}</div>
@@ -946,7 +997,7 @@ function_call: "auto"</code></pre>
                 const cvc = document.getElementById('cvc').value;
                 const nickname = document.getElementById('card-nickname').value;
                 
-                const newCard = await cardManager.simulateCardAdding(cardNumber, expMonth, expYear, cvc, nickname);
+                const newCard = await window.cardManager.simulateCardAdding(cardNumber, expMonth, expYear, cvc, nickname);
                 
                 // Close modal
                 closeAddCardModal();
@@ -982,14 +1033,14 @@ function_call: "auto"</code></pre>
         }
         
         function setDefaultCard(cardId) {
-            cardManager.setDefaultCard(cardId);
+            window.cardManager.setDefaultCard(cardId);
             updatePaymentMethodDisplay();
             closeCardManagerModal();
             addMessage(`✅ Default payment method updated.`, false);
         }
         
         function removeCard(cardId) {
-            cardManager.removeCard(cardId);
+            window.cardManager.removeCard(cardId);
             updatePaymentMethodDisplay();
             closeCardManagerModal();
             addMessage(`✅ Payment method removed.`, false);
@@ -1007,7 +1058,7 @@ function_call: "auto"</code></pre>
                     return;
                 }
                 
-                if (!spendingTracker) {
+                if (!window.spendingTracker) {
                     console.error('❌ spendingTracker is undefined');
                     alert('Spending tracker not initialized. Please refresh the page.');
                     return;
@@ -1019,7 +1070,7 @@ function_call: "auto"</code></pre>
                 modal.id = 'spending-settings-modal';
                 
                 const currentConfig = DEMO_CONFIG;
-                const currentStatus = spendingTracker.getDemoStatus();
+                const currentStatus = window.spendingTracker.getDemoStatus();
                 
                 console.log('📊 Current config:', currentConfig);
                 console.log('📊 Current status:', currentStatus);
@@ -1259,8 +1310,10 @@ function_call: "auto"</code></pre>
                 addMessage(errorMessage, false);
                 
                 // Show current spending status
-                const status = spendingTracker.getDemoStatus();
-                addMessage(`📊 Demo Status: $${status.spentToday.toFixed(2)}/$${status.dailyLimit} spent (${status.spentPercentage}%), ${status.transactionCount}/${status.maxTransactions} transactions used`, false);
+                const status = window.spendingTracker?.getDemoStatus();
+                if (status) {
+                    addMessage(`📊 Demo Status: $${status.spentToday.toFixed(2)}/$${status.dailyLimit} spent (${status.spentPercentage}%), ${status.transactionCount}/${status.maxTransactions} transactions used`, false);
+                }
                 
                 if (validation.reason.includes('Emergency stop')) {
                     addMessage('🚨 Emergency stop activated. Type "reset emergency" to continue demo.', false);
@@ -1284,7 +1337,7 @@ function_call: "auto"</code></pre>
             addMessage('💳 Processing payment with Aslan...', false);
             
             // Check if payment method is available
-            const selectedCard = cardManager.getSelectedCard();
+            const selectedCard = window.cardManager?.getSelectedCard();
             if (!selectedCard) {
                 addMessage('❌ No payment method available. Please add a card first.', false);
                 return;
@@ -1292,13 +1345,13 @@ function_call: "auto"</code></pre>
             
             try {
                 // Process payment through card system
-                const paymentResult = await paymentProcessor.processPayment(amount, service);
+                const paymentResult = await window.paymentProcessor.processPayment(amount, service);
                 
                 // ⚡ INSTANT: Mock server update (no real API calls)
                 console.log(`✅ Mock server updated: transaction processed instantly`);
                 
                 // Also record locally as backup
-                const recordedTransaction = spendingTracker.recordTransaction(amount, service);
+                const recordedTransaction = window.spendingTracker.recordTransaction(amount, service);
                 
                 const transaction = {
                     service: service,
@@ -1327,8 +1380,10 @@ function_call: "auto"</code></pre>
                 addMessage(response, false);
                 
                 // Show updated spending status
-                const status = spendingTracker.getDemoStatus();
-                addMessage(`📊 Updated limits: $${status.spentToday.toFixed(2)}/$${status.dailyLimit} spent, ${status.remainingTransactions} transactions remaining`, false);
+                const status = window.spendingTracker?.getDemoStatus();
+                if (status) {
+                    addMessage(`📊 Updated limits: $${status.spentToday.toFixed(2)}/$${status.dailyLimit} spent, ${status.remainingTransactions} transactions remaining`, false);
+                }
                 
             } catch (paymentError) {
                 addMessage(`❌ Payment failed: ${paymentError.message}. Please try again or use a different payment method.`, false);
@@ -1348,11 +1403,15 @@ function_call: "auto"</code></pre>
             
             // Handle special commands
             if (message.toLowerCase().includes('reset emergency')) {
-                spendingTracker.resetEmergencyStop();
+                window.spendingTracker?.resetEmergencyStop();
                 addMessage('✅ Emergency stop reset. Demo transactions enabled again.', false);
             } else if (message.toLowerCase().includes('spending status')) {
-                const status = spendingTracker.getDemoStatus();
-                addMessage(`📊 Demo Status:\n💰 Spent: $${status.spentToday.toFixed(2)}/$${status.dailyLimit} (${status.spentPercentage}%)\n📦 Transactions: ${status.transactionCount}/${status.maxTransactions} (${status.transactionPercentage}%)\n⏱️ Emergency Stop: ${status.isEmergencyStop ? 'ACTIVE' : 'Disabled'}`, false);
+                const status = window.spendingTracker?.getDemoStatus();
+                if (status) {
+                    addMessage(`📊 Demo Status:\n💰 Spent: $${status.spentToday.toFixed(2)}/$${status.dailyLimit} (${status.spentPercentage}%)\n📦 Transactions: ${status.transactionCount}/${status.maxTransactions} (${status.transactionPercentage}%)\n⏱️ Emergency Stop: ${status.isEmergencyStop ? 'ACTIVE' : 'Disabled'}`, false);
+                } else {
+                    addMessage('❌ Spending tracker not available yet.', false);
+                }
             } else if (message.toLowerCase().includes('add') && message.toLowerCase().includes('card')) {
                 addMessage('💳 Opening card management interface...', false);
                 showAddCardForm();
@@ -1479,7 +1538,7 @@ const response = await openai.chat.completions.create({
                         const sendBtn = document.getElementById('send-btn');
                         if (chatInput && sendBtn) {
                             chatInput.value = suggestion;
-                            sendBtn.click();
+                            handleSendClick(); // Use the function instead of click()
                         }
                     }
                 };
