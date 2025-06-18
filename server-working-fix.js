@@ -408,17 +408,6 @@ app.get('/api/v1/test', (req, res) => {
     });
 });
 
-// ⚡ CATCH ALL API endpoints
-app.all('/api/*', (req, res) => {
-    res.json({ 
-        success: true, 
-        message: 'Emergency server - instant response',
-        method: req.method,
-        path: req.path,
-        timestamp: Date.now()
-    });
-});
-
 // ⚡ Static files
 const path = require('path');
 const publicPath = path.join(__dirname, 'public');
@@ -674,12 +663,25 @@ app.post('/api/demo/reset', (req, res) => {
     });
 });
 
+// ⚡ CATCH ALL API endpoints (AT THE END - after all specific routes)
+app.all('/api/*', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: 'Emergency server - catch all for unhandled endpoints',
+        method: req.method,
+        path: req.path,
+        timestamp: Date.now(),
+        note: 'This endpoint was not specifically implemented'
+    });
+});
+
 // ⚡ Start server
 app.listen(port, () => {
     const originalLog = process.stdout.write;
     process.stdout.write('🚨 WORKING FIX SERVER v3 running on port ' + port + '\n');
     process.stdout.write('✅ /api/keys endpoint FIXED with correct format\n');
     process.stdout.write('🔧 Real keys visible, copy/rotate/revoke working\n');
+    process.stdout.write('🛡️ Spam protection: ZERO duplicates allowed\n');
 });
 
 module.exports = app; 
