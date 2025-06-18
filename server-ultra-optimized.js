@@ -37,13 +37,41 @@ app.get('/health', (req, res) => {
 
 // ⚡ ULTRA-PERFORMANCE: Static files (CRITICAL - for demo page)
 const path = require('path');
-app.use(express.static('public', { maxAge: '1h', etag: false }));
+const publicPath = path.join(__dirname, 'public');
+app.use(express.static(publicPath, { maxAge: '1h', etag: false }));
 
-// ⚡ ULTRA-PERFORMANCE: Essential routes
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/demo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'demo.html')));
-app.get('/auth', (req, res) => res.sendFile(path.join(__dirname, 'public', 'auth.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+// ⚡ ULTRA-PERFORMANCE: Essential routes with error handling
+app.get('/', (req, res) => {
+    try {
+        res.sendFile(path.join(publicPath, 'index.html'));
+    } catch (error) {
+        res.status(404).json({error: 'Page not found', debug: 'index.html missing'});
+    }
+});
+
+app.get('/demo', (req, res) => {
+    try {
+        res.sendFile(path.join(publicPath, 'demo.html'));
+    } catch (error) {
+        res.status(404).json({error: 'Demo page not found', debug: 'demo.html missing'});
+    }
+});
+
+app.get('/auth', (req, res) => {
+    try {
+        res.sendFile(path.join(publicPath, 'auth.html'));
+    } catch (error) {
+        res.status(404).json({error: 'Auth page not found'});
+    }
+});
+
+app.get('/dashboard', (req, res) => {
+    try {
+        res.sendFile(path.join(publicPath, 'dashboard.html'));
+    } catch (error) {
+        res.status(404).json({error: 'Dashboard page not found'});
+    }
+});
 
 // ⚡ ULTRA-PERFORMANCE: Resilient database loading
 let database;
@@ -196,11 +224,29 @@ app.post('/api/v1/authorize', validateApiKey, validateAmount, async (req, res) =
 
 // ⚡ ULTRA-PERFORMANCE: Status endpoint
 app.get('/api/status', (req, res) => {
+    const fs = require('fs');
+    let publicExists = false;
+    let publicFiles = [];
+    
+    try {
+        publicExists = fs.existsSync(publicPath);
+        if (publicExists) {
+            publicFiles = fs.readdirSync(publicPath).slice(0, 10); // Show first 10 files
+        }
+    } catch (error) {
+        // Ignore errors
+    }
+    
     res.json({
         status: 'ULTRA_OPTIMIZED',
         uptime: process.uptime(),
         cacheSize: apiKeyCache.size,
         targetLatency: '< 400ms',
+        publicPath: publicPath,
+        publicExists: publicExists,
+        publicFiles: publicFiles,
+        __dirname: __dirname,
+        cwd: process.cwd(),
         optimizations: [
             'Production mode enforced',
             'Logging disabled',
