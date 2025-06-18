@@ -201,7 +201,7 @@
                     </button>
                 </div>
                 <pre class="text-emerald-300 text-sm font-mono overflow-x-auto leading-relaxed"><code id="example-code">curl -X POST https://aslanpay.xyz/api/v1/authorize \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer ak_live_1234567890abcdef..." \
   -H "Content-Type: application/json" \
   -d '{
     "amount": 2500,
@@ -247,6 +247,18 @@
                         class="w-full px-4 py-3 border border-neutral-300 rounded-xl text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                     >
                     <p class="text-neutral-500 text-sm mt-2">Choose a descriptive name to identify this key</p>
+                </div>
+                
+                <div>
+                    <label for="key-environment" class="block text-sm font-semibold text-neutral-900 mb-2">Environment</label>
+                    <select 
+                        id="key-environment" 
+                        class="w-full px-4 py-3 border border-neutral-300 rounded-xl text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                    >
+                        <option value="live">🟢 Live (ak_live_...)</option>
+                        <option value="test">🔵 Test (ak_test_...)</option>
+                    </select>
+                    <p class="text-neutral-500 text-sm mt-2">Live keys work with real transactions, test keys are for development</p>
                 </div>
                 
                 <div class="flex gap-3">
@@ -494,18 +506,20 @@
             e.preventDefault();
             
             const name = document.getElementById('key-name').value;
+            const environment = document.getElementById('key-environment').value;
             
             try {
                 const response = await fetch('/api/keys', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ name })
+                    body: JSON.stringify({ name, environment })
                 });
                 
                 if (response.ok) {
                     document.getElementById('create-key-modal').classList.add('hidden');
                     document.getElementById('key-name').value = '';
+                    document.getElementById('key-environment').value = 'live'; // Reset to default
                     showToast('🔑 API key created successfully!', 'success');
                     loadApiKeys(); // Reload the list
                 } else {
