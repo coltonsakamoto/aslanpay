@@ -46,7 +46,7 @@ async function startServer() {
     console.log('🦁 Starting Aslan server...');
     
     // Start the server with proper signal handling
-    const server = spawn('node', ['server.js'], {
+    const server = spawn('node', ['server-unified-fix.js'], {
         stdio: 'inherit',
         env: { ...process.env }
     });
