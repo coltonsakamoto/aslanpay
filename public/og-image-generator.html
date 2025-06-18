@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Social Image Generator</title>
+    <style>
+        body { margin: 20px; font-family: Arial, sans-serif; }
+        canvas { border: 1px solid #ccc; margin: 20px 0; }
+        .download-btn { background: #FF6B35; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>🚀 Aslan Social Sharing Image Generator</h2>
+    <p>This will generate a PNG version of the social sharing image.</p>
+    
+    <canvas id="socialCanvas" width="1200" height="630"></canvas>
+    <br>
+    <button class="download-btn" onclick="downloadPNG()">📥 Download PNG</button>
+    
+    <script>
+        const canvas = document.getElementById('socialCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function drawSocialImage() {
+            // Background gradient
+            const bgGradient = ctx.createLinearGradient(0, 0, 1200, 630);
+            bgGradient.addColorStop(0, '#FAFAFA');
+            bgGradient.addColorStop(1, '#F5F5F5');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, 1200, 630);
+            
+            // Decorative circles
+            ctx.fillStyle = 'rgba(255, 107, 53, 0.1)';
+            ctx.beginPath(); ctx.arc(150, 100, 60, 0, 2 * Math.PI); ctx.fill();
+            ctx.beginPath(); ctx.arc(1050, 150, 80, 0, 2 * Math.PI); ctx.fill();
+            ctx.beginPath(); ctx.arc(100, 500, 40, 0, 2 * Math.PI); ctx.fill();
+            ctx.beginPath(); ctx.arc(1100, 480, 70, 0, 2 * Math.PI); ctx.fill();
+            
+            // Logo background
+            const logoGradient = ctx.createLinearGradient(500, 130, 600, 230);
+            logoGradient.addColorStop(0, '#FF6B35');
+            logoGradient.addColorStop(1, '#F7931E');
+            
+            ctx.fillStyle = logoGradient;
+            ctx.beginPath();
+            ctx.roundRect(550, 130, 100, 100, 24);
+            ctx.fill();
+            
+            // Logo "A" letter
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 60px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('A', 600, 200);
+            
+            // Logo accent dot
+            ctx.beginPath();
+            ctx.arc(600, 155, 4, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Main heading "ASLAN"
+            ctx.fillStyle = '#1A1A1A';
+            ctx.font = 'bold 96px Inter, Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.letterSpacing = '4px';
+            ctx.fillText('ASLAN', 600, 380);
+            
+            // Subheading
+            ctx.fillStyle = '#525252';
+            ctx.font = '500 24px Inter, Arial, sans-serif';
+            ctx.fillText('Payment Infrastructure for AI Agents', 600, 430);
+            
+            // Accent line
+            const lineGradient = ctx.createLinearGradient(450, 460, 750, 460);
+            lineGradient.addColorStop(0, '#FF6B35');
+            lineGradient.addColorStop(1, '#F7931E');
+            ctx.fillStyle = lineGradient;
+            ctx.fillRect(450, 460, 300, 3);
+            
+            // Bottom accent
+            ctx.fillStyle = 'rgba(255, 107, 53, 0.2)';
+            ctx.fillRect(0, 620, 1200, 10);
+        }
+        
+        function downloadPNG() {
+            const link = document.createElement('a');
+            link.download = 'aslan-og-image.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Draw the image when page loads
+        drawSocialImage();
+    </script>
+</body>
+</html> 
