@@ -52,7 +52,7 @@ app.get('/api/keys', (req, res) => {
         {
             id: 'key_demo_001',
             name: 'Production API Key',
-            key: 'aslan_' + 'live_demo_key_for_testing_only',
+            key: 'demo_production_key_' + Date.now(),
             createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
             lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
             status: 'active'
@@ -60,7 +60,7 @@ app.get('/api/keys', (req, res) => {
         {
             id: 'key_demo_002', 
             name: 'Test Environment Key',
-            key: 'aslan_' + 'test_demo_key_for_testing_only',
+            key: 'demo_testing_key_' + (Date.now() + 1000),
             createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
             lastUsed: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
             status: 'active'
