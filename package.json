@@ -34,6 +34,8 @@
     "test:security": "npm run security:validate && echo 'Security validation passed!'",
     "railway:setup": "node scripts/railway-setup.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:api-contracts": "node test-api-contract.js",
+    "test:pre-deploy": "npm run test:api-contracts",
     "security-check": "node scripts/security-check.js",
     "generate-secrets": "echo 'Generate JWT_SECRET:' && echo 'node -e \"console.log(require(\\\"crypto\\\").randomBytes(32).toString(\\\"hex\\\"))\"' && echo '' && echo 'Generate SESSION_SECRET:' && echo 'node -e \"console.log(require(\\\"crypto\\\").randomBytes(32).toString(\\\"hex\\\"))\"'",
     "check-stripe": "node -e \"console.log('STRIPE_PUBLISHABLE_KEY:', process.env.STRIPE_PUBLISHABLE_KEY ? '✅ Set' : '❌ Missing'); console.log('STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? '✅ Set' : '❌ Missing');\"",
