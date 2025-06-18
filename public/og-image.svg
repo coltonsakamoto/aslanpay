@@ -1,78 +1,103 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
   <defs>
-    <!-- Modern gradient background -->
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FAFAFA;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#F5F5F5;stop-opacity:1" />
-    </linearGradient>
-    
-    <!-- Primary gradient for elements -->
-    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#F7931E;stop-opacity:1" />
     </linearGradient>
-    
-    <!-- Subtle accent gradient -->
-    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:0.1" />
-      <stop offset="50%" style="stop-color:#F7931E;stop-opacity:0.15" />
-      <stop offset="100%" style="stop-color:#FF6B35;stop-opacity:0.1" />
-    </linearGradient>
-    
-    <!-- Soft shadow filter -->
-    <filter id="softShadow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-      <feOffset dx="0" dy="2" result="offsetBlur"/>
-      <feMerge> 
-        <feMergeNode in="offsetBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="4" stdDeviation="8" flood-color="rgba(0,0,0,0.3)"/>
     </filter>
   </defs>
   
   <!-- Background -->
   <rect width="1200" height="630" fill="url(#bgGradient)"/>
   
-  <!-- Subtle geometric background elements -->
-  <circle cx="150" cy="100" r="60" fill="url(#accentGradient)" opacity="0.3"/>
-  <circle cx="1050" cy="150" r="80" fill="url(#accentGradient)" opacity="0.2"/>
-  <circle cx="100" cy="500" r="40" fill="url(#accentGradient)" opacity="0.4"/>
-  <circle cx="1100" cy="480" r="70" fill="url(#accentGradient)" opacity="0.25"/>
+  <!-- Overlay pattern -->
+  <rect width="1200" height="630" fill="url(#pattern)" opacity="0.1"/>
+  <defs>
+    <pattern id="pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="2" fill="white" opacity="0.3"/>
+    </pattern>
+  </defs>
   
-  <!-- Professional icon instead of emoji -->
-  <g transform="translate(550, 180)">
-    <!-- Icon background -->
-    <rect x="-50" y="-50" width="100" height="100" rx="24" ry="24" fill="url(#primaryGradient)" filter="url(#softShadow)"/>
-    <!-- Modern "A" letter -->
-    <path d="M0 -30L-25 30h12l4-12h18l4 12h12L0 -30h0zm-7 24L0 -12l7 24h-14z" 
-          fill="white" 
-          stroke="none"/>
-    <!-- Accent dot -->
-    <circle cx="0" cy="-25" r="4" fill="white" opacity="0.9"/>
+  <!-- Main container -->
+  <g transform="translate(80, 80)">
+    
+    <!-- Logo and Title -->
+    <g transform="translate(0, 20)">
+      <!-- Aslan Logo Circle -->
+      <circle cx="40" cy="40" r="32" fill="white" filter="url(#shadow)"/>
+      <text x="40" y="50" text-anchor="middle" fill="#FF6B35" font-family="Arial, sans-serif" font-size="32" font-weight="bold">A</text>
+      
+      <!-- Main Title -->
+      <text x="90" y="35" fill="white" font-family="Arial, sans-serif" font-size="48" font-weight="bold">Aslan</text>
+      <text x="90" y="70" fill="rgba(255,255,255,0.9)" font-family="Arial, sans-serif" font-size="24">Payment Infrastructure for AI Agents</text>
+    </g>
+    
+    <!-- Key Features -->
+    <g transform="translate(0, 150)">
+      <!-- Feature 1: Spending Controls -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="320" height="120" rx="12" fill="rgba(255,255,255,0.95)" filter="url(#shadow)"/>
+        <text x="20" y="30" fill="#FF6B35" font-family="Arial, sans-serif" font-size="24">🛡️</text>
+        <text x="60" y="35" fill="#333" font-family="Arial, sans-serif" font-size="20" font-weight="bold">Spending Controls</text>
+        <text x="20" y="60" fill="#666" font-family="Arial, sans-serif" font-size="14">Block transactions that exceed</text>
+        <text x="20" y="80" fill="#666" font-family="Arial, sans-serif" font-size="14">daily limits and safety rules</text>
+        <text x="20" y="100" fill="#FF6B35" font-family="Arial, sans-serif" font-size="12" font-weight="bold">THE CORE VALUE PROPOSITION</text>
+      </g>
+      
+      <!-- Feature 2: Enterprise Security -->
+      <g transform="translate(360, 0)">
+        <rect x="0" y="0" width="320" height="120" rx="12" fill="rgba(255,255,255,0.95)" filter="url(#shadow)"/>
+        <text x="20" y="30" fill="#FF6B35" font-family="Arial, sans-serif" font-size="24">🔐</text>
+        <text x="60" y="35" fill="#333" font-family="Arial, sans-serif" font-size="20" font-weight="bold">Enterprise Security</text>
+        <text x="20" y="60" fill="#666" font-family="Arial, sans-serif" font-size="14">ak_live_ API keys with 256-bit</text>
+        <text x="20" y="80" fill="#666" font-family="Arial, sans-serif" font-size="14">encryption and fraud protection</text>
+        <text x="20" y="100" fill="#FF6B35" font-family="Arial, sans-serif" font-size="12" font-weight="bold">SECURITY BEST PRACTICES</text>
+      </g>
+      
+      <!-- Feature 3: Real-time Blocking -->
+      <g transform="translate(720, 0)">
+        <rect x="0" y="0" width="320" height="120" rx="12" fill="rgba(255,255,255,0.95)" filter="url(#shadow)"/>
+        <text x="20" y="30" fill="#FF6B35" font-family="Arial, sans-serif" font-size="24">⚡</text>
+        <text x="60" y="35" fill="#333" font-family="Arial, sans-serif" font-size="20" font-weight="bold">Real-time Blocking</text>
+        <text x="20" y="60" fill="#666" font-family="Arial, sans-serif" font-size="14">Instant transaction validation</text>
+        <text x="20" y="80" fill="#666" font-family="Arial, sans-serif" font-size="14">and emergency stop controls</text>
+        <text x="20" y="100" fill="#FF6B35" font-family="Arial, sans-serif" font-size="12" font-weight="bold">SUB-100MS RESPONSE</text>
+      </g>
+    </g>
+    
+    <!-- Demo Preview -->
+    <g transform="translate(0, 320)">
+      <rect x="0" y="0" width="1040" height="140" rx="16" fill="rgba(255,255,255,0.9)" filter="url(#shadow)"/>
+      
+      <!-- Demo Header -->
+      <text x="20" y="30" fill="#333" font-family="Arial, sans-serif" font-size="18" font-weight="bold">🚨 Live Demo: Transaction Blocked</text>
+      
+      <!-- Mock transaction details -->
+      <g transform="translate(20, 50)">
+        <rect x="0" y="0" width="480" height="70" rx="8" fill="#FEF2F2" stroke="#EF4444" stroke-width="2"/>
+        <text x="15" y="25" fill="#DC2626" font-family="Arial, sans-serif" font-size="14" font-weight="bold">❌ Purchase of $120 Amazon Gift Card - BLOCKED</text>
+        <text x="15" y="45" fill="#991B1B" font-family="Arial, sans-serif" font-size="12">Reason: Would exceed daily limit of $100</text>
+        <text x="15" y="60" fill="#991B1B" font-family="Arial, sans-serif" font-size="12">Current spent: $85 | Attempting: $120 | Limit: $100</text>
+      </g>
+      
+      <!-- Status indicators -->
+      <g transform="translate(520, 50)">
+        <rect x="0" y="0" width="500" height="70" rx="8" fill="#F0FDF4" stroke="#22C55E" stroke-width="2"/>
+        <text x="15" y="25" fill="#15803D" font-family="Arial, sans-serif" font-size="14" font-weight="bold">✅ Spending Controls Active</text>
+        <text x="15" y="45" fill="#166534" font-family="Arial, sans-serif" font-size="12">Daily Limit: $100 | Transactions: 8/10 | Emergency Stop: Disabled</text>
+        <text x="15" y="60" fill="#166534" font-family="Arial, sans-serif" font-size="12">Response Time: 47ms | Status: Protecting your AI agents</text>
+      </g>
+    </g>
+    
   </g>
   
-  <!-- ASLAN text with modern typography -->
-  <text x="600" y="380" 
-        font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
-        font-size="96" 
-        font-weight="800" 
-        text-anchor="middle" 
-        fill="#1A1A1A" 
-        letter-spacing="4px">ASLAN</text>
+  <!-- Footer -->
+  <g transform="translate(0, 580)">
+    <text x="600" y="30" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="16">aslanpay.xyz • Payment Infrastructure for AI Agents</text>
+  </g>
   
-  <!-- Professional subtitle -->
-  <text x="600" y="430" 
-        font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
-        font-size="24" 
-        font-weight="500" 
-        text-anchor="middle" 
-        fill="#525252" 
-        opacity="0.9">Payment Infrastructure for AI Agents</text>
-  
-  <!-- Modern accent line -->
-  <rect x="450" y="460" width="300" height="3" rx="2" fill="url(#primaryGradient)" opacity="0.8"/>
-  
-  <!-- Subtle bottom accent -->
-  <rect x="0" y="620" width="1200" height="10" fill="url(#accentGradient)" opacity="0.5"/>
 </svg> 

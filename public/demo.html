@@ -204,8 +204,8 @@
             // Show demo card
             updatePaymentDisplay();
             
-            // Initialize spending controls
-            updateSpendingControls();
+            // Load spending controls from server
+            loadSpendingStatus();
             
             // Add suggestion buttons
             addSuggestionButtons();
@@ -214,6 +214,28 @@
             setupEventListeners();
             
             console.log('✅ Demo ready!');
+        }
+        
+        // Load spending status from server
+        async function loadSpendingStatus() {
+            try {
+                const response = await fetch('/api/demo/spending-status');
+                const data = await response.json();
+                
+                // Update local state with server state
+                totalSpent = data.totalSpent;
+                transactionCount = data.transactionCount;
+                spendingLimits.dailyLimit = data.dailyLimit;
+                spendingLimits.maxTransactions = data.maxTransactions;
+                spendingLimits.emergencyStop = data.emergencyStop;
+                
+                updateSpendingControls();
+                updateStats();
+                
+                console.log('✅ Spending status loaded from server');
+            } catch (error) {
+                console.error('❌ Failed to load spending status:', error);
+            }
         }
         
         // Update payment method display
@@ -234,7 +256,7 @@
             }
         }
         
-        // Add suggestion buttons
+        // Add suggestion buttons with PROMINENT blocking demos
         function addSuggestionButtons() {
             const container = document.getElementById('suggestion-buttons');
             if (!container) {
@@ -246,25 +268,28 @@
                 "⚙️ Configure spending controls",
                 "Buy me a $10 Amazon gift card",
                 "Get me a $25 gift card", 
-                "Purchase AWS credits for $80 (test limit)",
-                "Buy a $120 gift card (should be blocked)",
-                "Send an SMS message",
-                "🚨 Test emergency stop"
+                "🚨 Test $120 purchase (WILL BE BLOCKED)",
+                "🔴 Try $200 gift card (EXCEEDS LIMIT)", 
+                "🛑 Test emergency stop protection",
+                "📊 Check current spending limits"
             ];
             
             container.innerHTML = '';
             
             suggestions.forEach(suggestion => {
                 const btn = document.createElement('button');
-                btn.className = 'text-xs bg-white text-aslan-orange px-3 py-2 rounded-full hover:bg-orange-100 transition-colors border border-aslan-orange';
+                const isBlockingDemo = suggestion.includes('BLOCKED') || suggestion.includes('EXCEEDS') || suggestion.includes('emergency stop');
+                btn.className = `text-xs ${isBlockingDemo ? 'bg-red-50 border-red-500 text-red-700 hover:bg-red-100' : 'bg-white text-aslan-orange hover:bg-orange-100'} px-3 py-2 rounded-full transition-colors border ${isBlockingDemo ? 'border-red-500' : 'border-aslan-orange'}`;
                 btn.textContent = suggestion;
                 btn.onclick = () => {
                     console.log(`🖱️ Suggestion clicked: ${suggestion}`);
                     
                     if (suggestion.includes('Configure spending controls')) {
                         showSpendingSettings();
-                    } else if (suggestion.includes('Test emergency stop')) {
+                    } else if (suggestion.includes('emergency stop')) {
                         toggleEmergencyStop();
+                    } else if (suggestion.includes('Check current')) {
+                        showCurrentLimits();
                     } else {
                         const input = document.getElementById('chat-input');
                         if (input) {
@@ -276,7 +301,7 @@
                 container.appendChild(btn);
             });
             
-            console.log(`✅ Added ${suggestions.length} suggestion buttons`);
+            console.log(`✅ Added ${suggestions.length} suggestion buttons with blocking demos`);
         }
         
                  // Setup event listeners
@@ -341,8 +366,8 @@
             container.scrollTop = container.scrollHeight;
         }
         
-                 // Process purchase
-        function processPurchase(message) {
+                 // Process purchase using SERVER-SIDE spending controls
+        async function processPurchase(message) {
             const startTime = Date.now();
             
             addMessage('🔍 Processing your request...', false);
@@ -364,48 +389,70 @@
                 amount = 12.99;
             }
             
-            // ⚡ SPENDING VALIDATION - CORE FEATURE
-            addMessage('🛡️ Validating spending limits...', false);
+            // ⚡ SERVER-SIDE SPENDING VALIDATION - THE CORE PRODUCT FEATURE
+            addMessage('🛡️ Validating spending limits on server...', false);
             
-            const validation = validateSpending(amount);
-            if (!validation.approved) {
-                addMessage(`❌ Transaction BLOCKED: ${validation.reason}`, false);
-                addMessage(`📊 Current status: $${totalSpent}/$${spendingLimits.dailyLimit} spent, ${transactionCount}/${spendingLimits.maxTransactions} transactions`, false);
-                return;
-            }
-            
-            if (validation.warnings.length > 0) {
-                validation.warnings.forEach(warning => {
-                    addMessage(`⚠️ ${warning}`, false);
+            try {
+                const response = await fetch('/api/demo/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                        service: service,
+                        description: message
+                    })
                 });
-            }
-            
-            // Simulate instant processing
-            setTimeout(() => {
+                
+                const result = await response.json();
                 const latency = Date.now() - startTime;
-                const transactionId = `aslan_${Date.now()}`;
                 
-                // Add to transactions
-                transactions.push({
-                    id: transactionId,
-                    amount: amount,
-                    service: service,
-                    latency: latency,
-                    timestamp: Date.now()
-                });
+                if (!result.success && result.blocked) {
+                    // 🚨 TRANSACTION BLOCKED BY SPENDING CONTROLS
+                    addMessage(`🚨 TRANSACTION BLOCKED: ${result.reason}`, false);
+                    addMessage(`📊 Status: $${result.currentSpent}/$${result.dailyLimit} spent today`, false);
+                    addMessage(`📈 Transactions: ${result.transactionCount}/${result.maxTransactions} used today`, false);
+                    
+                    if (result.emergencyStop) {
+                        addMessage(`🛑 Emergency stop is ACTIVE - all purchases blocked`, false);
+                    }
+                    
+                    // Show prominent blocking message
+                    addBlockedTransactionToLog(amount, service, result.reason, latency);
+                    
+                    // Update local state
+                    await loadSpendingStatus();
+                    return;
+                }
                 
-                totalSpent += amount;
-                transactionCount++;
+                if (result.success) {
+                    // Transaction approved and processed
+                    totalSpent = result.spendingStatus.totalSpent;
+                    transactionCount = result.spendingStatus.transactionCount;
+                    
+                    addMessage(`✅ SUCCESS! Purchased ${service} for $${amount} using ${demoCard.nickname} (••••${demoCard.last4})`, false);
+                    addMessage(`⚡ Transaction completed in ${latency}ms`, false);
+                    addMessage(`📊 Remaining limit: $${result.spendingStatus.remainingLimit}`, false);
+                    
+                    // Add to transaction log
+                    addTransaction({ 
+                        amount, 
+                        service, 
+                        latency, 
+                        transactionId: result.transactionId,
+                        success: true
+                    });
+                    
+                    // Update displays
+                    updateStats();
+                    updateSpendingControls();
+                }
                 
-                // Success message
-                addMessage(`✅ Success! Purchased ${service} for $${amount} using ${demoCard.nickname} (••••${demoCard.last4}). Transaction completed in ${latency}ms.`, false);
-                
-                                 // Update displays
-                updateStats();
-                updateSpendingControls();
-                addTransaction({ amount, service, latency, transactionId });
-                
-            }, 50); // Ultra-fast response
+            } catch (error) {
+                console.error('❌ Purchase error:', error);
+                addMessage(`❌ Error processing purchase: ${error.message}`, false);
+            }
         }
         
         // ⚡ VALIDATE SPENDING - CORE SECURITY FEATURE
@@ -533,6 +580,61 @@
             `;
             
             log.insertBefore(txDiv, log.firstChild);
+        }
+        
+        // Add BLOCKED transaction to log - CORE PRODUCT DEMO
+        function addBlockedTransactionToLog(amount, service, reason, latency) {
+            const log = document.getElementById('transaction-log');
+            if (!log) return;
+            
+            // Remove empty state
+            const emptyState = log.querySelector('.text-center');
+            if (emptyState) emptyState.remove();
+            
+            const txDiv = document.createElement('div');
+            txDiv.className = 'bg-red-50 rounded-lg p-3 border-l-4 border-red-500 mb-3';
+            txDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-semibold text-red-600">🚨 TRANSACTION BLOCKED</span>
+                    <span class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</span>
+                </div>
+                <div class="text-sm space-y-1">
+                    <div><strong>Service:</strong> ${service}</div>
+                    <div><strong>Amount:</strong> $${amount}</div>
+                    <div><strong>Reason:</strong> <span class="text-red-600 font-medium">${reason}</span></div>
+                    <div><strong>Processing Time:</strong> ${latency}ms</div>
+                    <div class="mt-2 p-2 bg-red-100 rounded text-xs">
+                        🛡️ <strong>Spending Controls Active:</strong> This demonstrates how AslanPay protects against unauthorized spending.
+                    </div>
+                </div>
+            `;
+            
+            log.insertBefore(txDiv, log.firstChild);
+        }
+        
+        // Show current spending limits - CORE FEATURE
+        function showCurrentLimits() {
+            addMessage('📊 Checking current spending status...', false);
+            
+            const status = `
+📈 Current Spending Status:
+• Daily Limit: $${spendingLimits.dailyLimit}
+• Spent Today: $${totalSpent.toFixed(2)}
+• Remaining: $${(spendingLimits.dailyLimit - totalSpent).toFixed(2)}
+• Transactions: ${transactionCount}/${spendingLimits.maxTransactions}
+• Emergency Stop: ${spendingLimits.emergencyStop ? 'ACTIVE 🛑' : 'Disabled ✅'}
+            `;
+            
+            addMessage(status, false);
+            
+            const spentPercentage = (totalSpent / spendingLimits.dailyLimit) * 100;
+            if (spentPercentage > 75) {
+                addMessage(`⚠️ Warning: ${spentPercentage.toFixed(1)}% of daily limit used`, false);
+            }
+            
+            if (transactionCount >= spendingLimits.maxTransactions - 2) {
+                addMessage(`⚠️ Warning: Only ${spendingLimits.maxTransactions - transactionCount} transactions remaining`, false);
+            }
         }
         
         // ⚡ SPENDING SETTINGS MODAL - CORE FEATURE

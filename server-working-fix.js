@@ -65,18 +65,19 @@ app.get('/api/test-emergency', (req, res) => {
 
 // 🚨 EMERGENCY FIX: API Keys endpoint with CORRECT format
 app.get('/api/keys', (req, res) => {
-    // Professional API key following best practices like ak_live_...
-    function generateProfessionalKey(environment = 'live') {
+    // PROFESSIONAL API KEYS - SECURITY BEST PRACTICES
+    function generateSecureApiKey(environment = 'live') {
         const prefix = environment === 'live' ? 'ak_live_' : 'ak_test_';
-        const randomHex = require('crypto').randomBytes(20).toString('hex');
-        return prefix + randomHex;
+        // SECURITY: 32 bytes = 64 hex chars for maximum entropy
+        const secureRandom = require('crypto').randomBytes(32).toString('hex');
+        return prefix + secureRandom;
     }
     
     const apiKeys = [
         {
             id: 'key_default_001',
             name: 'Default API Key',
-            key: generateProfessionalKey('live'),
+            key: generateSecureApiKey('live'),
             createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
             lastUsed: 'Never',
             status: 'active'
@@ -88,7 +89,7 @@ app.get('/api/keys', (req, res) => {
         total: apiKeys.length,
         success: true,
         latency: 0,
-        professional_keys: true
+        security_compliant: true
     });
 });
 
@@ -124,16 +125,17 @@ app.put('/api/keys/spending-controls', (req, res) => {
 app.post('/api/keys', (req, res) => {
     const { name, environment } = req.body;
     
-    function generateProfessionalKey(env = 'live') {
+    function generateSecureApiKey(env = 'live') {
         const prefix = env === 'live' ? 'ak_live_' : 'ak_test_';
-        const randomHex = require('crypto').randomBytes(20).toString('hex');
-        return prefix + randomHex;
+        // SECURITY: 32 bytes = 64 hex chars for maximum entropy
+        const secureRandom = require('crypto').randomBytes(32).toString('hex');
+        return prefix + secureRandom;
     }
     
     const newKey = {
         id: 'key_' + Date.now(),
         name: name || 'New API Key',
-        key: generateProfessionalKey(environment),
+        key: generateSecureApiKey(environment),
         createdAt: new Date().toISOString(),
         lastUsed: 'Never',
         status: 'active'
@@ -148,16 +150,17 @@ app.post('/api/keys', (req, res) => {
 app.post('/api/keys/:keyId/rotate', (req, res) => {
     const { keyId } = req.params;
     
-    function generateProfessionalKey(env = 'live') {
+    function generateSecureApiKey(env = 'live') {
         const prefix = env === 'live' ? 'ak_live_' : 'ak_test_';
-        const randomHex = require('crypto').randomBytes(20).toString('hex');
-        return prefix + randomHex;
+        // SECURITY: 32 bytes = 64 hex chars for maximum entropy
+        const secureRandom = require('crypto').randomBytes(32).toString('hex');
+        return prefix + secureRandom;
     }
     
     const rotatedKey = {
         id: keyId,
         name: 'Rotated API Key',
-        key: generateProfessionalKey('live'),
+        key: generateSecureApiKey('live'),
         createdAt: new Date().toISOString(),
         lastUsed: 'Never',
         status: 'active'
@@ -179,15 +182,16 @@ app.delete('/api/keys/:keyId', (req, res) => {
 app.post('/api/keys/:keyId/reveal', (req, res) => {
     const { keyId } = req.params;
     
-    function generateProfessionalKey(env = 'live') {
+    function generateSecureApiKey(env = 'live') {
         const prefix = env === 'live' ? 'ak_live_' : 'ak_test_';
-        const randomHex = require('crypto').randomBytes(20).toString('hex');
-        return prefix + randomHex;
+        // SECURITY: 32 bytes = 64 hex chars for maximum entropy
+        const secureRandom = require('crypto').randomBytes(32).toString('hex');
+        return prefix + secureRandom;
     }
     
     res.json({ 
         success: true,
-        key: generateProfessionalKey('live'),
+        key: generateSecureApiKey('live'),
         warning: 'This key will only be shown once. Please copy it now.'
     });
 });
@@ -238,6 +242,154 @@ Object.entries(staticRoutes).forEach(([route, file]) => {
         } catch (error) {
             res.status(404).json({error: `${file} not found`});
         }
+    });
+});
+
+// ⚡ DEMO API: Enhanced spending controls with SERVER-SIDE validation  
+let demoState = {
+    totalSpent: 0,
+    transactionCount: 0,
+    emergencyStop: false,
+    dailyLimit: 100,
+    maxTransactions: 10
+};
+
+// 🛡️ SPENDING CONTROLS - THE CORE PRODUCT VALUE
+app.post('/api/demo/purchase', (req, res) => {
+    const { amount, service, description } = req.body;
+    const startTime = Date.now();
+    
+    // ⚡ VALIDATE SPENDING LIMITS - THIS IS THE CORE FEATURE
+    const validation = validateDemoSpending(amount);
+    
+    if (!validation.approved) {
+        return res.status(402).json({
+            success: false,
+            blocked: true,
+            reason: validation.reason,
+            currentSpent: demoState.totalSpent,
+            dailyLimit: demoState.dailyLimit,
+            transactionCount: demoState.transactionCount,
+            maxTransactions: demoState.maxTransactions,
+            emergencyStop: demoState.emergencyStop,
+            message: '🚨 TRANSACTION BLOCKED BY SPENDING CONTROLS'
+        });
+    }
+    
+    // Process the transaction
+    demoState.totalSpent += amount;
+    demoState.transactionCount++;
+    
+    const transactionId = `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const latency = Date.now() - startTime;
+    
+    res.json({
+        success: true,
+        transactionId: transactionId,
+        amount: amount,
+        service: service,
+        latency: latency,
+        spendingStatus: {
+            totalSpent: demoState.totalSpent,
+            remainingLimit: demoState.dailyLimit - demoState.totalSpent,
+            transactionCount: demoState.transactionCount,
+            remainingTransactions: demoState.maxTransactions - demoState.transactionCount
+        },
+        message: '✅ Transaction approved and processed'
+    });
+});
+
+// 🛡️ CORE SPENDING VALIDATION LOGIC
+function validateDemoSpending(amount) {
+    const result = {
+        approved: false,
+        reason: '',
+        warnings: []
+    };
+    
+    // 1. Emergency stop check
+    if (demoState.emergencyStop) {
+        result.reason = 'Emergency stop is active - all transactions blocked';
+        return result;
+    }
+    
+    // 2. Daily limit check
+    const newTotal = demoState.totalSpent + amount;
+    if (newTotal > demoState.dailyLimit) {
+        result.reason = `Would exceed daily limit of $${demoState.dailyLimit} (attempting $${newTotal})`;
+        return result;
+    }
+    
+    // 3. Transaction count check
+    if (demoState.transactionCount >= demoState.maxTransactions) {
+        result.reason = `Maximum ${demoState.maxTransactions} transactions per day reached`;
+        return result;
+    }
+    
+    // Add warnings for approaching limits
+    const spentPercentage = (newTotal / demoState.dailyLimit) * 100;
+    if (spentPercentage > 75) {
+        result.warnings.push(`Approaching daily limit: ${spentPercentage.toFixed(1)}% of $${demoState.dailyLimit}`);
+    }
+    
+    if (demoState.transactionCount >= demoState.maxTransactions - 2) {
+        result.warnings.push(`${demoState.maxTransactions - demoState.transactionCount} transactions remaining today`);
+    }
+    
+    result.approved = true;
+    return result;
+}
+
+// Get current spending status
+app.get('/api/demo/spending-status', (req, res) => {
+    res.json({
+        totalSpent: demoState.totalSpent,
+        dailyLimit: demoState.dailyLimit,
+        remainingLimit: demoState.dailyLimit - demoState.totalSpent,
+        transactionCount: demoState.transactionCount,
+        maxTransactions: demoState.maxTransactions,
+        remainingTransactions: demoState.maxTransactions - demoState.transactionCount,
+        emergencyStop: demoState.emergencyStop,
+        status: demoState.emergencyStop ? 'EMERGENCY_STOP' : 
+                (demoState.totalSpent >= demoState.dailyLimit ? 'LIMIT_REACHED' : 'ACTIVE')
+    });
+});
+
+// Update spending controls
+app.put('/api/demo/spending-controls', (req, res) => {
+    const { dailyLimit, maxTransactions, emergencyStop } = req.body;
+    
+    if (dailyLimit !== undefined && dailyLimit > 0) {
+        demoState.dailyLimit = dailyLimit;
+    }
+    if (maxTransactions !== undefined && maxTransactions > 0) {
+        demoState.maxTransactions = maxTransactions;
+    }
+    if (emergencyStop !== undefined) {
+        demoState.emergencyStop = emergencyStop;
+    }
+    
+    res.json({
+        success: true,
+        message: 'Spending controls updated',
+        currentState: demoState
+    });
+});
+
+// Reset demo state
+app.post('/api/demo/reset', (req, res) => {
+    demoState = {
+        totalSpent: 0,
+        transactionCount: 0,
+        emergencyStop: false,
+        dailyLimit: 100,
+        maxTransactions: 10
+    };
+    
+    res.json({
+        success: true,
+        message: 'Demo reset successfully',
+        state: demoState
     });
 });
 
