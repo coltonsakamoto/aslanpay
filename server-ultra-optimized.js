@@ -91,7 +91,7 @@ app.get('/api/keys*', (req, res) => {
             {
                 id: 'key_demo_001',
                 name: 'Production API Key',
-                key: 'sk_live_51234567890123456789012345678901234567890123456789012345678901234567890123456789',
+                key: 'aslan_demo_' + 'prod_key_'.repeat(8) + '1234',
                 createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
                 lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
                 status: 'active'
@@ -99,7 +99,7 @@ app.get('/api/keys*', (req, res) => {
             {
                 id: 'key_demo_002', 
                 name: 'Test Environment Key',
-                key: 'sk_test_51234567890123456789012345678901234567890123456789012345678901234567890123456789',
+                key: 'aslan_demo_' + 'test_key_'.repeat(8) + '5678',
                 createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
                 lastUsed: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
                 status: 'active'
