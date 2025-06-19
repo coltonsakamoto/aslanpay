@@ -21,6 +21,7 @@ class SecurityHeaders {
                 "'unsafe-eval'", // Remove in production
                 "https://cdn.jsdelivr.net",
                 "https://cdnjs.cloudflare.com",
+                "https://cdn.tailwindcss.com", // ✅ CRITICAL FIX: Allow Tailwind CSS
                 "https://js.stripe.com",
                 // Add nonce support for inline scripts
                 (req, res) => `'nonce-${res.locals.nonce}'`
@@ -32,6 +33,7 @@ class SecurityHeaders {
                 "'unsafe-inline'", // For inline styles (try to remove)
                 "https://cdn.jsdelivr.net",
                 "https://cdnjs.cloudflare.com",
+                "https://cdn.tailwindcss.com", // ✅ CRITICAL FIX: Allow Tailwind CSS styles
                 "https://fonts.googleapis.com"
             ],
             
