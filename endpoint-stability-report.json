@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-06-18T21:47:56.807Z",
+  "timestamp": "2025-06-19T00:59:56.566Z",
   "server": "http://localhost:3000",
-  "totalEndpoints": 14,
-  "passed": 14,
+  "totalEndpoints": 15,
+  "passed": 15,
   "failed": 0,
   "criticalFailures": 0,
   "details": [
@@ -57,6 +57,12 @@
     {
       "success": true,
       "endpoint": "Create API Key",
+      "status": 200,
+      "responseTime": "N/A"
+    },
+    {
+      "success": true,
+      "endpoint": "API Key Reveal",
       "status": 200,
       "responseTime": "N/A"
     },
