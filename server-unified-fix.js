@@ -567,10 +567,28 @@ app.post('/api/demo/purchase', (req, res) => {
                 emergencyStop: demoState.emergencyStop,
                 spamDetected: validation.spamDetected || false,
                 latency: latency,
+                processing_time: latency, // Additional field for consistency
                 message: '🚨 TRANSACTION BLOCKED BY SPENDING CONTROLS'
             });
         }, processingDelay);
         return;
+    }
+    
+    // CRITICAL FIX: Add transaction to tracking IMMEDIATELY to prevent race conditions
+    const transactionId = `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const tempTransaction = {
+        id: transactionId,
+        amount: amount,
+        service: service,
+        description: description,
+        timestamp: Date.now(),
+        status: 'processing' // Mark as processing to prevent duplicates
+    };
+    
+    // Add to tracking immediately to block duplicates
+    demoState.recentTransactions.push(tempTransaction);
+    if (demoState.recentTransactions.length > 50) {
+        demoState.recentTransactions = demoState.recentTransactions.slice(-50);
     }
     
     // Simulate realistic transaction processing time
@@ -581,19 +599,10 @@ app.post('/api/demo/purchase', (req, res) => {
         demoState.totalSpent += amount;
         demoState.transactionCount++;
         
-        const transactionId = `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const transaction = {
-            id: transactionId,
-            amount: amount,
-            service: service,
-            description: description,
-            timestamp: Date.now()
-        };
-        
-        // Track recent transactions
-        demoState.recentTransactions.push(transaction);
-        if (demoState.recentTransactions.length > 50) {
-            demoState.recentTransactions = demoState.recentTransactions.slice(-50);
+        // Update the transaction status to completed
+        const txIndex = demoState.recentTransactions.findIndex(tx => tx.id === transactionId);
+        if (txIndex !== -1) {
+            demoState.recentTransactions[txIndex].status = 'completed';
         }
         
         const latency = Date.now() - startTime;
@@ -603,13 +612,17 @@ app.post('/api/demo/purchase', (req, res) => {
             transactionId: transactionId,
             amount: amount,
             service: service,
+            description: description,
             latency: latency,
+            processing_time: latency, // Additional field for consistency
             spendingStatus: {
                 totalSpent: demoState.totalSpent,
                 remainingLimit: demoState.dailyLimit - demoState.totalSpent,
                 transactionCount: demoState.transactionCount,
                 remainingTransactions: demoState.maxTransactions - demoState.transactionCount
             },
+            timestamp: Date.now(),
+            status: 'completed',
             message: '✅ Transaction approved and processed'
         });
     }, processingDelay);
@@ -634,26 +647,28 @@ function validateDemoSpending(amount, service, description) {
     const now = Date.now();
     const spamWindow = 30 * 1000; // 30 seconds
     
-    // Clean old transactions
+    // Clean old transactions (keep last 5 minutes)
     demoState.recentTransactions = demoState.recentTransactions.filter(
         tx => now - tx.timestamp < 300000 // Keep last 5 minutes
     );
     
-    // Check for identical transactions - ZERO tolerance
+    // ENHANCED: Check for identical transactions - ZERO tolerance (including processing ones)
     const identicalInWindow = demoState.recentTransactions.filter(tx => {
         return (now - tx.timestamp < spamWindow) &&
                tx.amount === amount &&
                tx.service === service &&
-               tx.description === description;
+               tx.description === description &&
+               (tx.status === 'completed' || tx.status === 'processing'); // Include processing transactions
     });
     
     if (identicalInWindow.length > 0) {
-        result.reason = `DUPLICATE BLOCKED: Identical transaction already processed within 30 seconds`;
+        const status = identicalInWindow[0].status;
+        result.reason = `DUPLICATE BLOCKED: Identical transaction ${status === 'processing' ? 'currently processing' : 'already completed'} within 30 seconds`;
         result.spamDetected = true;
         return result;
     }
     
-    // Check for rapid-fire transactions
+    // ENHANCED: Check for rapid-fire transactions (any status)
     const rapidWindow = 10 * 1000; // 10 seconds
     const rapidTransactions = demoState.recentTransactions.filter(tx => {
         return now - tx.timestamp < rapidWindow;
@@ -661,6 +676,17 @@ function validateDemoSpending(amount, service, description) {
     
     if (rapidTransactions.length >= 5) {
         result.reason = `VELOCITY SPAM DETECTED: ${rapidTransactions.length} transactions in 10 seconds (max 5)`;
+        result.spamDetected = true;
+        return result;
+    }
+    
+    // Check for same amount pattern (potential spam)
+    const sameAmountInWindow = demoState.recentTransactions.filter(tx => {
+        return (now - tx.timestamp < spamWindow) && tx.amount === amount;
+    });
+    
+    if (sameAmountInWindow.length >= 3) {
+        result.reason = `PATTERN SPAM DETECTED: Same amount ($${amount}) attempted ${sameAmountInWindow.length} times in 30 seconds`;
         result.spamDetected = true;
         return result;
     }
@@ -676,6 +702,16 @@ function validateDemoSpending(amount, service, description) {
     if (demoState.transactionCount >= demoState.maxTransactions) {
         result.reason = `Maximum ${demoState.maxTransactions} transactions per day reached`;
         return result;
+    }
+    
+    // Add warnings for approaching limits
+    const spentPercentage = (newTotal / demoState.dailyLimit) * 100;
+    if (spentPercentage > 75) {
+        result.warnings.push(`Approaching daily limit: ${spentPercentage.toFixed(1)}% of $${demoState.dailyLimit}`);
+    }
+    
+    if (demoState.transactionCount >= demoState.maxTransactions - 2) {
+        result.warnings.push(`${demoState.maxTransactions - demoState.transactionCount} transactions remaining today`);
     }
     
     result.approved = true;
