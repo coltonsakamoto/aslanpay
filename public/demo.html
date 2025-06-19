@@ -443,14 +443,24 @@
                     addTransaction({ 
                         amount, 
                         service, 
-                        latency: result.latency || latency, 
+                        latency: result.latency || result.processing_time || latency, 
                         transactionId: result.transactionId,
                         success: true
                     });
                     
-                    // Update displays
+                    // Update displays - ENSURE PURPLE BOX LATENCY UPDATES
                     updateStats();
                     updateSpendingControls();
+                    
+                    // Force purple box latency update with most recent transaction
+                    const latencyEl = document.getElementById('avg-latency');
+                    if (latencyEl && transactions.length > 0) {
+                        const lastTransaction = transactions[transactions.length - 1];
+                        if (lastTransaction.latency) {
+                            latencyEl.textContent = `${Math.round(lastTransaction.latency)}ms`;
+                            console.log('✅ Purple box latency updated:', Math.round(lastTransaction.latency) + 'ms');
+                        }
+                    }
                 }
                 
             } catch (error) {
@@ -529,9 +539,15 @@
             
             // Calculate average latency from successful transactions only
             const safeTransactions = transactions.filter(tx => tx.success && tx.latency);
-            if (latencyEl && safeTransactions.length > 0) {
-                const avgLatency = safeTransactions.reduce((sum, tx) => sum + (tx.latency || 0), 0) / safeTransactions.length;
-                latencyEl.textContent = `${Math.round(avgLatency)}ms`;
+            if (latencyEl) {
+                if (safeTransactions.length > 0) {
+                    const avgLatency = safeTransactions.reduce((sum, tx) => sum + (tx.latency || 0), 0) / safeTransactions.length;
+                    latencyEl.textContent = `${Math.round(avgLatency)}ms`;
+                    console.log('✅ Purple box latency updated:', Math.round(avgLatency) + 'ms');
+                } else {
+                    // Show 0ms if no transactions yet
+                    latencyEl.textContent = '0ms';
+                }
             }
         }
         
