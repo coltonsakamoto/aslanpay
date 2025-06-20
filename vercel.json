@@ -1,34 +1,12 @@
 {
   "version": 2,
-  "builds": [
+  "buildCommand": "echo 'No build needed - static files'",
+  "outputDirectory": "frontend/public",
+  "functions": {},
+  "rewrites": [
     {
-      "src": "server-unified-fix.js",
-      "use": "@vercel/node"
+      "source": "/api/(.*)",
+      "destination": "https://aslanpay.xyz/api/$1"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/v1/authorize",
-      "dest": "/server-unified-fix.js"
-    },
-    {
-      "src": "/api/keys/spending-controls",
-      "dest": "/server-unified-fix.js"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/server-unified-fix.js"
-    },
-    {
-      "src": "/health",
-      "dest": "/server-unified-fix.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/server-unified-fix.js"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
-} 
+  ]
+}
