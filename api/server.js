@@ -248,6 +248,47 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// Database health check endpoint
+app.get('/api/db-health', async (req, res) => {
+    try {
+        console.log('🏥 Database health check requested');
+        
+        // Check if we're using PostgreSQL or simple auth
+        const hasDatabaseUrl = process.env.DATABASE_URL && process.env.DATABASE_URL.length > 0;
+        
+        if (!hasDatabaseUrl) {
+            return res.json({
+                status: 'simple-auth',
+                message: 'Using simple auth system (no DATABASE_URL)',
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        console.log('🔗 DATABASE_URL found, testing PostgreSQL connection...');
+        
+        // Try to load the database
+        const database = require('../config/database');
+        
+        // Test database health
+        const healthResult = await database.healthCheck();
+        console.log('✅ Database health check result:', healthResult);
+        
+        res.json({
+            status: 'postgresql-connected',
+            health: healthResult,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Database health check failed:', error);
+        res.status(500).json({
+            status: 'database-error',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Main authorization endpoint (simplified but functional)
 app.post('/api/v1/authorize', (req, res) => {
     const { amount, service = 'unknown', description, apiKey } = req.body;
