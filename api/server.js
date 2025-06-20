@@ -2,10 +2,6 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-// Import real authentication system (now that PostgreSQL is connected)
-const database = require('../config/database');
-const authRoutes = require('../routes/auth');
-
 // --- Health-check for Railway ---
 app.get('/health', (_req, res) => res.status(200).send('ok'));
 
@@ -22,6 +18,80 @@ app.use(require('express-session')({
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     }
 }));
+
+// Conditional auth system based on DATABASE_URL availability
+const hasDatabaseUrl = process.env.DATABASE_URL && process.env.DATABASE_URL.length > 0;
+
+if (hasDatabaseUrl) {
+    console.log('🔗 Using PostgreSQL database with full auth system');
+    // Import real authentication system (when PostgreSQL is connected)
+    const database = require('../config/database');
+    const authRoutes = require('../routes/auth');
+    app.use('/api/auth', authRoutes);
+} else {
+    console.log('⚠️ DATABASE_URL not found - using simple auth for staging testing');
+    
+    // Simple in-memory auth for staging testing when DB not configured
+    const tempUsers = new Map();
+    const tempSessions = new Map();
+    
+    // Add test user
+    tempUsers.set('test@aslanpay.xyz', {
+        id: 'user_test_123',
+        email: 'test@aslanpay.xyz',
+        name: 'Test User',
+        password: 'password123'
+    });
+    
+    // Simple auth endpoints
+    app.post('/api/auth/login', (req, res) => {
+        const { email, password } = req.body;
+        
+        if (!email || !password) {
+            return res.status(400).json({
+                error: 'Email and password are required',
+                code: 'MISSING_CREDENTIALS'
+            });
+        }
+        
+        const user = tempUsers.get(email.toLowerCase());
+        if (!user || password !== user.password) {
+            return res.status(401).json({
+                error: 'Invalid email or password',
+                code: 'INVALID_CREDENTIALS'
+            });
+        }
+        
+        const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        tempSessions.set(sessionId, { user, createdAt: new Date() });
+        req.session.id = sessionId;
+        
+        res.json({
+            user: { id: user.id, email: user.email, name: user.name },
+            message: 'Login successful (staging test mode)'
+        });
+    });
+    
+    app.get('/api/auth/status', (req, res) => {
+        const sessionId = req.session?.id;
+        const userSession = sessionId ? tempSessions.get(sessionId) : null;
+        
+        res.json({
+            authenticated: !!userSession,
+            user: userSession?.user || null,
+            message: 'Staging test mode - DATABASE_URL not configured'
+        });
+    });
+    
+    app.post('/api/auth/logout', (req, res) => {
+        const sessionId = req.session?.id;
+        if (sessionId) {
+            tempSessions.delete(sessionId);
+            req.session.destroy();
+        }
+        res.json({ message: 'Logout successful' });
+    });
+}
 
 // Serve static frontend files FIRST (before API routes)
 app.use(express.static(path.join(__dirname, '../frontend/public')));
@@ -70,9 +140,6 @@ app.get('/checkout', (req, res) => {
 app.get('/status', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/public/status.html'));
 });
-
-// Real Authentication Routes (supports signup, login, database storage)
-app.use('/api/auth', authRoutes);
 
 // API Status endpoint
 app.get('/api/status', (req, res) => {
