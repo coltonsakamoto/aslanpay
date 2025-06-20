@@ -2,11 +2,27 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
+// Import real authentication system
+const database = require('../config/database');
+const authRoutes = require('../routes/auth');
+const { validateSession } = require('../middleware/auth');
+
 // --- Health-check for Railway ---
 app.get('/health', (_req, res) => res.status(200).send('ok'));
 
 // Basic middleware
 app.use(express.json());
+
+// Session middleware for authentication
+app.use(require('express-session')({
+    secret: process.env.SESSION_SECRET || 'aslan-dev-secret-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    }
+}));
 
 // Serve static frontend files FIRST (before API routes)
 app.use(express.static(path.join(__dirname, '../frontend/public')));
@@ -55,6 +71,9 @@ app.get('/checkout', (req, res) => {
 app.get('/status', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/public/status.html'));
 });
+
+// Real Authentication Routes (replaces dummy auth endpoints)
+app.use('/api/auth', authRoutes);
 
 // API Status endpoint
 app.get('/api/status', (req, res) => {
@@ -142,31 +161,6 @@ app.get('/api/keys/spending-controls', (req, res) => {
         maxTransactions: 10,
         emergencyStop: false,
         lastUpdated: new Date().toISOString()
-    });
-});
-
-// Auth endpoints
-app.get('/api/auth/status', (req, res) => {
-    res.json({
-        authenticated: false,
-        message: 'Authentication status'
-    });
-});
-
-app.post('/api/auth/login', (req, res) => {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-        return res.status(400).json({
-            error: 'Email and password required'
-        });
-    }
-    
-    res.json({
-        message: 'Login endpoint',
-        email,
-        token: `token_${Date.now()}`,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     });
 });
 
