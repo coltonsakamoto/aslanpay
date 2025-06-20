@@ -98,9 +98,16 @@ router.post('/signup',
         
         console.error('❌ SaaS signup error:', error);
         console.error('Stack trace:', error.stack);
+        
+        // Return more specific error for debugging
+        const errorMessage = error.message || 'Unknown error';
         res.status(500).json({
-            error: 'Failed to create account. Please try again.',
-            code: 'SIGNUP_FAILED'
+            error: `Failed to create account: ${errorMessage}`,
+            code: 'SIGNUP_FAILED',
+            debug: process.env.NODE_ENV === 'development' ? {
+                originalError: errorMessage,
+                stack: error.stack
+            } : undefined
         });
     }
 });

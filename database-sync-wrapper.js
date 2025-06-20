@@ -166,7 +166,17 @@ class SyncDatabaseWrapper {
             console.error('❌ createTenantWithOwner error:', error);
             console.error('❌ Error details:', error.message);
             console.error('❌ Error stack:', error.stack);
-            throw error;
+            
+            // Re-throw with more specific error message for debugging
+            if (error.message.includes('User already exists')) {
+                throw new Error('User already exists');
+            } else if (error.message.includes('connect')) {
+                throw new Error('Database connection failed - PostgreSQL may not be accessible');
+            } else if (error.message.includes('prisma')) {
+                throw new Error('Database client error - Prisma configuration issue');
+            } else {
+                throw new Error(`Database operation failed: ${error.message}`);
+            }
         }
     }
     
