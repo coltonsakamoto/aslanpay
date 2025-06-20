@@ -43,53 +43,81 @@ if (hasDatabaseUrl) {
         password: 'password123'
     });
     
-    // Simple auth endpoints
+    // Simple auth endpoints (no sessions required)
     app.post('/api/auth/login', (req, res) => {
-        const { email, password } = req.body;
-        
-        if (!email || !password) {
-            return res.status(400).json({
-                error: 'Email and password are required',
-                code: 'MISSING_CREDENTIALS'
+        try {
+            const { email, password } = req.body;
+            
+            if (!email || !password) {
+                return res.status(400).json({
+                    error: 'Email and password are required',
+                    code: 'MISSING_CREDENTIALS'
+                });
+            }
+            
+            const user = tempUsers.get(email.toLowerCase());
+            if (!user || password !== user.password) {
+                return res.status(401).json({
+                    error: 'Invalid email or password',
+                    code: 'INVALID_CREDENTIALS'
+                });
+            }
+            
+            const token = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            tempSessions.set(token, { user, createdAt: new Date() });
+            
+            res.json({
+                success: true,
+                user: { id: user.id, email: user.email, name: user.name },
+                token: token,
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                message: 'Login successful (simple auth mode)'
+            });
+        } catch (error) {
+            console.error('Auth login error:', error);
+            res.status(500).json({
+                error: 'Internal server error',
+                code: 'INTERNAL_ERROR'
             });
         }
-        
-        const user = tempUsers.get(email.toLowerCase());
-        if (!user || password !== user.password) {
-            return res.status(401).json({
-                error: 'Invalid email or password',
-                code: 'INVALID_CREDENTIALS'
-            });
-        }
-        
-        const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        tempSessions.set(sessionId, { user, createdAt: new Date() });
-        req.session.id = sessionId;
-        
-        res.json({
-            user: { id: user.id, email: user.email, name: user.name },
-            message: 'Login successful (staging test mode)'
-        });
     });
     
     app.get('/api/auth/status', (req, res) => {
-        const sessionId = req.session?.id;
-        const userSession = sessionId ? tempSessions.get(sessionId) : null;
-        
-        res.json({
-            authenticated: !!userSession,
-            user: userSession?.user || null,
-            message: 'Staging test mode - DATABASE_URL not configured'
-        });
+        try {
+            const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+            const userSession = token ? tempSessions.get(token) : null;
+            
+            res.json({
+                authenticated: !!userSession,
+                user: userSession?.user || null,
+                message: 'Simple auth mode - no DATABASE_URL'
+            });
+        } catch (error) {
+            console.error('Auth status error:', error);
+            res.status(500).json({
+                error: 'Internal server error',
+                code: 'INTERNAL_ERROR'
+            });
+        }
     });
     
     app.post('/api/auth/logout', (req, res) => {
-        const sessionId = req.session?.id;
-        if (sessionId) {
-            tempSessions.delete(sessionId);
-            req.session.destroy();
+        try {
+            const token = req.headers.authorization?.replace('Bearer ', '') || req.body.token;
+            if (token) {
+                tempSessions.delete(token);
+            }
+            res.json({ 
+                success: true,
+                message: 'Logout successful' 
+            });
+        } catch (error) {
+            console.error('Auth logout error:', error);
+            res.status(500).json({
+                error: 'Internal server error',
+                code: 'INTERNAL_ERROR'
+            });
         }
-        res.json({ message: 'Logout successful' });
     });
 }
 
