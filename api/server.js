@@ -132,7 +132,61 @@ function setupSimpleAuth() {
         }
     });
     
-    console.log('✅ Simple auth system ready');
+    // Add signup endpoint to simple auth system
+    app.post('/api/auth/signup', (req, res) => {
+        try {
+            const { email, password, name, organizationName } = req.body;
+            
+            if (!email || !password || !name) {
+                return res.status(400).json({
+                    error: 'Email, password, and name are required',
+                    code: 'MISSING_CREDENTIALS'
+                });
+            }
+            
+            if (password.length < 8) {
+                return res.status(400).json({
+                    error: 'Password must be at least 8 characters long',
+                    code: 'WEAK_PASSWORD'
+                });
+            }
+            
+            const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+            const token = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Add user to temp storage
+            tempUsers.set(email.toLowerCase(), {
+                id: userId,
+                email: email.toLowerCase(),
+                name,
+                password,
+                organizationName,
+                createdAt: new Date().toISOString()
+            });
+            
+            // Create session
+            tempSessions.set(token, { 
+                user: { id: userId, email: email.toLowerCase(), name },
+                createdAt: new Date() 
+            });
+            
+            res.status(201).json({
+                success: true,
+                message: 'Account created successfully! (Simple auth mode)',
+                user: { id: userId, email: email.toLowerCase(), name },
+                token: token,
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            });
+        } catch (error) {
+            console.error('Auth signup error:', error);
+            res.status(500).json({
+                error: 'Internal server error',
+                code: 'INTERNAL_ERROR'
+            });
+        }
+    });
+    
+    console.log('✅ Simple auth system ready (with signup)');
 }
 
 // Serve static frontend files FIRST (before API routes)

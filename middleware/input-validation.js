@@ -24,6 +24,13 @@ class InputValidation {
             name: this.patterns.name.required()
         }),
         
+        signup: Joi.object({
+            email: this.patterns.email.required(),
+            password: this.patterns.password.required(),
+            name: this.patterns.name.required(),
+            organizationName: Joi.string().trim().min(1).max(100).optional()
+        }),
+        
         login: Joi.object({
             email: this.patterns.email.required(),
             password: this.patterns.password.required()
