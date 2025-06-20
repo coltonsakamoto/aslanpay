@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Controls Test - AgentPay</title>
+    <script src="demo-config.js"></script>
+    <style>
+        body { font-family: monospace; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .pass { background-color: #d4edda; border-color: #c3e6cb; }
+        .fail { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { margin: 5px; padding: 8px 12px; border: none; border-radius: 3px; cursor: pointer; }
+        .reset-btn { background-color: #007bff; color: white; }
+        .test-btn { background-color: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🛡️ AgentPay Payment Controls Test Suite</h1>
+    <p>This page tests the payment validation and control systems.</p>
+    
+    <button onclick="runAllTests()" class="test-btn">🚀 Run All Tests</button>
+    <button onclick="resetDemo()" class="reset-btn">🔄 Reset Demo State</button>
+    
+    <div id="test-results"></div>
+    
+    <div class="info test">
+        <h3>📊 Current Demo Status</h3>
+        <div id="status-display"></div>
+        <button onclick="updateStatus()" class="test-btn">Refresh Status</button>
+    </div>
+
+    <script>
+        let tracker = new DemoSpendingTracker();
+        
+        function updateStatus() {
+            const status = tracker.getDemoStatus();
+            document.getElementById('status-display').innerHTML = `
+                <strong>Spent Today:</strong> $${status.spentToday.toFixed(2)} / $${status.dailyLimit}<br>
+                <strong>Transactions:</strong> ${status.transactionCount} / ${status.maxTransactions}<br>
+                <strong>Remaining Amount:</strong> $${status.remainingAmount.toFixed(2)}<br>
+                <strong>Remaining Transactions:</strong> ${status.remainingTransactions}<br>
+                <strong>Emergency Stop:</strong> ${status.isEmergencyStop ? 'ACTIVE' : 'Disabled'}<br>
+                <strong>Spent Percentage:</strong> ${status.spentPercentage}%
+            `;
+        }
+        
+        function resetDemo() {
+            localStorage.removeItem('demoSpending');
+            tracker = new DemoSpendingTracker();
+            updateStatus();
+            showResult('Demo state reset successfully', 'pass');
+        }
+        
+        function showResult(message, type) {
+            const resultsDiv = document.getElementById('test-results');
+            const testDiv = document.createElement('div');
+            testDiv.className = `test ${type}`;
+            testDiv.innerHTML = `<strong>${type.toUpperCase()}:</strong> ${message}`;
+            resultsDiv.appendChild(testDiv);
+        }
+        
+        function testValidTransaction() {
+            const validation = tracker.validateTransaction(10, 'gift-card', 'Buy me a gift card');
+            if (validation.approved) {
+                showResult('✅ Valid $10 gift card transaction approved', 'pass');
+                return true;
+            } else {
+                showResult(`❌ Valid transaction rejected: ${validation.reason}`, 'fail');
+                return false;
+            }
+        }
+        
+        function testAmountTooHigh() {
+            const validation = tracker.validateTransaction(100, 'gift-card', 'Buy expensive gift card');
+            if (!validation.approved && validation.reason.includes('Maximum amount')) {
+                showResult('✅ High amount ($100) correctly rejected', 'pass');
+                return true;
+            } else {
+                showResult('❌ High amount should be rejected', 'fail');
+                return false;
+            }
+        }
+        
+        function testApprovalRequired() {
+            const validation = tracker.validateTransaction(35, 'gift-card', 'Buy gift card');
+            if (validation.requiresApproval && validation.reason.includes('require approval')) {
+                showResult('✅ Amount >$30 correctly requires approval', 'pass');
+                return true;
+            } else {
+                showResult('❌ Amounts >$30 should require approval', 'fail');
+                return false;
+            }
+        }
+        
+        function testEmergencyStop() {
+            const validation = tracker.validateTransaction(10, 'gift-card', 'emergency stop everything');
+            if (!validation.approved && validation.reason.includes('Emergency stop')) {
+                showResult('✅ Emergency stop correctly triggered by message', 'pass');
+                return true;
+            } else {
+                showResult('❌ Emergency stop should be triggered', 'fail');
+                return false;
+            }
+        }
+        
+        function testDailyLimitProtection() {
+            // First, spend close to the limit
+            for (let i = 0; i < 9; i++) {
+                tracker.recordTransaction(10, 'gift-card');
+            }
+            
+            // Now try to exceed limit
+            const validation = tracker.validateTransaction(20, 'gift-card', 'Buy gift card');
+            if (!validation.approved && validation.reason.includes('daily limit')) {
+                showResult('✅ Daily limit protection working', 'pass');
+                return true;
+            } else {
+                showResult('❌ Daily limit should prevent over-spending', 'fail');
+                return false;
+            }
+        }
+        
+        function testTransactionCountLimit() {
+            // Reset for clean test
+            resetDemo();
+            
+            // Use up all transactions
+            for (let i = 0; i < 10; i++) {
+                tracker.recordTransaction(5, 'gift-card');
+            }
+            
+            // Try one more
+            const validation = tracker.validateTransaction(5, 'gift-card', 'Buy gift card');
+            if (!validation.approved && validation.reason.includes('Demo limited')) {
+                showResult('✅ Transaction count limit working', 'pass');
+                return true;
+            } else {
+                showResult('❌ Transaction count limit should prevent excess transactions', 'fail');
+                return false;
+            }
+        }
+        
+        function testServiceLimits() {
+            resetDemo();
+            
+            // Test SMS minimum
+            const smsValidation = tracker.validateTransaction(0.005, 'sms', 'Send SMS');
+            if (!smsValidation.approved && smsValidation.reason.includes('Minimum amount')) {
+                showResult('✅ SMS minimum amount validation working', 'pass');
+            } else {
+                showResult('❌ SMS should have minimum amount validation', 'fail');
+            }
+            
+            // Test domain maximum
+            const domainValidation = tracker.validateTransaction(50, 'domain', 'Register domain');
+            if (!domainValidation.approved && domainValidation.reason.includes('Maximum amount')) {
+                showResult('✅ Domain maximum amount validation working', 'pass');
+            } else {
+                showResult('❌ Domain should have maximum amount validation', 'fail');
+            }
+        }
+        
+        async function runAllTests() {
+            document.getElementById('test-results').innerHTML = '<h2>🧪 Running Payment Control Tests...</h2>';
+            
+            resetDemo();
+            
+            // Run tests with delays to see progress
+            setTimeout(() => testValidTransaction(), 100);
+            setTimeout(() => testAmountTooHigh(), 200);
+            setTimeout(() => testApprovalRequired(), 300);
+            setTimeout(() => testServiceLimits(), 400);
+            setTimeout(() => {
+                resetDemo();
+                testDailyLimitProtection();
+            }, 500);
+            setTimeout(() => {
+                resetDemo();
+                testTransactionCountLimit();
+            }, 600);
+            setTimeout(() => {
+                resetDemo();
+                testEmergencyStop();
+            }, 700);
+            
+            setTimeout(() => {
+                showResult('🎉 All payment control tests completed!', 'info');
+                updateStatus();
+            }, 800);
+        }
+        
+        // Initialize
+        updateStatus();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aslan Demo | AI Payment Infrastructure</title>
+    
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <meta name="description" content="See AI agents make real payments with Aslan's spending controls and sub-400ms latency">
+    <meta name="keywords" content="ai payments, agent payments, spending controls, aslan">
+    
+    <meta property="og:title" content="Aslan Demo | AI Payment Infrastructure">
+    <meta property="og:description" content="See AI agents make real payments with Aslan's spending controls and sub-400ms latency">
+    <meta property="og:image" content="https://aslanpay.xyz/og-image.svg">
+    <meta property="og:type" content="website">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF8C00',
+                        'aslan-gold': '#FFD700',
+                        'aslan-gray': '#374151'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-orange-50 via-white to-orange-100 min-h-screen overflow-x-hidden">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-orange-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-br from-aslan-orange to-aslan-gold rounded-full flex items-center justify-center mr-3">
+                            <span class="text-white font-bold text-sm">🦁</span>
+                        </div>
+                        <span class="text-xl font-bold text-aslan-gray">Aslan</span>
+                        <span class="ml-2 px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">Demo</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-700 hover:text-aslan-orange">Home</a>
+                    <a href="/docs" class="text-gray-700 hover:text-aslan-orange">Docs</a>
+                    <a href="/pricing" class="text-gray-700 hover:text-aslan-orange">Pricing</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
+        <div class="grid lg:grid-cols-2 gap-8 w-full">
+            <!-- Chat Interface -->
+            <div class="bg-white rounded-xl shadow-lg p-6 space-y-6 min-w-0">
+                <h2 class="text-2xl font-bold text-gray-900">🤖 AI Agent Demo</h2>
+                
+                <!-- Chat Messages -->
+                <div id="chat-messages" class="bg-gray-50 rounded-lg p-4 h-80 overflow-y-auto overflow-x-hidden">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-aslan-orange rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-white text-sm">🤖</span>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 max-w-sm shadow-sm break-words">
+                            <p class="text-sm text-gray-800">Hi! I'm ready to make purchases with your Demo Visa Card (••••4242). Try one of the suggestions below!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Suggestion Buttons -->
+                <div class="bg-orange-50 rounded-lg p-3">
+                    <div class="text-xs font-medium text-orange-800 mb-2">💡 Try these:</div>
+                    <div id="suggestion-buttons" class="flex flex-wrap gap-2">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Input -->
+                <div class="flex space-x-2 w-full">
+                    <input 
+                        id="chat-input" 
+                        type="text" 
+                        placeholder="Try: 'Buy me a $10 gift card'"
+                        class="flex-1 min-w-0 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-aslan-orange"
+                    >
+                    <button 
+                        id="send-btn"
+                        class="bg-aslan-orange text-white px-6 py-3 rounded-lg hover:bg-aslan-gold transition-colors flex-shrink-0"
+                    >
+                        Send
+                    </button>
+                </div>
+                
+                <!-- Payment Method -->
+                <div class="border-t pt-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-sm font-medium text-gray-700">💳 Payment Method</label>
+                        <button id="add-card-btn" class="text-xs bg-aslan-orange text-white px-3 py-1 rounded-full">+ Add Card</button>
+                    </div>
+                    <div id="payment-method-display" class="bg-gray-50 rounded-lg p-3 border overflow-hidden">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Transaction Log -->
+            <div class="bg-white rounded-xl shadow-lg p-6 space-y-6 min-w-0">
+                <h3 class="text-xl font-bold text-gray-900">Transaction Log</h3>
+                <div id="transaction-log" class="bg-gray-50 rounded-lg p-4 h-80 overflow-y-auto overflow-x-hidden">
+                    <div class="text-center text-gray-500 text-sm py-8">
+                        Transactions will appear here...
+                    </div>
+                </div>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    <div class="bg-orange-50 rounded-lg p-3">
+                        <div class="text-xl font-bold text-aslan-orange" id="total-transactions">0</div>
+                        <div class="text-xs text-orange-800">Transactions</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3">
+                        <div class="text-xl font-bold text-green-600" id="total-amount">$0</div>
+                        <div class="text-xs text-green-800">Total</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-3">
+                        <div class="text-xl font-bold text-purple-600" id="avg-latency">0ms</div>
+                        <div class="text-xs text-purple-800">Latency</div>
+                    </div>
+                </div>
+                
+                <!-- Controls -->
+                <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-semibold text-orange-800">🛡️ Spending Controls</h4>
+                        <button id="settings-btn" class="text-xs bg-orange-600 text-white px-3 py-1 rounded-full hover:bg-orange-700">⚙️ Settings</button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-2">
+                        <div class="break-words">Daily Limit: <span id="daily-limit" class="font-mono">$100</span></div>
+                        <div class="break-words">Spent: <span id="spent-today" class="font-mono">$0</span></div>
+                        <div class="break-words">Remaining: <span id="remaining-limit" class="font-mono">$100</span></div>
+                        <div class="break-words">Status: <span id="limit-status" class="font-mono text-green-600">Active</span></div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="w-full bg-orange-200 rounded-full h-2">
+                            <div id="spending-progress" class="bg-orange-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="text-xs text-orange-700 mt-1">Spending Progress</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚡ WORKING DEMO - GUARANTEED TO FUNCTION
+        console.log('🚀 Demo starting...');
+        
+        // Demo data and state - INITIALIZE PROPERLY
+        let transactions = [];
+        let totalSpent = 0;
+        let transactionCount = 0;
+        
+        // ⚡ SPENDING CONTROLS - THE CORE VALUE PROP
+        let spendingLimits = {
+            dailyLimit: 100,
+            maxTransactions: 10,
+            emergencyStop: false
+        };
+        
+        // Demo card (always available)
+        const demoCard = {
+            id: 'demo_card_1',
+            nickname: 'Demo Visa Card',
+            brand: 'visa', 
+            last4: '4242',
+            expMonth: '12',
+            expYear: '28'
+        };
+        
+        // Initialize everything immediately
+        function initDemo() {
+            console.log('✅ Initializing demo...');
+            
+            // Show demo card
+            updatePaymentDisplay();
+            
+            // Load spending controls from server
+            loadSpendingStatus();
+            
+            // Add suggestion buttons
+            addSuggestionButtons();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            console.log('✅ Demo ready!');
+        }
+        
+        // Load spending status from server
+        async function loadSpendingStatus() {
+            try {
+                const response = await fetch('/api/demo/spending-status');
+                const data = await response.json();
+                
+                // Update local state with server state - PREVENT UNDEFINED ERRORS
+                totalSpent = data.totalSpent || 0;
+                transactionCount = data.transactionCount || 0;
+                spendingLimits.dailyLimit = data.dailyLimit || 100;
+                spendingLimits.maxTransactions = data.maxTransactions || 10;
+                spendingLimits.emergencyStop = data.emergencyStop || false;
+                
+                updateSpendingControls();
+                updateStats();
+                
+                console.log('✅ Spending status loaded from server:', {
+                    totalSpent,
+                    transactionCount,
+                    dailyLimit: spendingLimits.dailyLimit
+                });
+            } catch (error) {
+                console.error('❌ Failed to load spending status:', error);
+                // Use defaults if server fails
+                totalSpent = 0;
+                transactionCount = 0;
+                updateSpendingControls();
+                updateStats();
+            }
+        }
+        
+        // Update payment method display
+        function updatePaymentDisplay() {
+            const display = document.getElementById('payment-method-display');
+            if (display) {
+                display.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="text-xl">💳</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium break-words">${demoCard.nickname}</div>
+                            <div class="text-xs text-gray-500 break-words">•••• •••• •••• ${demoCard.last4} • ${demoCard.expMonth}/${demoCard.expYear}</div>
+                        </div>
+                        <div class="text-xs text-green-600 flex-shrink-0">✅ Active</div>
+                    </div>
+                `;
+                console.log('✅ Payment method displayed');
+            }
+        }
+        
+        // Add suggestion buttons with PROMINENT blocking demos
+        function addSuggestionButtons() {
+            const container = document.getElementById('suggestion-buttons');
+            if (!container) {
+                console.error('❌ suggestion-buttons container not found');
+                return;
+            }
+            
+            const suggestions = [
+                "⚙️ Configure spending controls",
+                "Buy me a $10 Amazon gift card",
+                "Get me a $25 gift card", 
+                "🚨 Test $120 purchase (WILL BE BLOCKED)",
+                "🔴 Try $200 gift card (EXCEEDS LIMIT)", 
+                "🛑 Test emergency stop protection",
+                "📊 Check current spending limits"
+            ];
+            
+            container.innerHTML = '';
+            
+            suggestions.forEach(suggestion => {
+                const btn = document.createElement('button');
+                const isBlockingDemo = suggestion.includes('BLOCKED') || suggestion.includes('EXCEEDS') || suggestion.includes('emergency stop');
+                btn.className = `text-xs ${isBlockingDemo ? 'bg-red-50 border-red-500 text-red-700 hover:bg-red-100' : 'bg-white text-aslan-orange hover:bg-orange-100'} px-3 py-2 rounded-full transition-colors border ${isBlockingDemo ? 'border-red-500' : 'border-aslan-orange'} break-words`;
+                btn.textContent = suggestion;
+                btn.onclick = () => {
+                    console.log(`🖱️ Suggestion clicked: ${suggestion}`);
+                    
+                    if (suggestion.includes('Configure spending controls')) {
+                        showSpendingSettings();
+                    } else if (suggestion.includes('emergency stop')) {
+                        toggleEmergencyStop();
+                    } else if (suggestion.includes('Check current')) {
+                        showCurrentLimits();
+                    } else {
+                        const input = document.getElementById('chat-input');
+                        if (input) {
+                            input.value = suggestion;
+                            handleSend();
+                        }
+                    }
+                };
+                container.appendChild(btn);
+            });
+            
+            console.log(`✅ Added ${suggestions.length} suggestion buttons with blocking demos`);
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            const sendBtn = document.getElementById('send-btn');
+            const chatInput = document.getElementById('chat-input');
+            const settingsBtn = document.getElementById('settings-btn');
+            
+            if (sendBtn) {
+                sendBtn.onclick = handleSend;
+                console.log('✅ Send button listener added');
+            }
+            
+            if (chatInput) {
+                chatInput.onkeypress = (e) => {
+                    if (e.key === 'Enter') handleSend();
+                };
+                console.log('✅ Input listener added');
+            }
+            
+            if (settingsBtn) {
+                settingsBtn.onclick = showSpendingSettings;
+                console.log('✅ Settings button listener added');
+            }
+        }
+        
+        // Handle sending messages
+        function handleSend() {
+            const input = document.getElementById('chat-input');
+            const message = input?.value?.trim();
+            
+            if (!message) return;
+            
+            console.log(`💬 Processing: ${message}`);
+            
+            // Add user message
+            addMessage(message, true);
+            input.value = '';
+            
+            // Process purchase
+            setTimeout(() => processPurchase(message), 100);
+        }
+        
+        // Add message to chat
+        function addMessage(content, isUser = false) {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex items-start space-x-3 mb-3 ${isUser ? 'justify-end' : ''} overflow-hidden`;
+            
+            messageDiv.innerHTML = `
+                <div class="w-8 h-8 ${isUser ? 'bg-gray-600' : 'bg-aslan-orange'} rounded-full flex items-center justify-center ${isUser ? 'order-2' : ''} flex-shrink-0">
+                    <span class="text-white text-sm">${isUser ? '👤' : '🤖'}</span>
+                </div>
+                <div class="bg-white rounded-lg p-3 max-w-sm shadow-sm ${isUser ? 'bg-gray-600 text-white order-1' : ''} break-words min-w-0">
+                    <p class="text-sm break-words">${content}</p>
+                </div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Process purchase using SERVER-SIDE spending controls
+        async function processPurchase(message) {
+            const startTime = Date.now();
+            
+            addMessage('🔍 Processing your request...', false);
+            
+            // Parse amount and service
+            let amount = 10;
+            let service = 'gift-card';
+            
+            const amountMatch = message.match(/\$(\d+)/);
+            if (amountMatch) amount = parseInt(amountMatch[1]);
+            
+            if (message.toLowerCase().includes('aws')) {
+                service = 'cloud-credits';
+            } else if (message.toLowerCase().includes('sms')) {
+                service = 'sms';
+                amount = 0.01;
+            } else if (message.toLowerCase().includes('domain')) {
+                service = 'domain';
+                amount = 12.99;
+            }
+            
+            // ⚡ SERVER-SIDE SPENDING VALIDATION - THE CORE PRODUCT FEATURE
+            addMessage('🛡️ Validating spending limits on server...', false);
+            
+            try {
+                const response = await fetch('/api/demo/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                        service: service,
+                        description: message
+                    })
+                });
+                
+                const result = await response.json();
+                const latency = Date.now() - startTime;
+                
+                if (!result.success && result.blocked) {
+                    // 🚨 TRANSACTION BLOCKED BY SPENDING CONTROLS
+                    addMessage(`🚨 TRANSACTION BLOCKED: ${result.reason}`, false);
+                    addMessage(`📊 Status: $${result.currentSpent}/$${result.dailyLimit} spent today`, false);
+                    addMessage(`📈 Transactions: ${result.transactionCount}/${result.maxTransactions} used today`, false);
+                    
+                    if (result.emergencyStop) {
+                        addMessage(`🛑 Emergency stop is ACTIVE - all purchases blocked`, false);
+                    }
+                    
+                    // Show prominent blocking message
+                    addBlockedTransactionToLog(amount, service, result.reason, latency);
+                    
+                    // Update local state
+                    await loadSpendingStatus();
+                    return;
+                }
+                
+                if (result.success) {
+                    // Transaction approved and processed - UPDATE LOCAL STATE SAFELY
+                    if (result.spendingStatus) {
+                        totalSpent = result.spendingStatus.totalSpent || 0;
+                        transactionCount = result.spendingStatus.transactionCount || 0;
+                    } else {
+                        // Fallback - update manually if no spending status
+                        totalSpent += amount;
+                        transactionCount++;
+                    }
+                    
+                    addMessage(`✅ SUCCESS! Purchased ${service} for $${amount} using ${demoCard.nickname} (••••${demoCard.last4})`, false);
+                    addMessage(`⚡ Transaction completed in ${latency}ms`, false);
+                    addMessage(`📊 Remaining limit: $${result.spendingStatus?.remainingLimit || (spendingLimits.dailyLimit - totalSpent)}`, false);
+                    
+                    // Add to transaction log
+                    addTransaction({ 
+                        amount, 
+                        service, 
+                        latency: result.latency || result.processing_time || latency, 
+                        transactionId: result.transactionId,
+                        success: true
+                    });
+                    
+                    // Update displays - ENSURE PURPLE BOX LATENCY UPDATES
+                    updateStats();
+                    updateSpendingControls();
+                    
+                    // Force purple box latency update with most recent transaction
+                    const latencyEl = document.getElementById('avg-latency');
+                    if (latencyEl && transactions.length > 0) {
+                        const lastTransaction = transactions[transactions.length - 1];
+                        if (lastTransaction.latency) {
+                            latencyEl.textContent = `${Math.round(lastTransaction.latency)}ms`;
+                            console.log('✅ Purple box latency updated:', Math.round(lastTransaction.latency) + 'ms');
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Purchase error:', error);
+                addMessage(`❌ Error processing purchase: ${error.message}`, false);
+            }
+        }
+        
+        // Add transaction to log
+        function addTransaction(tx) {
+            transactions.push(tx);
+            
+            const log = document.getElementById('transaction-log');
+            if (!log) return;
+            
+            // Clear placeholder
+            if (transactions.length === 1) {
+                log.innerHTML = '';
+            }
+            
+            const txElement = document.createElement('div');
+            txElement.className = 'bg-white rounded-lg p-3 mb-3 border-l-4 border-green-500 break-words overflow-hidden';
+            
+            txElement.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <div class="font-medium text-green-700 break-words">${tx.service}</div>
+                    <div class="text-lg font-bold text-green-600">$${tx.amount}</div>
+                </div>
+                <div class="text-xs text-gray-600 space-y-1">
+                    <div class="break-all"><strong>ID:</strong> ${tx.transactionId}</div>
+                    <div><strong>Latency:</strong> ${tx.latency}ms</div>
+                    <div><strong>Time:</strong> ${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            
+            log.appendChild(txElement);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function addBlockedTransactionToLog(amount, service, reason, latency) {
+            const log = document.getElementById('transaction-log');
+            if (!log) return;
+            
+            // Clear placeholder if this is the first entry
+            if (log.children.length === 1 && log.querySelector('.text-center')) {
+                log.innerHTML = '';
+            }
+            
+            const txElement = document.createElement('div');
+            txElement.className = 'bg-red-50 rounded-lg p-3 mb-3 border-l-4 border-red-500 break-words overflow-hidden';
+            
+            txElement.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <div class="font-medium text-red-700 break-words">❌ ${service}</div>
+                    <div class="text-lg font-bold text-red-600">$${amount}</div>
+                </div>
+                <div class="text-xs text-red-600 space-y-1">
+                    <div class="break-words"><strong>Blocked:</strong> ${reason}</div>
+                    <div><strong>Processing Time:</strong> ${latency}ms</div>
+                    <div><strong>Time:</strong> ${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            
+            log.appendChild(txElement);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Update stats display
+        function updateStats() {
+            const totalTxEl = document.getElementById('total-transactions');
+            const totalAmountEl = document.getElementById('total-amount');
+            const latencyEl = document.getElementById('avg-latency');
+            
+            if (totalTxEl) totalTxEl.textContent = transactionCount;
+            if (totalAmountEl) totalAmountEl.textContent = `$${totalSpent.toFixed(2)}`;
+            
+            // Calculate average latency from successful transactions only
+            const safeTransactions = transactions.filter(tx => tx.success && tx.latency);
+            if (latencyEl) {
+                if (safeTransactions.length > 0) {
+                    const avgLatency = safeTransactions.reduce((sum, tx) => sum + (tx.latency || 0), 0) / safeTransactions.length;
+                    latencyEl.textContent = `${Math.round(avgLatency)}ms`;
+                    console.log('✅ Purple box latency updated:', Math.round(avgLatency) + 'ms');
+                } else {
+                    // Show 0ms if no transactions yet
+                    latencyEl.textContent = '0ms';
+                }
+            }
+        }
+        
+        // Update spending controls display
+        function updateSpendingControls() {
+            const dailyLimitEl = document.getElementById('daily-limit');
+            const spentEl = document.getElementById('spent-today');
+            const remainingEl = document.getElementById('remaining-limit');
+            const statusEl = document.getElementById('limit-status');
+            const progressEl = document.getElementById('spending-progress');
+            
+            // SAFE UPDATES - HANDLE UNDEFINED VALUES
+            const safeSpent = totalSpent || 0;
+            const safeDailyLimit = spendingLimits?.dailyLimit || 100;
+            
+            if (dailyLimitEl) dailyLimitEl.textContent = `$${safeDailyLimit}`;
+            if (spentEl) spentEl.textContent = `$${safeSpent.toFixed(2)}`;
+            if (remainingEl) remainingEl.textContent = `$${(safeDailyLimit - safeSpent).toFixed(2)}`;
+            
+            const spentPercentage = (safeSpent / safeDailyLimit) * 100;
+            
+            if (statusEl) {
+                if (spendingLimits?.emergencyStop) {
+                    statusEl.textContent = 'EMERGENCY STOP';
+                    statusEl.className = 'font-mono text-red-600';
+                } else if (safeSpent >= safeDailyLimit) {
+                    statusEl.textContent = 'LIMIT REACHED';
+                    statusEl.className = 'font-mono text-red-600';
+                } else if (spentPercentage > 75) {
+                    statusEl.textContent = 'Warning';
+                    statusEl.className = 'font-mono text-yellow-600';
+                } else {
+                    statusEl.textContent = 'Active';
+                    statusEl.className = 'font-mono text-green-600';
+                }
+            }
+            
+            if (progressEl) {
+                progressEl.style.width = `${Math.min(spentPercentage, 100)}%`;
+                if (spentPercentage > 90) {
+                    progressEl.className = 'bg-red-600 h-2 rounded-full transition-all duration-300';
+                } else if (spentPercentage > 75) {
+                    progressEl.className = 'bg-yellow-600 h-2 rounded-full transition-all duration-300';
+                } else {
+                    progressEl.className = 'bg-orange-600 h-2 rounded-full transition-all duration-300';
+                }
+            }
+        }
+        
+        // Show spending settings modal
+        function showSpendingSettings() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl max-w-md w-full p-6 overflow-hidden">
+                    <h3 class="text-lg font-bold mb-4">🛡️ Spending Controls</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Daily Limit ($)</label>
+                            <input type="number" id="modal-daily-limit" value="${spendingLimits.dailyLimit}" 
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Max Transactions</label>
+                            <input type="number" id="modal-max-transactions" value="${spendingLimits.maxTransactions}"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-aslan-orange">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="modal-emergency-stop" ${spendingLimits.emergencyStop ? 'checked' : ''}
+                                   class="rounded border-gray-300 text-aslan-orange focus:ring-aslan-orange">
+                            <label for="modal-emergency-stop" class="text-sm font-medium text-gray-700">Emergency Stop (blocks all transactions)</label>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3 mt-6">
+                        <button onclick="closeModal()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">Cancel</button>
+                        <button onclick="saveSettings()" class="flex-1 bg-aslan-orange text-white py-2 rounded-lg hover:bg-aslan-gold">Save</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close modal functions
+            window.closeModal = () => {
+                document.body.removeChild(modal);
+                delete window.closeModal;
+                delete window.saveSettings;
+            };
+            
+            // Save settings function
+            window.saveSettings = async () => {
+                const dailyLimit = parseInt(document.getElementById('modal-daily-limit').value);
+                const maxTransactions = parseInt(document.getElementById('modal-max-transactions').value);
+                const emergencyStop = document.getElementById('modal-emergency-stop').checked;
+                
+                if (dailyLimit <= 0 || maxTransactions <= 0) {
+                    alert('Values must be positive numbers');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/demo/spending-controls', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            dailyLimit,
+                            maxTransactions,
+                            emergencyStop
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        spendingLimits.dailyLimit = dailyLimit;
+                        spendingLimits.maxTransactions = maxTransactions;
+                        spendingLimits.emergencyStop = emergencyStop;
+                        
+                        updateSpendingControls();
+                        
+                        addMessage(`⚙️ Settings updated: Daily limit $${dailyLimit}, Max transactions ${maxTransactions}${emergencyStop ? ', Emergency stop ENABLED' : ''}`, false);
+                        
+                        closeModal();
+                    } else {
+                        alert('Failed to update settings');
+                    }
+                } catch (error) {
+                    console.error('Settings error:', error);
+                    alert('Error updating settings');
+                }
+            };
+        }
+        
+        // Show current limits
+        function showCurrentLimits() {
+            addMessage(`📊 Current limits: Daily $${spendingLimits.dailyLimit}, Max ${spendingLimits.maxTransactions} transactions${spendingLimits.emergencyStop ? ', Emergency stop ACTIVE' : ''}`, false);
+            addMessage(`💰 Status: $${totalSpent.toFixed(2)}/$${spendingLimits.dailyLimit} spent, ${transactionCount}/${spendingLimits.maxTransactions} transactions used`, false);
+        }
+        
+        // Toggle emergency stop
+        async function toggleEmergencyStop() {
+            try {
+                const newState = !spendingLimits.emergencyStop;
+                
+                const response = await fetch('/api/demo/spending-controls', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        dailyLimit: spendingLimits.dailyLimit,
+                        maxTransactions: spendingLimits.maxTransactions,
+                        emergencyStop: newState
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    spendingLimits.emergencyStop = newState;
+                    updateSpendingControls();
+                    
+                    addMessage(`🛑 Emergency stop ${newState ? 'ENABLED' : 'DISABLED'} - ${newState ? 'All transactions will be blocked' : 'Normal operations resumed'}`, false);
+                } else {
+                    addMessage('❌ Failed to toggle emergency stop', false);
+                }
+            } catch (error) {
+                console.error('Emergency stop error:', error);
+                addMessage('❌ Error toggling emergency stop', false);
+            }
+        }
+        
+        // Start demo when page loads
+        document.addEventListener('DOMContentLoaded', initDemo);
+    </script>
+</body>
+</html> 

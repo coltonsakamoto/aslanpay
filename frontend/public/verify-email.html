@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - Autonomy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'autonomy-blue': '#0066FF',
+                        'autonomy-dark': '#1a1a1a',
+                        'autonomy-gray': '#6B7280'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-200 bg-white">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-autonomy-blue rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">A</span>
+                    </div>
+                    <span class="text-xl font-semibold text-autonomy-dark">Autonomy</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="auth.html" class="text-autonomy-gray hover:text-autonomy-dark transition-colors">← Back to Sign In</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="min-h-screen flex items-center justify-center py-12 px-6">
+        <div class="max-w-md w-full space-y-8">
+            <!-- Loading State -->
+            <div id="loading-state" class="bg-white p-8 rounded-xl shadow-lg">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-autonomy-blue mx-auto mb-4"></div>
+                    <h3 class="text-xl font-semibold text-autonomy-dark mb-2">Verifying Email...</h3>
+                    <p class="text-autonomy-gray">Please wait while we verify your email address.</p>
+                </div>
+            </div>
+
+            <!-- Success State -->
+            <div id="success-state" class="hidden bg-white p-8 rounded-xl shadow-lg">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-autonomy-dark mb-2">Email Verified Successfully!</h3>
+                    <p class="text-autonomy-gray mb-6">Your email address has been verified. You can now access all features of your account.</p>
+                    <div class="space-y-3">
+                        <a href="dashboard.html" class="block w-full bg-autonomy-blue text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center">
+                            Go to Dashboard
+                        </a>
+                        <a href="auth.html" class="block w-full border border-gray-300 text-autonomy-dark py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                            Sign In
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="hidden bg-white p-8 rounded-xl shadow-lg">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-autonomy-dark mb-2">Verification Failed</h3>
+                    <p class="text-autonomy-gray mb-6">This verification link is invalid or has expired. Please request a new verification email.</p>
+                    <a href="auth.html" class="bg-autonomy-blue text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        Back to Sign In
+                    </a>
+                </div>
+            </div>
+
+            <!-- No Token State -->
+            <div id="no-token-state" class="hidden bg-white p-8 rounded-xl shadow-lg">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-autonomy-dark mb-2">Invalid Link</h3>
+                    <p class="text-autonomy-gray mb-6">This verification link is missing required information. Please check your email for the correct link.</p>
+                    <a href="auth.html" class="bg-autonomy-blue text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        Back to Sign In
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get token from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        // Verify email on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!token) {
+                // No token provided
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('no-token-state').classList.remove('hidden');
+                return;
+            }
+
+            try {
+                // Attempt to verify the email
+                const response = await fetch('/api/auth/verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+
+                const data = await response.json();
+
+                // Hide loading state
+                document.getElementById('loading-state').classList.add('hidden');
+
+                if (response.ok) {
+                    // Show success state
+                    document.getElementById('success-state').classList.remove('hidden');
+                } else {
+                    // Show error state
+                    document.getElementById('error-state').classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error('Email verification error:', error);
+                
+                // Hide loading state and show error
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('error-state').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html> 

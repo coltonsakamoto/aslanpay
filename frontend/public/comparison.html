@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aslan vs Stripe Agent Toolkit - When to Use Each | Aslan</title>
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#FF6B35">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                        'aslan-dark': '#1a1a1a',
+                        'aslan-gray': '#6B7280'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white overflow-x-hidden">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <a href="/" class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</a>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
+                    <a href="/docs" class="text-aslan-gray hover:text-aslan-dark transition-colors">Documentation</a>
+                    <a href="/pricing" class="text-aslan-gray hover:text-aslan-dark transition-colors">Pricing</a>
+                    <a href="/auth" class="text-aslan-gray hover:text-aslan-dark transition-colors">Sign In</a>
+                    <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                        Try Demo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-12 pb-8 bg-gradient-to-r from-blue-50 to-indigo-100">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-aslan-dark mb-4">
+                Aslan vs Stripe Agent Toolkit
+            </h1>
+            <p class="text-lg text-aslan-gray mb-6">
+                Understanding when to use each solution for your AI payment needs
+            </p>
+        </div>
+    </section>
+
+    <!-- Breaking News Section -->
+    <section class="py-8 bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-orange-400">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="text-center">
+                <h2 class="text-xl font-bold text-orange-900 mb-4">📢 Stripe Just Announced Agent Issuing & Order Intents</h2>
+                <p class="text-orange-800 max-w-4xl mx-auto leading-relaxed">
+                    Stripe's new approach: <strong>Create virtual cards</strong> → Give to agents → Monitor traditional transactions.<br>
+                    <strong>Aslan's approach:</strong> Purpose-built authorization APIs designed for autonomous AI agents from day one.
+                </p>
+                <div class="mt-4 inline-flex items-center space-x-2 text-sm font-medium text-orange-700 bg-orange-100 px-4 py-2 rounded-lg">
+                    <span>💡</span>
+                    <span>Different problems, different solutions - they work great together!</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Decision Guide -->
+    <section class="py-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <h2 class="text-2xl font-bold text-aslan-dark mb-8 text-center">🚀 Quick Decision Guide</h2>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <div class="p-6 border-2 border-blue-200 rounded-xl bg-blue-50">
+                    <h3 class="text-xl font-semibold text-blue-900 mb-3">Building an AI App?</h3>
+                    <p class="text-blue-800 mb-4">Want to charge users for your AI service?</p>
+                    <div class="bg-white p-3 rounded-lg border border-blue-200">
+                        <div class="font-semibold text-blue-900">✅ Use Stripe Agent Toolkit</div>
+                        <div class="text-sm text-blue-700">Perfect for billing and subscriptions</div>
+                    </div>
+                </div>
+                
+                <div class="p-6 border-2 border-orange-200 rounded-xl bg-orange-50">
+                    <h3 class="text-xl font-semibold text-orange-900 mb-3">Deploying AI Agents?</h3>
+                    <p class="text-orange-800 mb-4">Need agents to buy things autonomously?</p>
+                    <div class="bg-white p-3 rounded-lg border border-orange-200">
+                        <div class="font-semibold text-orange-900">✅ Use Aslan</div>
+                        <div class="text-sm text-orange-700">Built for agent spending control</div>
+                    </div>
+                </div>
+                
+                <div class="p-6 border-2 border-green-200 rounded-xl bg-green-50">
+                    <h3 class="text-xl font-semibold text-green-900 mb-3">Complete AI Economy?</h3>
+                    <p class="text-green-800 mb-4">Both charging users AND agent spending?</p>
+                    <div class="bg-white p-3 rounded-lg border border-green-200">
+                        <div class="font-semibold text-green-900">✅ Use Both Together</div>
+                        <div class="text-sm text-green-700">Complementary solutions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed Comparison -->
+    <section class="py-12 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <h2 class="text-3xl font-bold text-aslan-dark mb-12 text-center">Detailed Feature Comparison</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full bg-white rounded-xl shadow-lg">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Feature</th>
+                            <th class="px-6 py-4 text-center text-sm font-semibold text-purple-900">Stripe Issuing + Order Intents</th>
+                            <th class="px-6 py-4 text-center text-sm font-semibold text-orange-900">Aslan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 font-medium text-gray-900">Primary Purpose</td>
+                            <td class="px-6 py-4 text-center">Agent spending via virtual cards</td>
+                            <td class="px-6 py-4 text-center">Native agent commerce APIs</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">Architecture</td>
+                            <td class="px-6 py-4 text-center">Card networks + PCI compliance</td>
+                            <td class="px-6 py-4 text-center">Direct authorization (no cards)</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-medium text-gray-900">Integration Complexity</td>
+                            <td class="px-6 py-4 text-center">Multi-step (issuing + monitoring)</td>
+                            <td class="px-6 py-4 text-center">Single API call</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">Deployment Model</td>
+                            <td class="px-6 py-4 text-center">Library/SDK</td>
+                            <td class="px-6 py-4 text-center">Full platform + APIs</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-medium text-gray-900">User Interface</td>
+                            <td class="px-6 py-4 text-center">None (code only)</td>
+                            <td class="px-6 py-4 text-center">Web dashboard + API</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">Multi-Agent Management</td>
+                            <td class="px-6 py-4 text-center text-red-600">❌</td>
+                            <td class="px-6 py-4 text-center text-green-600">✅</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-medium text-gray-900">Spending Controls</td>
+                            <td class="px-6 py-4 text-center text-red-600">❌</td>
+                            <td class="px-6 py-4 text-center text-green-600">✅ Advanced</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">Authorization Engine</td>
+                            <td class="px-6 py-4 text-center text-red-600">❌</td>
+                            <td class="px-6 py-4 text-center text-green-600">✅ Real-time</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-medium text-gray-900">Token Usage Billing</td>
+                            <td class="px-6 py-4 text-center text-green-600">✅ Native</td>
+                            <td class="px-6 py-4 text-center text-red-600">❌</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">Enterprise Security</td>
+                            <td class="px-6 py-4 text-center text-yellow-600">⚠️ Basic</td>
+                            <td class="px-6 py-4 text-center text-green-600">✅ 15+ features</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-medium text-gray-900">Production Ready</td>
+                            <td class="px-6 py-4 text-center text-yellow-600">⚠️ Developer preview</td>
+                            <td class="px-6 py-4 text-center text-green-600">✅ Production deployed</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">Framework Support</td>
+                            <td class="px-6 py-4 text-center">OpenAI, LangChain, CrewAI</td>
+                            <td class="px-6 py-4 text-center">Framework-agnostic REST API</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Case Scenarios -->
+    <section class="py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <h2 class="text-3xl font-bold text-aslan-dark mb-12 text-center">Real-World Scenarios</h2>
+            
+            <div class="space-y-8">
+                <!-- Scenario 1 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg border-l-4 border-blue-500">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">🤖</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Scenario 1: AI Chat Application</h3>
+                            <p class="text-gray-600 mb-4"><strong>Goal:</strong> Build a ChatGPT competitor and charge users monthly subscriptions</p>
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="font-semibold text-blue-900 mb-2">✅ Recommended: Stripe Agent Toolkit</div>
+                                <p class="text-blue-800 text-sm">Perfect for billing users, tracking token usage, and managing subscriptions. You're charging humans for AI services.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scenario 2 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg border-l-4 border-orange-500">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">🏢</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Scenario 2: Enterprise AI Agents</h3>
+                            <p class="text-gray-600 mb-4"><strong>Goal:</strong> Deploy AI agents that buy AWS credits, domain names, and SaaS tools automatically</p>
+                            <div class="bg-orange-50 p-4 rounded-lg">
+                                <div class="font-semibold text-orange-900 mb-2">✅ Recommended: Aslan</div>
+                                <p class="text-orange-800 text-sm">Built for autonomous agent spending with enterprise controls, audit trails, and spending limits. Your AI agents need to BE economic actors.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scenario 3 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg border-l-4 border-green-500">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">🚀</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Scenario 3: AI Agency Platform</h3>
+                            <p class="text-gray-600 mb-4"><strong>Goal:</strong> Platform where customers pay for AI services AND AI agents make purchases for customers</p>
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <div class="font-semibold text-green-900 mb-2">✅ Recommended: Both Systems</div>
+                                <p class="text-green-800 text-sm">Use Stripe Agent Toolkit for customer billing and Aslan for agent purchases. Complete the economic loop - money in AND money out.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Architecture -->
+    <section class="py-12 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <h2 class="text-3xl font-bold text-aslan-dark mb-8 text-center">How They Work Together</h2>
+            
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                <div class="text-center mb-8">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">The Complete AI Payment Stack</h3>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">1</span>
+                            </div>
+                            <span class="font-medium">Customer pays for AI services</span>
+                        </div>
+                        <div class="text-blue-600 font-semibold">Stripe Agent Toolkit</div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="text-2xl">⬇️</div>
+                        <div class="text-sm text-gray-600">Revenue flows to your business</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">2</span>
+                            </div>
+                            <span class="font-medium">AI agents process customer requests</span>
+                        </div>
+                        <div class="text-gray-600 font-semibold">Your Business Logic</div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="text-2xl">⬇️</div>
+                        <div class="text-sm text-gray-600">Agents need to make purchases</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">3</span>
+                            </div>
+                            <span class="font-medium">Agents buy services autonomously</span>
+                        </div>
+                        <div class="text-orange-600 font-semibold">Aslan Platform</div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 p-4 bg-green-100 rounded-lg text-center">
+                    <div class="font-semibold text-green-900 mb-2">💡 The Result</div>
+                    <div class="text-green-800">Complete autonomous AI economy with proper financial controls</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-12">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6">
+            <h2 class="text-3xl font-bold text-aslan-dark mb-12 text-center">Frequently Asked Questions</h2>
+            
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="font-semibold text-gray-900 mb-3">Q: Can I use both Stripe and Aslan together?</h3>
+                    <p class="text-gray-600">A: Absolutely! They're designed to be complementary. Use Stripe Agent Toolkit for customer billing and Aslan for agent spending. This gives you complete financial control over your AI ecosystem.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="font-semibold text-gray-900 mb-3">Q: Why not just use Stripe for everything?</h3>
+                    <p class="text-gray-600">A: Stripe Agent Toolkit is focused on billing and function calling. It doesn't provide the spending controls, authorization engine, or multi-agent management needed for autonomous agent commerce.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="font-semibold text-gray-900 mb-3">Q: Is Aslan competing with Stripe?</h3>
+                    <p class="text-gray-600">A: No, we're complementary. Stripe helps you make money FROM AI, Aslan helps AI spend money safely. We solve different parts of the AI economy puzzle.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="font-semibold text-gray-900 mb-3">Q: Which one should I start with?</h3>
+                    <p class="text-gray-600">A: If you're building an AI app to charge users, start with Stripe Agent Toolkit. If you're deploying AI agents that need to make purchases, start with Aslan. If you need both, implement them together.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-12 bg-gradient-to-r from-orange-50 to-red-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+            <h2 class="text-3xl font-bold text-aslan-dark mb-4">Ready to Enable Autonomous AI Commerce?</h2>
+            <p class="text-lg text-aslan-gray mb-8">
+                Start building with Aslan's enterprise-grade payment infrastructure for AI agents
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/demo" class="bg-aslan-orange text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-orange-600 transition-colors">
+                    Try Aslan Demo
+                </a>
+                <a href="/docs" class="border border-gray-300 text-aslan-dark px-8 py-4 rounded-lg text-lg font-medium hover:bg-gray-50 transition-colors">
+                    View Documentation
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="col-span-2 md:col-span-1">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="text-aslan-dark font-black text-xl tracking-wider">ASLAN</span>
+                    </div>
+                    <p class="text-aslan-gray text-sm">
+                        Payment infrastructure for AI agents
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-aslan-dark mb-3">Product</h4>
+                    <ul class="space-y-2 text-sm text-aslan-gray">
+                        <li><a href="/" class="hover:text-aslan-dark transition-colors">Home</a></li>
+                        <li><a href="/demo" class="hover:text-aslan-dark transition-colors">Demo</a></li>
+                        <li><a href="/pricing" class="hover:text-aslan-dark transition-colors">Pricing</a></li>
+                        <li><a href="/comparison" class="hover:text-aslan-dark transition-colors">vs Stripe</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-aslan-dark mb-3">Developers</h4>
+                    <ul class="space-y-2 text-sm text-aslan-gray">
+                        <li><a href="/docs" class="hover:text-aslan-dark transition-colors">Documentation</a></li>
+                        <li><a href="/api" class="hover:text-aslan-dark transition-colors">API Reference</a></li>
+                        <li><a href="https://github.com/coltonsakamoto/aslanpay" class="hover:text-aslan-dark transition-colors">GitHub</a></li>
+                        <li><a href="/status" class="hover:text-aslan-dark transition-colors">Status</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-aslan-dark mb-3">Company</h4>
+                    <ul class="space-y-2 text-sm text-aslan-gray">
+                        <li><a href="#about" class="hover:text-aslan-dark transition-colors">About</a></li>
+                        <li><a href="#blog" class="hover:text-aslan-dark transition-colors">Blog</a></li>
+                        <li><a href="mailto:support@aslanpay.xyz" class="hover:text-aslan-dark transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-200 mt-8 pt-8 text-center">
+                <p class="text-aslan-gray text-sm">
+                    © 2024 Aslan Technologies. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Test - Autonomy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'autonomy-blue': '#0066FF',
+                        'autonomy-dark': '#1a1a1a',
+                        'autonomy-gray': '#6B7280'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold text-autonomy-dark mb-8">✅ OAuth Test - Working!</h1>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">OAuth Integration Status</h2>
+            <p class="text-autonomy-gray mb-6">
+                The OAuth endpoints are now working correctly! Click the buttons below to test them.
+                Without OAuth credentials, you'll get helpful error messages instead of 404 errors.
+            </p>
+            
+            <div class="space-y-4">
+                <button onclick="testGoogleOAuth()" class="w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors">
+                    🔴 Test Google OAuth (Will show "not configured" message)
+                </button>
+                
+                <button onclick="testGitHubOAuth()" class="w-full bg-gray-800 text-white py-3 px-4 rounded-lg hover:bg-gray-900 transition-colors">
+                    ⚫ Test GitHub OAuth (Will show "not configured" message)
+                </button>
+                
+                <a href="/auth.html" class="block w-full bg-autonomy-blue text-white py-3 px-4 rounded-lg text-center hover:bg-blue-700 transition-colors">
+                    📝 Try Regular Email Login (Working!)
+                </a>
+            </div>
+        </div>
+        
+        <div class="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
+            <h3 class="font-semibold text-green-800 mb-2">✅ Fixed Issues</h3>
+            <ul class="text-green-700 text-sm space-y-2 list-disc list-inside">
+                <li>OAuth endpoints no longer return 404 "Endpoint not found" errors</li>
+                <li>Helpful error messages when OAuth credentials aren't configured</li>
+                <li>Graceful fallback to email registration when OAuth is disabled</li>
+                <li>OAuth strategies only load when credentials are provided</li>
+                <li>Server starts successfully without OAuth environment variables</li>
+            </ul>
+        </div>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <h3 class="font-semibold text-blue-800 mb-2">🔧 To Enable Full OAuth</h3>
+            <div class="text-blue-700 text-sm space-y-3">
+                <div>
+                    <p><strong>Google OAuth:</strong></p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Get credentials from <a href="https://console.developers.google.com/" class="underline" target="_blank">Google Cloud Console</a></li>
+                        <li>Set callback: <code class="bg-white px-1 rounded">http://localhost:3000/api/auth/google/callback</code></li>
+                        <li>Add to .env: <code class="bg-white px-1 rounded">GOOGLE_CLIENT_ID</code> and <code class="bg-white px-1 rounded">GOOGLE_CLIENT_SECRET</code></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <p><strong>GitHub OAuth:</strong></p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Create app at <a href="https://github.com/settings/developers" class="underline" target="_blank">GitHub Developer Settings</a></li>
+                        <li>Set callback: <code class="bg-white px-1 rounded">http://localhost:3000/api/auth/github/callback</code></li>
+                        <li>Add to .env: <code class="bg-white px-1 rounded">GITHUB_CLIENT_ID</code> and <code class="bg-white px-1 rounded">GITHUB_CLIENT_SECRET</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-6 text-center">
+            <a href="/auth.html" class="text-autonomy-blue hover:underline">← Back to Auth Page</a>
+        </div>
+    </div>
+
+    <script>
+        async function testGoogleOAuth() {
+            try {
+                const response = await fetch('/api/auth/google');
+                const data = await response.json();
+                alert('Google OAuth Response:\n\n' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                alert('Error testing Google OAuth: ' + error.message);
+            }
+        }
+
+        async function testGitHubOAuth() {
+            try {
+                const response = await fetch('/api/auth/github');
+                const data = await response.json();
+                alert('GitHub OAuth Response:\n\n' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                alert('Error testing GitHub OAuth: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html> 

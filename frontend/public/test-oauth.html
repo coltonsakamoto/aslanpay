@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Test - Autonomy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">OAuth Test Page</h1>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Test OAuth Integration</h2>
+            <p class="text-gray-600 mb-4">
+                Click the buttons below to test OAuth login. Make sure you have set up your OAuth credentials 
+                in the environment variables.
+            </p>
+            
+            <div class="space-y-3">
+                <a href="/api/auth/google" class="block w-full bg-red-600 text-white py-3 px-4 rounded-lg text-center hover:bg-red-700 transition-colors">
+                    🚀 Test Google OAuth
+                </a>
+                
+                <a href="/api/auth/github" class="block w-full bg-gray-800 text-white py-3 px-4 rounded-lg text-center hover:bg-gray-900 transition-colors">
+                    🚀 Test GitHub OAuth
+                </a>
+            </div>
+        </div>
+        
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 class="font-semibold text-yellow-800 mb-2">⚠️ Setup Required</h3>
+            <div class="text-yellow-700 text-sm space-y-2">
+                <p><strong>For Google OAuth:</strong></p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>Create credentials at <a href="https://console.developers.google.com/" class="underline" target="_blank">Google Cloud Console</a></li>
+                    <li>Add authorized redirect URI: <code class="bg-white px-1 rounded">http://localhost:3000/api/auth/google/callback</code></li>
+                    <li>Set <code class="bg-white px-1 rounded">GOOGLE_CLIENT_ID</code> and <code class="bg-white px-1 rounded">GOOGLE_CLIENT_SECRET</code> in .env</li>
+                </ul>
+                
+                <p class="pt-2"><strong>For GitHub OAuth:</strong></p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>Create OAuth App at <a href="https://github.com/settings/developers" class="underline" target="_blank">GitHub Developer Settings</a></li>
+                    <li>Set Authorization callback URL: <code class="bg-white px-1 rounded">http://localhost:3000/api/auth/github/callback</code></li>
+                    <li>Set <code class="bg-white px-1 rounded">GITHUB_CLIENT_ID</code> and <code class="bg-white px-1 rounded">GITHUB_CLIENT_SECRET</code> in .env</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mt-6 text-center">
+            <a href="/auth.html" class="text-blue-600 hover:underline">← Back to Auth Page</a>
+        </div>
+    </div>
+</body>
+</html> 
