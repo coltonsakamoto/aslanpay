@@ -120,8 +120,20 @@ dist
 
 # Gatsby files
 .cache/
-public
+/public
 !public/comparison.html
+
+# Frontend file exceptions (allow frontend assets to be tracked)
+!public/*.html
+!public/*.css
+!public/*.js
+!public/*.png
+!public/*.svg
+!public/*.ico
+!public/*.jpg
+!public/*.jpeg
+!public/*.gif
+!public/*.webp
 
 # Storybook build outputs
 .out
