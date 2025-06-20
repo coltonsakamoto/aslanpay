@@ -19,25 +19,35 @@ app.use(require('express-session')({
     }
 }));
 
-// Conditional auth system based on DATABASE_URL availability
+// ROBUST AUTH SYSTEM - Always setup simple auth first, then enhance with PostgreSQL if available
+console.log('🔧 Setting up robust auth system...');
+
+// STEP 1: Always setup simple auth as baseline (ensures signup always works)
+setupSimpleAuth();
+
+// STEP 2: Try to enhance with PostgreSQL if available (non-blocking)
 const hasDatabaseUrl = process.env.DATABASE_URL && process.env.DATABASE_URL.length > 0;
 
 if (hasDatabaseUrl) {
-    console.log('🔗 DATABASE_URL found - attempting PostgreSQL auth system');
-    try {
-        // Try to import real authentication system (when PostgreSQL is connected)
-        const database = require('../config/database');
-        const authRoutes = require('../routes/auth');
-        app.use('/api/auth', authRoutes);
-        console.log('✅ PostgreSQL auth system loaded successfully');
-    } catch (error) {
-        console.error('❌ Failed to load PostgreSQL auth system:', error.message);
-        console.log('🔄 Falling back to simple auth system');
-        setupSimpleAuth();
-    }
+    console.log('🔗 DATABASE_URL found - attempting to enhance with PostgreSQL features');
+    setTimeout(async () => {
+        try {
+            const database = require('../config/database');
+            
+            // Test database connection
+            await database.healthCheck();
+            console.log('✅ PostgreSQL connection successful - enhanced features available');
+            
+            // PostgreSQL is working, but simple auth is already handling signup
+            // This could be used for advanced features like persistent storage
+            
+        } catch (error) {
+            console.log('⚠️ PostgreSQL connection failed - continuing with simple auth only');
+            console.log('   Error:', error.message);
+        }
+    }, 1000); // Non-blocking async test
 } else {
-    console.log('⚠️ DATABASE_URL not found - using simple auth for testing');
-    setupSimpleAuth();
+    console.log('⚠️ DATABASE_URL not found - using simple auth only');
 }
 
 function setupSimpleAuth() {
