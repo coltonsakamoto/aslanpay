@@ -184,9 +184,9 @@ app.post('/api/demo-authorize', (req, res) => {
     });
 });
 
-// Basic API route
+// Basic API route - with proper formatting for browsers
 app.get('/api', (req, res) => {
-    res.json({ 
+    const apiInfo = { 
         message: 'Aslan API is running', 
         status: 'OK',
         version: '1.0.0',
@@ -201,7 +201,55 @@ app.get('/api', (req, res) => {
             'POST /api/auth/login',
             'POST /api/demo-authorize'
         ]
-    });
+    };
+    
+    // Check if request is from a browser (has text/html in Accept header)
+    const acceptsHtml = req.get('Accept') && req.get('Accept').includes('text/html');
+    
+    if (acceptsHtml) {
+        // Return formatted HTML for browsers
+        res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AslanPay API</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; background: #f8f9fa; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-bottom: 30px; }
+        .status { color: #27ae60; font-weight: bold; font-size: 18px; margin-bottom: 20px; }
+        .endpoints { background: #f8f9fa; padding: 20px; border-radius: 5px; margin-top: 20px; }
+        .endpoint { font-family: 'Monaco', 'Consolas', monospace; background: #fff; padding: 8px 12px; margin: 5px 0; border-radius: 3px; border-left: 3px solid #3498db; }
+        .json-link { margin-top: 20px; }
+        .json-link a { color: #3498db; text-decoration: none; }
+        .json-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 AslanPay API</h1>
+        <div class="status">✅ Status: ${apiInfo.status}</div>
+        <p><strong>Version:</strong> ${apiInfo.version}</p>
+        <p><strong>Message:</strong> ${apiInfo.message}</p>
+        
+        <div class="endpoints">
+            <h3>Available Endpoints:</h3>
+            ${apiInfo.endpoints.map(endpoint => `<div class="endpoint">${endpoint}</div>`).join('')}
+        </div>
+        
+        <div class="json-link">
+            <p><a href="/api?format=json">View raw JSON</a> | <a href="/docs">Documentation</a> | <a href="/demo">Try Demo</a></p>
+        </div>
+    </div>
+</body>
+</html>`);
+    } else {
+        // Return JSON for API clients (pretty formatted)
+        res.set('Content-Type', 'application/json');
+        res.send(JSON.stringify(apiInfo, null, 2));
+    }
 });
 
 const PORT = process.env.PORT || 8080;
