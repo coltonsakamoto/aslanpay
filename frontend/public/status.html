@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aslan Status - System Status</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                    }
+                }
+            }
+        }
+    </script>
+    <meta http-equiv="refresh" content="30">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
+            </div>
+            <a href="/" class="text-aslan-orange hover:text-aslan-gold font-medium">← Back to Aslan</a>
+        </div>
+    </header>
+
+    <!-- Status Overview -->
+    <section class="max-w-6xl mx-auto px-6 py-8">
+        <div class="bg-white rounded-xl shadow-sm p-8 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">System Status</h2>
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span class="text-green-600 font-medium">All Systems Operational</span>
+                </div>
+            </div>
+            
+            <!-- Live Status from API -->
+            <div id="status-data" class="space-y-4">
+                <div class="animate-pulse">
+                    <div class="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                    <div class="h-2 bg-gray-200 rounded w-1/2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Components -->
+        <div class="bg-white rounded-xl shadow-sm p-8 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">System Components</h3>
+            <div id="components-data" class="space-y-4">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- UptimeRobot Integration -->
+        <div class="bg-white rounded-xl shadow-sm p-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">Uptime Monitoring</h3>
+            <p class="text-gray-600 mb-4">External monitoring provided by UptimeRobot</p>
+            
+            <!-- Placeholder for UptimeRobot badge -->
+            <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <div class="text-gray-500 mb-2">
+                    <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <p class="text-sm text-gray-500">UptimeRobot badge will be configured here</p>
+                <p class="text-xs text-gray-400 mt-1">Sign up at <a href="https://uptimerobot.com" class="text-aslan-orange">uptimerobot.com</a> to monitor aslanpay.xyz</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Fetch live status data
+        async function loadStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                document.getElementById('status-data').innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm text-gray-600">Status</div>
+                            <div class="text-lg font-semibold text-green-600">${data.status}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm text-gray-600">Environment</div>
+                            <div class="text-lg font-semibold">${data.environment}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm text-gray-600">Uptime</div>
+                            <div class="text-lg font-semibold">${Math.floor(data.uptime / 60)} minutes</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-xs text-gray-500">
+                        Last updated: ${new Date(data.timestamp).toLocaleString()}
+                    </div>
+                `;
+                
+                // Components status
+                const components = data.components;
+                let componentsHtml = '';
+                
+                for (const [name, component] of Object.entries(components)) {
+                    const statusColor = component.status === 'operational' ? 'green' : 
+                                      component.status === 'not_configured' ? 'yellow' : 
+                                      component.status === 'monitoring' ? 'yellow' : 'red';
+                    const statusText = component.status === 'operational' ? 'Operational' :
+                                     component.status === 'not_configured' ? 'Not Configured' : 
+                                     component.status === 'monitoring' ? 'Monitoring' : 'Issues';
+                    
+                    componentsHtml += `
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-3 h-3 bg-${statusColor}-500 rounded-full"></div>
+                                <span class="font-medium capitalize">${name.replace('_', ' ')}</span>
+                            </div>
+                            <span class="text-${statusColor}-600 text-sm">${statusText}</span>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('components-data').innerHTML = componentsHtml;
+                
+            } catch (error) {
+                console.error('Failed to load status:', error);
+                document.getElementById('status-data').innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="text-red-800">Unable to load live status</div>
+                        <div class="text-red-600 text-sm">Please try refreshing the page</div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load status on page load
+        loadStatus();
+        
+        // Refresh every 30 seconds
+        setInterval(loadStatus, 30000);
+    </script>
+</body>
+</html> 

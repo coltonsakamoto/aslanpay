@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🟠 Favicon Test - Aslan</title>
+    
+    <!-- 🟠 ALL FAVICON FORMATS (Cache-busted) -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=2">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">
+    <link rel="manifest" href="/site.webmanifest?v=2">
+    <link rel="shortcut icon" href="/favicon.ico?v=2">
+    <meta name="theme-color" content="#FF6B35">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f8f9fa;
+        }
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .favicon-preview {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #ddd;
+            margin: 4px;
+            display: inline-block;
+        }
+        code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🟠 Aslan Favicon Test Page</h1>
+    
+    <div class="test-card">
+        <h2>✅ Favicon Status Check</h2>
+        <p>This page tests if the orange A favicon is working properly.</p>
+        
+        <div id="favicon-status"></div>
+        
+        <h3>📋 Troubleshooting Steps:</h3>
+        <ol>
+            <li><strong>Check browser tab:</strong> You should see an orange "A" icon in the browser tab</li>
+            <li><strong>Hard refresh:</strong> Press <code>Ctrl+F5</code> (or <code>Cmd+Shift+R</code> on Mac)</li>
+            <li><strong>Clear cache:</strong> Clear browser cache and cookies for aslanpay.xyz</li>
+            <li><strong>Try different browser:</strong> Test in Chrome, Firefox, Safari, Edge</li>
+        </ol>
+    </div>
+    
+    <div class="test-card">
+        <h2>🔗 Direct Favicon Links</h2>
+        <p>Click these links to test if favicon files are accessible:</p>
+        
+        <div style="margin: 16px 0;">
+            <a href="/favicon.ico?v=2" target="_blank">
+                <img class="favicon-preview" src="/favicon.ico?v=2" alt="ICO">
+                favicon.ico
+            </a>
+            <br>
+            
+            <a href="/favicon.svg?v=2" target="_blank">
+                <img class="favicon-preview" src="/favicon.svg?v=2" alt="SVG">
+                favicon.svg
+            </a>
+            <br>
+            
+            <a href="/favicon-32x32.png?v=2" target="_blank">
+                <img class="favicon-preview" src="/favicon-32x32.png?v=2" alt="32x32">
+                favicon-32x32.png
+            </a>
+            <br>
+            
+            <a href="/favicon-16x16.png?v=2" target="_blank">
+                <img class="favicon-preview" src="/favicon-16x16.png?v=2" alt="16x16">
+                favicon-16x16.png
+            </a>
+        </div>
+    </div>
+    
+    <div class="test-card">
+        <h2>🔧 Technical Details</h2>
+        <ul>
+            <li><strong>SVG Favicon:</strong> Modern browsers with vector support</li>
+            <li><strong>PNG Favicons:</strong> High-quality raster fallbacks</li>
+            <li><strong>ICO Favicon:</strong> Legacy browser support</li>
+            <li><strong>Apple Touch Icon:</strong> iOS Safari bookmarks</li>
+            <li><strong>Cache Version:</strong> v=2 (forces refresh)</li>
+        </ul>
+    </div>
+    
+    <div class="test-card">
+        <h2>🌐 All Pages with Favicon</h2>
+        <p>These pages should all show the orange A favicon:</p>
+        <ul>
+            <li><a href="/">🏠 Home Page</a></li>
+            <li><a href="/demo">🤖 Demo Page</a></li>
+            <li><a href="/pricing">💰 Pricing Page</a></li>
+            <li><a href="/docs">📚 Documentation</a></li>
+            <li><a href="/auth">🔐 Sign In Page</a></li>
+        </ul>
+    </div>
+    
+    <script>
+        // Test favicon loading
+        function testFavicon() {
+            const statusDiv = document.getElementById('favicon-status');
+            
+            // Test if favicon files are accessible
+            const tests = [
+                { name: 'favicon.ico', url: '/favicon.ico?v=2' },
+                { name: 'favicon.svg', url: '/favicon.svg?v=2' },
+                { name: 'favicon-32x32.png', url: '/favicon-32x32.png?v=2' }
+            ];
+            
+            let results = '<h4>🧪 Loading Tests:</h4>';
+            
+            Promise.all(tests.map(test => 
+                fetch(test.url)
+                    .then(response => ({
+                        name: test.name,
+                        status: response.ok ? 'success' : 'error',
+                        message: response.ok ? `✅ ${test.name} loaded successfully` : `❌ ${test.name} failed to load (${response.status})`
+                    }))
+                    .catch(error => ({
+                        name: test.name,
+                        status: 'error',
+                        message: `❌ ${test.name} network error`
+                    }))
+            )).then(results => {
+                const allSuccess = results.every(r => r.status === 'success');
+                
+                let html = results.map(r => 
+                    `<div class="status ${r.status}">${r.message}</div>`
+                ).join('');
+                
+                if (allSuccess) {
+                    html += '<div class="status success">🎉 All favicon files are working! If you don\'t see the icon, try a hard refresh.</div>';
+                } else {
+                    html += '<div class="status error">⚠️ Some favicon files failed to load. This might explain why you don\'t see the icon.</div>';
+                }
+                
+                statusDiv.innerHTML = html;
+            });
+        }
+        
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', testFavicon);
+        
+        // Show current page info
+        console.log('🟠 Favicon Test Page');
+        console.log('Current URL:', window.location.href);
+        console.log('User Agent:', navigator.userAgent);
+    </script>
+</body>
+</html> 

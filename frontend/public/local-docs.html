@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aslan Documentation - Local</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aslan-orange': '#FF6B35',
+                        'aslan-gold': '#F7931E',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen max-w-4xl mx-auto px-6 py-8">
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                <span class="text-aslan-dark font-black tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span> Documentation
+            </h1>
+            <p class="text-xl text-gray-600">Universal Payment Infrastructure for AI Agents</p>
+        </header>
+
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-4">⚡ Quick Start</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">1. Installation</h3>
+                    <pre class="bg-gray-100 p-3 rounded"><code>npm install aslan</code></pre>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">2. Basic Usage</h3>
+                    <pre class="bg-gray-100 p-3 rounded text-sm"><code>import Aslan from 'aslan';
+
+const aslan = new Aslan({
+  apiKey: 'your_aslan_api_key',
+  environment: 'sandbox'
+});
+
+// AI agent makes a purchase
+const result = await aslan.purchase('gift-card', {
+  brand: 'amazon',
+  amount: 25
+});
+
+console.log(result);
+// ✅ { success: true, transactionId: 'txn_...', amount: 25 }</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-4">🤖 OpenAI Integration</h2>
+            <pre class="bg-gray-100 p-3 rounded text-sm"><code>import OpenAI from 'openai';
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const functions = aslan.getFunctionSchema();
+
+const response = await openai.chat.completions.create({
+  model: "gpt-4",
+  messages: [{ role: "user", content: "Buy me a $10 Amazon gift card" }],
+  functions: functions,
+  function_call: "auto"
+});
+
+// ChatGPT will automatically call aslan_purchase!</code></pre>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-4">🎯 Control Tower (Enterprise)</h2>
+            <pre class="bg-gray-100 p-3 rounded text-sm"><code>// 1. Request authorization
+const auth = await aslan.authorize({
+  merchant: 'doordash.com',
+  amount: 45.99,
+  category: 'food',
+  intent: 'Team lunch order'
+});
+
+// 2. AI agent executes purchase at merchant
+// ... AI goes to DoorDash, places order ...
+
+// 3. Confirm transaction
+const result = await aslan.confirmPurchase(
+  auth.authorizationId, 
+  46.25, // final amount
+  { orderId: 'DD789', items: ['Pizza', 'Salad'] }
+);</code></pre>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-4">💳 Supported Services</h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="font-semibold text-green-600">🎁 Gift Cards</h3>
+                    <p class="text-sm text-gray-600">Amazon, Starbucks, Target</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-blue-600">🌐 Domains</h3>
+                    <p class="text-sm text-gray-600">.com, .org, .ai domains</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-purple-600">📱 SMS/Calls</h3>
+                    <p class="text-sm text-gray-600">Twilio integration</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-orange-600">☁️ Cloud Credits</h3>
+                    <p class="text-sm text-gray-600">AWS, DigitalOcean</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-4">🛡️ Enterprise Security</h2>
+            <div class="space-y-3">
+                <div class="flex items-center space-x-3">
+                    <span class="text-green-600 text-xl">✅</span>
+                    <span><strong>Sub-400ms Authorization:</strong> Real-time validation</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-green-600 text-xl">✅</span>
+                    <span><strong>JWT Security:</strong> Scoped tokens with expiration</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-green-600 text-xl">✅</span>
+                    <span><strong>Spending Controls:</strong> Daily limits, approvals, emergency stops</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-green-600 text-xl">✅</span>
+                    <span><strong>Complete Audit Trails:</strong> Every transaction logged</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-orange-50 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-bold text-orange-900 mb-3">🚀 Next Steps</h2>
+            <ul class="space-y-2 text-orange-800">
+                <li>• <a href="demo.html" class="hover:underline">Try the Interactive Demo</a></li>
+                <li>• <a href="#" onclick="alert('Contact: support@aslanpay.xyz')" class="hover:underline">Get API Key</a></li>
+                <li>• <a href="#" onclick="alert('Example: examples/openai-demo.js')" class="hover:underline">View Examples</a></li>
+                <li>• <a href="#" onclick="alert('GitHub: aslanpay/aslan-sdk')" class="hover:underline">Contribute on GitHub</a></li>
+            </ul>
+        </div>
+
+        <footer class="text-center text-gray-500 border-t pt-6">
+            <p>Aslan - Universal Payment Infrastructure for AI Agents</p>
+            <p class="text-sm">© 2024 Aslan Technologies. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html> 
