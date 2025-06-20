@@ -12,5 +12,8 @@ app.get('/', (req, res) => {
     res.json({ message: 'Aslan API is running', status: 'OK' });
 });
 
-const PORT = process.env.PORT || 8080;   // Railway supplies PORT
-app.listen(PORT, () => console.log('API listening on', PORT)); 
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../frontend/public')));
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log('API listening on', PORT));
