@@ -23,13 +23,25 @@ app.use(require('express-session')({
 const hasDatabaseUrl = process.env.DATABASE_URL && process.env.DATABASE_URL.length > 0;
 
 if (hasDatabaseUrl) {
-    console.log('🔗 Using PostgreSQL database with full auth system');
-    // Import real authentication system (when PostgreSQL is connected)
-    const database = require('../config/database');
-    const authRoutes = require('../routes/auth');
-    app.use('/api/auth', authRoutes);
+    console.log('🔗 DATABASE_URL found - attempting PostgreSQL auth system');
+    try {
+        // Try to import real authentication system (when PostgreSQL is connected)
+        const database = require('../config/database');
+        const authRoutes = require('../routes/auth');
+        app.use('/api/auth', authRoutes);
+        console.log('✅ PostgreSQL auth system loaded successfully');
+    } catch (error) {
+        console.error('❌ Failed to load PostgreSQL auth system:', error.message);
+        console.log('🔄 Falling back to simple auth system');
+        setupSimpleAuth();
+    }
 } else {
-    console.log('⚠️ DATABASE_URL not found - using simple auth for staging testing');
+    console.log('⚠️ DATABASE_URL not found - using simple auth for testing');
+    setupSimpleAuth();
+}
+
+function setupSimpleAuth() {
+    console.log('🔧 Setting up simple auth system');
     
     // Simple in-memory auth for staging testing when DB not configured
     const tempUsers = new Map();
@@ -119,6 +131,8 @@ if (hasDatabaseUrl) {
             });
         }
     });
+    
+    console.log('✅ Simple auth system ready');
 }
 
 // Serve static frontend files FIRST (before API routes)
