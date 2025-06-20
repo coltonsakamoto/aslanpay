@@ -2,9 +2,9 @@
   "name": "aslan",
   "version": "1.0.1",
   "description": "Payment infrastructure for AI agents - Like the great lion, Aslan guides AI agents to accomplish their missions in the real world",
-  "main": "server-unified-fix.js",
+  "main": "api/server.js",
   "scripts": {
-    "start": "node server-unified-fix.js",
+    "start": "node api/server.js",
     "start-minimal": "node server-minimal.js",
     "start-hybrid": "node server-hybrid.js",
     "start-full": "node server.js",
