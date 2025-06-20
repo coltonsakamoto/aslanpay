@@ -17,16 +17,7 @@ const router = express.Router();
 
 // PUBLIC SAAS SIGNUP - New main entry point
 router.post('/signup', 
-    InputValidation.validateBody({
-        type: 'object',
-        properties: {
-            email: { type: 'string', format: 'email' },
-            password: { type: 'string', minLength: 8 },
-            name: { type: 'string', minLength: 1 },
-            organizationName: { type: 'string' }
-        },
-        required: ['email', 'password', 'name']
-    }),
+    InputValidation.validateBody(InputValidation.authSchemas.signup),
     async (req, res) => {
     try {
         const { email, password, name, organizationName } = req.body;
