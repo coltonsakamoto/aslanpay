@@ -112,18 +112,33 @@ class SyncDatabaseWrapper {
     async createTenantWithOwner(userData) {
         const { email, password, name, organizationName } = userData;
         
+        console.log('🚀 createTenantWithOwner starting for:', email);
+        
         try {
             // Create the user first
+            console.log('📝 Creating user...');
             const user = await productionDb.createUser({
                 email,
                 password,
                 name,
                 provider: 'email'
             });
+            console.log('✅ User created:', user.id);
             
             // Get their default API key (created automatically)
+            console.log('🔑 Getting API keys for user...');
             const apiKeys = await productionDb.getApiKeysByUserId(user.id);
+            console.log('✅ Found API keys:', apiKeys.length);
+            
+            if (!apiKeys || apiKeys.length === 0) {
+                console.log('⚠️ No API keys found, creating one...');
+                const newApiKey = await productionDb.createApiKey(user.id, 'Default Key');
+                console.log('✅ Created new API key:', newApiKey.id);
+                apiKeys = [newApiKey];
+            }
+            
             const apiKey = apiKeys[0]; // Use the first (default) API key
+            console.log('🔑 Using API key:', apiKey.id);
             
             // Create mock tenant object (using user as tenant)
             const tenant = {
@@ -139,7 +154,9 @@ class SyncDatabaseWrapper {
                     transactionCount: 0
                 }
             };
+            console.log('🏢 Created tenant object:', tenant.id);
             
+            console.log('✅ createTenantWithOwner completed successfully');
             return {
                 user,
                 tenant,
@@ -147,6 +164,8 @@ class SyncDatabaseWrapper {
             };
         } catch (error) {
             console.error('❌ createTenantWithOwner error:', error);
+            console.error('❌ Error details:', error.message);
+            console.error('❌ Error stack:', error.stack);
             throw error;
         }
     }
