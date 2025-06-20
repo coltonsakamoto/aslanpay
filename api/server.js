@@ -2,13 +2,17 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
+// Import real authentication system (now that PostgreSQL is connected)
+const database = require('../config/database');
+const authRoutes = require('../routes/auth');
+
 // --- Health-check for Railway ---
 app.get('/health', (_req, res) => res.status(200).send('ok'));
 
 // Basic middleware
 app.use(express.json());
 
-// Session middleware for authentication (simplified)
+// Session middleware for authentication
 app.use(require('express-session')({
     secret: process.env.SESSION_SECRET || 'aslan-dev-secret-change-in-production',
     resave: false,
@@ -18,18 +22,6 @@ app.use(require('express-session')({
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     }
 }));
-
-// Simple in-memory store for staging testing (temporary)
-const tempUsers = new Map();
-const tempSessions = new Map();
-
-// Add a test user for staging
-tempUsers.set('test@aslanpay.xyz', {
-    id: 'user_test_123',
-    email: 'test@aslanpay.xyz',
-    name: 'Test User',
-    password: '$2a$12$LQv3c1yqBwEHxVi00LqOGekkfojQ1wUF9T2.F9W6GCzgNzBDgaZla' // "password123"
-});
 
 // Serve static frontend files FIRST (before API routes)
 app.use(express.static(path.join(__dirname, '../frontend/public')));
@@ -79,105 +71,8 @@ app.get('/status', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/public/status.html'));
 });
 
-// Simple Working Auth Routes (temporary for staging testing)
-app.get('/api/auth/status', (req, res) => {
-    const sessionId = req.session?.id;
-    const userSession = sessionId ? tempSessions.get(sessionId) : null;
-    
-    res.json({
-        authenticated: !!userSession,
-        user: userSession?.user || null,
-        message: 'Authentication status'
-    });
-});
-
-app.post('/api/auth/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        
-        if (!email || !password) {
-            return res.status(400).json({
-                error: 'Email and password are required',
-                code: 'MISSING_CREDENTIALS'
-            });
-        }
-        
-        // Check if user exists (simple test user)
-        const user = tempUsers.get(email.toLowerCase());
-        if (!user) {
-            return res.status(401).json({
-                error: 'Invalid email or password',
-                code: 'INVALID_CREDENTIALS'
-            });
-        }
-        
-        // Simple password check (for test user, accept "password123")
-        if (password !== 'password123') {
-            return res.status(401).json({
-                error: 'Invalid email or password', 
-                code: 'INVALID_CREDENTIALS'
-            });
-        }
-        
-        // Create session
-        const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        tempSessions.set(sessionId, {
-            id: sessionId,
-            userId: user.id,
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.name
-            },
-            createdAt: new Date()
-        });
-        
-        // Set session in Express session
-        req.session.id = sessionId;
-        
-        res.json({
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.name
-            },
-            message: 'Login successful'
-        });
-        
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({
-            error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
-        });
-    }
-});
-
-app.post('/api/auth/logout', (req, res) => {
-    const sessionId = req.session?.id;
-    if (sessionId) {
-        tempSessions.delete(sessionId);
-        req.session.destroy();
-    }
-    
-    res.json({ message: 'Logout successful' });
-});
-
-app.get('/api/auth/me', (req, res) => {
-    const sessionId = req.session?.id;
-    const userSession = sessionId ? tempSessions.get(sessionId) : null;
-    
-    if (!userSession) {
-        return res.status(401).json({
-            error: 'Not authenticated',
-            code: 'NOT_AUTHENTICATED'
-        });
-    }
-    
-    res.json({ 
-        user: userSession.user
-    });
-});
+// Real Authentication Routes (supports signup, login, database storage)
+app.use('/api/auth', authRoutes);
 
 // API Status endpoint
 app.get('/api/status', (req, res) => {
