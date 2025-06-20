@@ -9,7 +9,7 @@ app.get('/health', (_req, res) => res.status(200).send('ok'));
 app.use(express.json());
 
 // Serve static frontend files FIRST (before API routes)
-app.use(express.static(path.join(__dirname, '../frontend/public')));
+app.use(express.static('public'));
 
 // Basic API route (fallback for non-static requests)
 app.get('/api', (req, res) => {
