@@ -108,6 +108,85 @@ class SyncDatabaseWrapper {
         return await productionDb.validateApiKey(apiKey);
     }
     
+    // Multi-tenant signup - create tenant + owner + API key
+    async createTenantWithOwner(userData) {
+        const { email, password, name, organizationName } = userData;
+        
+        try {
+            // Create the user first
+            const user = await productionDb.createUser({
+                email,
+                password,
+                name,
+                provider: 'email'
+            });
+            
+            // Get their default API key (created automatically)
+            const apiKeys = await productionDb.getApiKeysByUserId(user.id);
+            const apiKey = apiKeys[0]; // Use the first (default) API key
+            
+            // Create mock tenant object (using user as tenant)
+            const tenant = {
+                id: user.id,
+                name: organizationName || `${name}'s Organization`,
+                plan: 'sandbox',
+                settings: {
+                    transactionLimit: 5000, // $50 for new users
+                    dailyLimit: 20000 // $200 for new users
+                },
+                usage: {
+                    dailySpent: 0,
+                    transactionCount: 0
+                }
+            };
+            
+            return {
+                user,
+                tenant,
+                apiKey
+            };
+        } catch (error) {
+            console.error('❌ createTenantWithOwner error:', error);
+            throw error;
+        }
+    }
+    
+    // Email verification methods
+    async createEmailVerification(userId, email) {
+        return await productionDb.createEmailVerification(userId, email);
+    }
+    
+    async verifyEmail(token) {
+        return await productionDb.verifyEmail(token);
+    }
+    
+    // Password reset methods  
+    async createPasswordReset(email) {
+        return await productionDb.createPasswordReset(email);
+    }
+    
+    async resetPassword(token, password) {
+        return await productionDb.resetPassword(token, password);
+    }
+    
+    // Tenant management
+    getTenant(tenantId) {
+        // Return a mock tenant based on user ID
+        return {
+            id: tenantId,
+            name: 'User Tenant',
+            plan: 'sandbox',
+            settings: {
+                transactionLimit: 5000,
+                dailyLimit: 20000
+            },
+            usage: {
+                dailySpent: 0,
+                transactionCount: 0
+            }
+        };
+    }
+
     // Health check
     async healthCheck() {
         return await productionDb.healthCheck();
