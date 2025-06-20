@@ -244,6 +244,159 @@ app.post('/api/demo-authorize', (req, res) => {
     });
 });
 
+// Demo spending controls - the endpoints the frontend actually calls
+let demoSpendingState = {
+    totalSpent: 0,
+    transactionCount: 0,
+    dailyLimit: 100,
+    maxTransactions: 10,
+    emergencyStop: false,
+    transactions: []
+};
+
+// Get current spending status
+app.get('/api/demo/spending-status', (req, res) => {
+    const remainingLimit = Math.max(0, demoSpendingState.dailyLimit - demoSpendingState.totalSpent);
+    const remainingTransactions = Math.max(0, demoSpendingState.maxTransactions - demoSpendingState.transactionCount);
+    
+    res.json({
+        success: true,
+        totalSpent: demoSpendingState.totalSpent,
+        transactionCount: demoSpendingState.transactionCount,
+        dailyLimit: demoSpendingState.dailyLimit,
+        maxTransactions: demoSpendingState.maxTransactions,
+        emergencyStop: demoSpendingState.emergencyStop,
+        remainingLimit,
+        remainingTransactions,
+        lastUpdated: new Date().toISOString()
+    });
+});
+
+// Process purchase with spending controls
+app.post('/api/demo/purchase', (req, res) => {
+    const { amount, service = 'gift-card', description = '' } = req.body;
+    const startTime = Date.now();
+    
+    // Validate input
+    if (!amount || amount <= 0) {
+        return res.status(400).json({
+            success: false,
+            error: 'Invalid amount',
+            code: 'INVALID_AMOUNT'
+        });
+    }
+    
+    // Check emergency stop
+    if (demoSpendingState.emergencyStop) {
+        return res.json({
+            success: false,
+            blocked: true,
+            reason: 'Emergency stop is active - all purchases blocked',
+            currentSpent: demoSpendingState.totalSpent,
+            dailyLimit: demoSpendingState.dailyLimit,
+            transactionCount: demoSpendingState.transactionCount,
+            maxTransactions: demoSpendingState.maxTransactions,
+            emergencyStop: true
+        });
+    }
+    
+    // Check daily limit
+    if (demoSpendingState.totalSpent + amount > demoSpendingState.dailyLimit) {
+        return res.json({
+            success: false,
+            blocked: true,
+            reason: `Daily limit exceeded: $${amount} would exceed remaining $${demoSpendingState.dailyLimit - demoSpendingState.totalSpent}`,
+            currentSpent: demoSpendingState.totalSpent,
+            dailyLimit: demoSpendingState.dailyLimit,
+            transactionCount: demoSpendingState.transactionCount,
+            maxTransactions: demoSpendingState.maxTransactions,
+            emergencyStop: false
+        });
+    }
+    
+    // Check transaction count limit
+    if (demoSpendingState.transactionCount >= demoSpendingState.maxTransactions) {
+        return res.json({
+            success: false,
+            blocked: true,
+            reason: `Transaction limit reached: ${demoSpendingState.maxTransactions} transactions already used today`,
+            currentSpent: demoSpendingState.totalSpent,
+            dailyLimit: demoSpendingState.dailyLimit,
+            transactionCount: demoSpendingState.transactionCount,
+            maxTransactions: demoSpendingState.maxTransactions,
+            emergencyStop: false
+        });
+    }
+    
+    // Process successful transaction
+    const transactionId = `tx_demo_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const latency = Date.now() - startTime + Math.floor(Math.random() * 50); // Add realistic latency
+    
+    // Update spending state
+    demoSpendingState.totalSpent += amount;
+    demoSpendingState.transactionCount += 1;
+    demoSpendingState.transactions.push({
+        id: transactionId,
+        amount,
+        service,
+        description,
+        timestamp: new Date().toISOString(),
+        latency
+    });
+    
+    const remainingLimit = Math.max(0, demoSpendingState.dailyLimit - demoSpendingState.totalSpent);
+    
+    res.json({
+        success: true,
+        approved: true,
+        transactionId,
+        amount,
+        service,
+        description,
+        latency,
+        processing_time: latency,
+        spendingStatus: {
+            totalSpent: demoSpendingState.totalSpent,
+            transactionCount: demoSpendingState.transactionCount,
+            dailyLimit: demoSpendingState.dailyLimit,
+            maxTransactions: demoSpendingState.maxTransactions,
+            remainingLimit,
+            emergencyStop: demoSpendingState.emergencyStop
+        },
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Reset demo spending state (for testing)
+app.post('/api/demo/reset', (req, res) => {
+    demoSpendingState = {
+        totalSpent: 0,
+        transactionCount: 0,
+        dailyLimit: 100,
+        maxTransactions: 10,
+        emergencyStop: false,
+        transactions: []
+    };
+    
+    res.json({
+        success: true,
+        message: 'Demo spending state reset',
+        spendingStatus: demoSpendingState
+    });
+});
+
+// Toggle emergency stop
+app.post('/api/demo/emergency-stop', (req, res) => {
+    const { enable } = req.body;
+    demoSpendingState.emergencyStop = enable === true;
+    
+    res.json({
+        success: true,
+        emergencyStop: demoSpendingState.emergencyStop,
+        message: `Emergency stop ${demoSpendingState.emergencyStop ? 'enabled' : 'disabled'}`
+    });
+});
+
 // API Documentation page - restored original clean UI
 app.get('/api', (req, res) => {
     const apiHTML = `<!DOCTYPE html>
