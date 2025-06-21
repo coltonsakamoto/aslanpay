@@ -475,7 +475,7 @@ app.get('/api/status', (req, res) => {
     res.json({
         status: 'OK',
         service: 'AslanPay API - Rebuilt Auth System',
-        version: '2.0.0',
+        version: '3.0.0-DEPLOYMENT-FORCE',
         timestamp: new Date().toISOString(),
         environment: 'staging',
         features: {
