@@ -817,5 +817,6 @@ app.get('/api', (req, res) => {
     res.send(apiHTML);
 });
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log('API listening on', PORT));
+// Export the Express app instead of starting a server
+// (the root server.js will handle starting the server)
+module.exports = app;
