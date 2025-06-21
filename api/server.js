@@ -2,8 +2,7 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-// --- Health-check for Railway ---
-app.get('/health', (_req, res) => res.status(200).send('ok'));
+// No health endpoint needed here - handled by root server.js
 
 // Basic middleware
 app.use(express.json());
