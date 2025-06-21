@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const database = require('../database-production.js');
+const database = require('../config/database');
 
 // Import validateSession from middleware (which should work with production database)
 const { validateSession } = require('../middleware/auth');
