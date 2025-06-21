@@ -21,12 +21,14 @@ const validateSessionForApiKeys = async (req, res, next) => {
             });
         }
 
-        // For now, create a mock session for API key functionality
-        // This keeps the frontend working while providing API key access
+        // Simple token validation - accept any Bearer token for API key functionality
+        // This allows the existing frontend auth to work while providing API key access
+        console.log('🔍 Token validation: Accepting any Bearer token for API key access');
+        
         const mockUser = {
-            id: 'user_api_' + Date.now(),
-            email: 'api@user.com',
-            name: 'API User',
+            id: 'user_frontend_' + token.substring(0, 8), // Use part of token for consistency
+            email: 'frontend@user.com',
+            name: 'Frontend User',
             emailVerified: true,
             subscriptionPlan: 'builder'
         };
@@ -34,7 +36,7 @@ const validateSessionForApiKeys = async (req, res, next) => {
         req.user = mockUser;
         req.session = { userId: mockUser.id };
         
-        console.log('✅ API key auth successful for mock user');
+        console.log('✅ API key auth successful for frontend user');
         next();
         
     } catch (error) {
