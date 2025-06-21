@@ -303,8 +303,10 @@
         async function loadUserData() {
             try {
                 console.log('🔍 Loading user data...');
-                const response = await fetch('/api/auth/me', {
-                    credentials: 'include'
+                const response = await fetch('/api/auth/status', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
+                    }
                 });
                 
                 console.log('📊 Auth response status:', response.status);
@@ -341,7 +343,9 @@
         async function loadApiKeys() {
             try {
                 const response = await fetch('/api/keys', {
-                    credentials: 'include'
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
+                    }
                 });
                 
                 if (response.ok) {
@@ -511,8 +515,10 @@
             try {
                 const response = await fetch('/api/keys', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
+                    },
                     body: JSON.stringify({ name, environment })
                 });
                 
@@ -540,7 +546,9 @@
             try {
                 const response = await fetch(`/api/keys/${keyId}/rotate`, {
                     method: 'POST',
-                    credentials: 'include'
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
+                    }
                 });
                 
                 if (response.ok) {
@@ -564,7 +572,9 @@
             try {
                 const response = await fetch(`/api/keys/${keyId}`, {
                     method: 'DELETE',
-                    credentials: 'include'
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
+                    }
                 });
                 
                 if (response.ok) {
@@ -584,7 +594,9 @@
             try {
                 await fetch('/api/auth/logout', {
                     method: 'POST',
-                    credentials: 'include'
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
+                    }
                 });
                 window.location.href = '/auth.html';
             } catch (error) {

@@ -466,6 +466,74 @@ app.post('/api/keys', requireAuth, (req, res) => {
     }
 });
 
+// Delete API Key
+app.delete('/api/keys/:keyId', requireAuth, (req, res) => {
+    try {
+        const { keyId } = req.params;
+        let foundKey = null;
+
+        for (const [apiKey, keyData] of apiKeys.entries()) {
+            if (keyData.keyId === keyId && keyData.userId === req.user.id) {
+                foundKey = apiKey;
+                break;
+            }
+        }
+
+        if (foundKey) {
+            apiKeys.delete(foundKey);
+            req.user.apiKeyCount = Math.max(0, (req.user.apiKeyCount || 1) - 1);
+            console.log('🗑️ API key revoked:', { keyId, userId: req.user.id });
+            res.json({ success: true, message: 'API key revoked' });
+        } else {
+            res.status(404).json({ success: false, error: 'API key not found or you do not have permission to revoke it' });
+        }
+    } catch (error) {
+        console.error('❌ API key revocation error:', error);
+        res.status(500).json({ success: false, error: 'Failed to revoke API key' });
+    }
+});
+
+// Rotate API Key
+app.post('/api/keys/:keyId/rotate', requireAuth, (req, res) => {
+    try {
+        const { keyId } = req.params;
+        let oldApiKey = null;
+
+        for (const [apiKey, keyData] of apiKeys.entries()) {
+            if (keyData.keyId === keyId && keyData.userId === req.user.id) {
+                oldApiKey = apiKey;
+                break;
+            }
+        }
+
+        if (oldApiKey) {
+            const oldKeyData = apiKeys.get(oldApiKey);
+            apiKeys.delete(oldApiKey);
+
+            const newApiKey = 'ak_staging_' + crypto.randomBytes(16).toString('hex');
+            const newKeyData = {
+                ...oldKeyData,
+                keyId: 'key_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex'), // new ID
+                createdAt: new Date().toISOString()
+            };
+            apiKeys.set(newApiKey, newKeyData);
+
+            console.log('🔄 API key rotated:', { oldKeyId: keyId, newKeyId: newKeyData.keyId, userId: req.user.id });
+            res.status(200).json({
+                success: true,
+                message: 'API key rotated successfully',
+                apiKey: newApiKey,
+                keyId: newKeyData.keyId
+            });
+        } else {
+            res.status(404).json({ success: false, error: 'API key not found or you do not have permission to rotate it' });
+        }
+    } catch (error) {
+        console.error('❌ API key rotation error:', error);
+        res.status(500).json({ success: false, error: 'Failed to rotate API key' });
+    }
+});
+
 // ========================================
 // CORE API ENDPOINTS
 // ========================================
