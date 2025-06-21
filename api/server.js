@@ -1,310 +1,505 @@
 const express = require('express');
 const path = require('path');
+const crypto = require('crypto');
 const app = express();
 
-// No health endpoint needed here - handled by root server.js
+console.log('🚀 Starting AslanPay API Server - Rebuilt Auth System');
 
 // Basic middleware
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-// Session middleware for authentication
+// Session middleware
 app.use(require('express-session')({
-    secret: process.env.SESSION_SECRET || 'aslan-dev-secret-change-in-production',
+    secret: process.env.SESSION_SECRET || 'aslan-staging-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        secure: false, // Allow HTTP in staging
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        httpOnly: true
     }
 }));
 
-// ROBUST AUTH SYSTEM - Always setup simple auth first, then enhance with PostgreSQL if available
-console.log('🔧 Setting up robust auth system...');
+// CORS for staging
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
+});
 
-// STEP 1: Always setup simple auth as baseline (ensures signup always works)
-setupSimpleAuth();
+// ========================================
+// REBUILT AUTH SYSTEM - PERSISTENT STORAGE
+// ========================================
 
-// STEP 2: Try to enhance with PostgreSQL if available (non-blocking)
-const hasDatabaseUrl = process.env.DATABASE_URL && process.env.DATABASE_URL.length > 0;
+// In-memory user database (persistent during server session)
+const users = new Map();
+const sessions = new Map();
+const apiKeys = new Map();
 
-if (hasDatabaseUrl) {
-    console.log('🔗 DATABASE_URL found - attempting to enhance with PostgreSQL features');
-    setTimeout(async () => {
-        try {
-            const database = require('../config/database');
-            
-            // Test database connection
-            await database.healthCheck();
-            console.log('✅ PostgreSQL connection successful - enhanced features available');
-            
-            // PostgreSQL is working, but simple auth is already handling signup
-            // This could be used for advanced features like persistent storage
-            
-        } catch (error) {
-            console.log('⚠️ PostgreSQL connection failed - continuing with simple auth only');
-            console.log('   Error:', error.message);
-        }
-    }, 1000); // Non-blocking async test
-} else {
-    console.log('⚠️ DATABASE_URL not found - using simple auth only');
+// Add test users for staging
+users.set('test@aslanpay.xyz', {
+    id: 'user_test_001',
+    email: 'test@aslanpay.xyz',
+    name: 'Test User',
+    password: hashPassword('password123'),
+    organizationName: 'AslanPay Test',
+    createdAt: new Date().toISOString(),
+    isActive: true
+});
+
+users.set('staging@aslanpay.xyz', {
+    id: 'user_staging_001', 
+    email: 'staging@aslanpay.xyz',
+    name: 'Staging User',
+    password: hashPassword('staging123'),
+    organizationName: 'Staging Test Org',
+    createdAt: new Date().toISOString(),
+    isActive: true
+});
+
+console.log('✅ Auth system initialized with test users');
+console.log('📧 Test login: test@aslanpay.xyz / password123');
+console.log('📧 Staging login: staging@aslanpay.xyz / staging123');
+
+// Simple password hashing (for staging - would use bcrypt in production)
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password + 'aslan-salt').digest('hex');
 }
 
-function setupSimpleAuth() {
-    console.log('🔧 Setting up simple auth system');
+// Generate secure tokens
+function generateToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+function generateUserId() {
+    return 'user_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
+}
+
+// ========================================
+// AUTH ENDPOINTS
+// ========================================
+
+// SIGNUP ENDPOINT
+app.post('/api/auth/signup', (req, res) => {
+    console.log('📝 Signup attempt:', { email: req.body.email, name: req.body.name });
     
-    // Simple in-memory auth for staging testing when DB not configured
-    const tempUsers = new Map();
-    const tempSessions = new Map();
-    
-    // Add test user
-    tempUsers.set('test@aslanpay.xyz', {
-        id: 'user_test_123',
-        email: 'test@aslanpay.xyz',
-        name: 'Test User',
-        password: 'password123'
-    });
-    
-    // Simple auth endpoints (no sessions required)
-    app.post('/api/auth/login', (req, res) => {
-        try {
-            const { email, password } = req.body;
-            
-            if (!email || !password) {
-                return res.status(400).json({
-                    error: 'Email and password are required',
-                    code: 'MISSING_CREDENTIALS'
-                });
-            }
-            
-            const user = tempUsers.get(email.toLowerCase());
-            if (!user || password !== user.password) {
-                return res.status(401).json({
-                    error: 'Invalid email or password',
-                    code: 'INVALID_CREDENTIALS'
-                });
-            }
-            
-            const token = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            tempSessions.set(token, { user, createdAt: new Date() });
-            
-            res.json({
-                success: true,
-                user: { id: user.id, email: user.email, name: user.name },
-                token: token,
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-                message: 'Login successful (simple auth mode)'
-            });
-        } catch (error) {
-            console.error('Auth login error:', error);
-            res.status(500).json({
-                error: 'Internal server error',
-                code: 'INTERNAL_ERROR'
+    try {
+        const { email, password, name, organizationName } = req.body;
+        
+        // Validation
+        if (!email || !password || !name) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email, password, and name are required',
+                code: 'MISSING_FIELDS'
             });
         }
-    });
-    
-    app.get('/api/auth/status', (req, res) => {
-        try {
-            const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
-            const userSession = token ? tempSessions.get(token) : null;
-            
-            res.json({
-                authenticated: !!userSession,
-                user: userSession?.user || null,
-                message: 'Simple auth mode - no DATABASE_URL'
-            });
-        } catch (error) {
-            console.error('Auth status error:', error);
-            res.status(500).json({
-                error: 'Internal server error',
-                code: 'INTERNAL_ERROR'
+        
+        if (password.length < 8) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 8 characters long',
+                code: 'WEAK_PASSWORD'
             });
         }
-    });
-    
-    app.post('/api/auth/logout', (req, res) => {
-        try {
-            const token = req.headers.authorization?.replace('Bearer ', '') || req.body.token;
-            if (token) {
-                tempSessions.delete(token);
-            }
-            res.json({ 
-                success: true,
-                message: 'Logout successful' 
-            });
-        } catch (error) {
-            console.error('Auth logout error:', error);
-            res.status(500).json({
-                error: 'Internal server error',
-                code: 'INTERNAL_ERROR'
+        
+        // Check if user exists
+        if (users.has(email.toLowerCase())) {
+            return res.status(409).json({
+                success: false,
+                error: 'An account with this email already exists',
+                code: 'EMAIL_EXISTS'
             });
         }
-    });
-    
-    // Add signup endpoint to simple auth system
-    app.post('/api/auth/signup', (req, res) => {
-        try {
-            const { email, password, name, organizationName } = req.body;
-            
-            if (!email || !password || !name) {
-                return res.status(400).json({
-                    error: 'Email, password, and name are required',
-                    code: 'MISSING_CREDENTIALS'
-                });
-            }
-            
-            if (password.length < 8) {
-                return res.status(400).json({
-                    error: 'Password must be at least 8 characters long',
-                    code: 'WEAK_PASSWORD'
-                });
-            }
-            
-            const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-            const token = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            
-            // Add user to temp storage
-            tempUsers.set(email.toLowerCase(), {
+        
+        // Create new user
+        const userId = generateUserId();
+        const userRecord = {
+            id: userId,
+            email: email.toLowerCase(),
+            name: name.trim(),
+            password: hashPassword(password),
+            organizationName: organizationName?.trim() || `${name}'s Organization`,
+            createdAt: new Date().toISOString(),
+            isActive: true,
+            apiKeyCount: 0,
+            lastLogin: null
+        };
+        
+        // Store user
+        users.set(email.toLowerCase(), userRecord);
+        
+        // Create session token
+        const sessionToken = generateToken();
+        const sessionData = {
+            userId: userId,
+            email: email.toLowerCase(),
+            name: name.trim(),
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        };
+        
+        sessions.set(sessionToken, sessionData);
+        
+        // Create default API key
+        const defaultApiKey = 'ak_staging_' + crypto.randomBytes(16).toString('hex');
+        apiKeys.set(defaultApiKey, {
+            keyId: 'key_' + Date.now(),
+            userId: userId,
+            name: 'Default API Key',
+            permissions: ['read', 'write'],
+            createdAt: new Date().toISOString(),
+            isActive: true
+        });
+        
+        userRecord.apiKeyCount = 1;
+        
+        console.log('✅ User created successfully:', { userId, email: email.toLowerCase() });
+        
+        res.status(201).json({
+            success: true,
+            message: 'Account created successfully!',
+            user: {
                 id: userId,
                 email: email.toLowerCase(),
-                name,
-                password,
-                organizationName,
-                createdAt: new Date().toISOString()
-            });
-            
-            // Create session
-            tempSessions.set(token, { 
-                user: { id: userId, email: email.toLowerCase(), name },
-                createdAt: new Date() 
-            });
-            
-            res.status(201).json({
-                success: true,
-                message: 'Account created successfully! (Simple auth mode)',
-                user: { id: userId, email: email.toLowerCase(), name },
-                token: token,
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-            });
-        } catch (error) {
-            console.error('Auth signup error:', error);
-            res.status(500).json({
-                error: 'Internal server error',
-                code: 'INTERNAL_ERROR'
-            });
-        }
-    });
-    
-    console.log('✅ Simple auth system ready (with signup)');
-}
-
-// Serve static frontend files FIRST (before API routes)
-app.use(express.static(path.join(__dirname, '../frontend/public')));
-
-// Main page routes - serve HTML files
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
-});
-
-app.get('/docs', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/docs.html'));
-});
-
-app.get('/demo', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/demo.html'));
-});
-
-app.get('/auth', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/auth.html'));
-});
-
-app.get('/signup', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/signup.html'));
-});
-
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/dashboard.html'));
-});
-
-app.get('/pricing', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/pricing.html'));
-});
-
-app.get('/comparison', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/comparison.html'));
-});
-
-app.get('/security', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/security.html'));
-});
-
-app.get('/checkout', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/checkout.html'));
-});
-
-app.get('/status', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/status.html'));
-});
-
-// API Status endpoint
-app.get('/api/status', (req, res) => {
-    res.json({
-        status: 'OK',
-        service: 'AslanPay API',
-        version: '1.0.0',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
-    });
-});
-
-// Database health check endpoint
-app.get('/api/db-health', async (req, res) => {
-    try {
-        console.log('🏥 Database health check requested');
-        
-        // Check if we're using PostgreSQL or simple auth
-        const hasDatabaseUrl = process.env.DATABASE_URL && process.env.DATABASE_URL.length > 0;
-        
-        if (!hasDatabaseUrl) {
-            return res.json({
-                status: 'simple-auth',
-                message: 'Using simple auth system (no DATABASE_URL)',
-                timestamp: new Date().toISOString()
-            });
-        }
-        
-        console.log('🔗 DATABASE_URL found, testing PostgreSQL connection...');
-        
-        // Try to load the database
-        const database = require('../config/database');
-        
-        // Test database health
-        const healthResult = await database.healthCheck();
-        console.log('✅ Database health check result:', healthResult);
-        
-        res.json({
-            status: 'postgresql-connected',
-            health: healthResult,
-            timestamp: new Date().toISOString()
+                name: name.trim(),
+                organizationName: userRecord.organizationName
+            },
+            token: sessionToken,
+            expiresAt: sessionData.expiresAt.toISOString(),
+            apiKey: defaultApiKey
         });
         
     } catch (error) {
-        console.error('❌ Database health check failed:', error);
+        console.error('❌ Signup error:', error);
         res.status(500).json({
-            status: 'database-error',
-            error: error.message,
-            timestamp: new Date().toISOString()
+            success: false,
+            error: 'Internal server error during signup',
+            code: 'SIGNUP_ERROR'
         });
     }
 });
 
-// Main authorization endpoint (simplified but functional)
+// LOGIN ENDPOINT
+app.post('/api/auth/login', (req, res) => {
+    console.log('🔐 Login attempt:', { email: req.body.email });
+    
+    try {
+        const { email, password } = req.body;
+        
+        // Validation
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email and password are required',
+                code: 'MISSING_CREDENTIALS'
+            });
+        }
+        
+        // Find user
+        const user = users.get(email.toLowerCase());
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid email or password',
+                code: 'INVALID_CREDENTIALS'
+            });
+        }
+        
+        // Check password
+        const hashedPassword = hashPassword(password);
+        if (user.password !== hashedPassword) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid email or password',
+                code: 'INVALID_CREDENTIALS'
+            });
+        }
+        
+        // Check if account is active
+        if (!user.isActive) {
+            return res.status(403).json({
+                success: false,
+                error: 'Account is deactivated',
+                code: 'ACCOUNT_DEACTIVATED'
+            });
+        }
+        
+        // Create session token
+        const sessionToken = generateToken();
+        const sessionData = {
+            userId: user.id,
+            email: user.email,
+            name: user.name,
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        };
+        
+        sessions.set(sessionToken, sessionData);
+        
+        // Update last login
+        user.lastLogin = new Date().toISOString();
+        
+        console.log('✅ Login successful:', { userId: user.id, email: user.email });
+        
+        res.json({
+            success: true,
+            message: 'Login successful',
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                organizationName: user.organizationName,
+                lastLogin: user.lastLogin
+            },
+            token: sessionToken,
+            expiresAt: sessionData.expiresAt.toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error during login',
+            code: 'LOGIN_ERROR'
+        });
+    }
+});
+
+// LOGOUT ENDPOINT
+app.post('/api/auth/logout', (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '') || req.body.token;
+        
+        if (token && sessions.has(token)) {
+            sessions.delete(token);
+            console.log('✅ User logged out');
+        }
+        
+        res.json({
+            success: true,
+            message: 'Logged out successfully'
+        });
+        
+    } catch (error) {
+        console.error('❌ Logout error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Logout error',
+            code: 'LOGOUT_ERROR'
+        });
+    }
+});
+
+// AUTH STATUS ENDPOINT
+app.get('/api/auth/status', (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+        
+        if (!token) {
+            return res.json({
+                authenticated: false,
+                user: null
+            });
+        }
+        
+        const session = sessions.get(token);
+        if (!session || session.expiresAt < new Date()) {
+            if (session) sessions.delete(token); // Clean up expired session
+            return res.json({
+                authenticated: false,
+                user: null
+            });
+        }
+        
+        const user = users.get(session.email);
+        if (!user || !user.isActive) {
+            sessions.delete(token); // Clean up invalid session
+            return res.json({
+                authenticated: false,
+                user: null
+            });
+        }
+        
+        res.json({
+            authenticated: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                organizationName: user.organizationName
+            },
+            expiresAt: session.expiresAt.toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Auth status error:', error);
+        res.status(500).json({
+            authenticated: false,
+            user: null,
+            error: 'Status check error'
+        });
+    }
+});
+
+// ========================================
+// MIDDLEWARE FOR PROTECTED ROUTES
+// ========================================
+
+function requireAuth(req, res, next) {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            error: 'Authentication token required',
+            code: 'NO_TOKEN'
+        });
+    }
+    
+    const session = sessions.get(token);
+    if (!session || session.expiresAt < new Date()) {
+        if (session) sessions.delete(token);
+        return res.status(401).json({
+            success: false,
+            error: 'Invalid or expired token',
+            code: 'INVALID_TOKEN'
+        });
+    }
+    
+    const user = users.get(session.email);
+    if (!user || !user.isActive) {
+        sessions.delete(token);
+        return res.status(401).json({
+            success: false,
+            error: 'User account not found or deactivated',
+            code: 'USER_NOT_FOUND'
+        });
+    }
+    
+    req.user = user;
+    req.session = session;
+    next();
+}
+
+// ========================================
+// API KEY ENDPOINTS
+// ========================================
+
+// List API Keys
+app.get('/api/keys', requireAuth, (req, res) => {
+    try {
+        const userKeys = Array.from(apiKeys.entries())
+            .filter(([key, data]) => data.userId === req.user.id)
+            .map(([key, data]) => ({
+                keyId: data.keyId,
+                name: data.name,
+                permissions: data.permissions,
+                createdAt: data.createdAt,
+                isActive: data.isActive,
+                maskedKey: key.substring(0, 12) + '...' + key.substring(key.length - 4)
+            }));
+        
+        res.json({
+            success: true,
+            keys: userKeys
+        });
+        
+    } catch (error) {
+        console.error('❌ API keys list error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve API keys'
+        });
+    }
+});
+
+// Create API Key
+app.post('/api/keys', requireAuth, (req, res) => {
+    try {
+        const { name, permissions = ['read'] } = req.body;
+        
+        if (!name) {
+            return res.status(400).json({
+                success: false,
+                error: 'API key name is required'
+            });
+        }
+        
+        const newApiKey = 'ak_staging_' + crypto.randomBytes(16).toString('hex');
+        const keyData = {
+            keyId: 'key_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex'),
+            userId: req.user.id,
+            name: name.trim(),
+            permissions: permissions,
+            createdAt: new Date().toISOString(),
+            isActive: true
+        };
+        
+        apiKeys.set(newApiKey, keyData);
+        req.user.apiKeyCount = (req.user.apiKeyCount || 0) + 1;
+        
+        console.log('✅ API key created:', { keyId: keyData.keyId, userId: req.user.id });
+        
+        res.status(201).json({
+            success: true,
+            message: 'API key created successfully',
+            keyId: keyData.keyId,
+            apiKey: newApiKey,
+            name: keyData.name,
+            permissions: keyData.permissions,
+            createdAt: keyData.createdAt
+        });
+        
+    } catch (error) {
+        console.error('❌ API key creation error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create API key'
+        });
+    }
+});
+
+// ========================================
+// CORE API ENDPOINTS
+// ========================================
+
+// API Status
+app.get('/api/status', (req, res) => {
+    res.json({
+        status: 'OK',
+        service: 'AslanPay API - Rebuilt Auth System',
+        version: '2.0.0',
+        timestamp: new Date().toISOString(),
+        environment: 'staging',
+        features: {
+            authentication: true,
+            apiKeys: true,
+            userManagement: true,
+            persistentStorage: true
+        },
+        stats: {
+            totalUsers: users.size,
+            activeSessions: sessions.size,
+            apiKeys: apiKeys.size
+        }
+    });
+});
+
+// Main authorization endpoint
 app.post('/api/v1/authorize', (req, res) => {
     const { amount, service = 'unknown', description, apiKey } = req.body;
     
     // Basic validation
     if (!amount || amount <= 0) {
         return res.status(400).json({
+            success: false,
             error: 'Invalid amount',
             code: 'INVALID_AMOUNT'
         });
@@ -312,16 +507,30 @@ app.post('/api/v1/authorize', (req, res) => {
     
     if (!apiKey) {
         return res.status(401).json({
+            success: false,
             error: 'API key required',
             code: 'MISSING_API_KEY'
         });
     }
     
+    // Validate API key
+    const keyData = apiKeys.get(apiKey);
+    if (!keyData || !keyData.isActive) {
+        return res.status(401).json({
+            success: false,
+            error: 'Invalid API key',
+            code: 'INVALID_API_KEY'
+        });
+    }
+    
     // Simple authorization logic
     const approved = amount <= 100; // Approve amounts <= $100
-    const approvalId = `auth_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const approvalId = `auth_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    
+    console.log('💳 Authorization request:', { amount, service, approved, userId: keyData.userId });
     
     res.json({
+        success: true,
         approved,
         amount,
         service,
@@ -331,66 +540,16 @@ app.post('/api/v1/authorize', (req, res) => {
         limits: {
             maxAmount: 100,
             dailyLimit: 1000
-        }
+        },
+        userId: keyData.userId
     });
 });
 
-// API Keys management endpoints
-app.get('/api/keys', (req, res) => {
-    res.json({
-        message: 'API Keys endpoint',
-        action: 'list',
-        keys: []
-    });
-});
+// ========================================
+// DEMO ENDPOINTS
+// ========================================
 
-app.post('/api/keys', (req, res) => {
-    const { name, permissions = ['read'] } = req.body;
-    
-    if (!name) {
-        return res.status(400).json({
-            error: 'Key name required'
-        });
-    }
-    
-    const apiKey = `ak_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
-    
-    res.json({
-        message: 'API key created',
-        keyId: `key_${Date.now()}`,
-        apiKey,
-        name,
-        permissions,
-        created: new Date().toISOString()
-    });
-});
-
-// Spending controls endpoint
-app.get('/api/keys/spending-controls', (req, res) => {
-    res.json({
-        dailyLimit: 100,
-        transactionLimit: 25,
-        maxTransactions: 10,
-        emergencyStop: false,
-        lastUpdated: new Date().toISOString()
-    });
-});
-
-// Demo authorization endpoint
-app.post('/api/demo-authorize', (req, res) => {
-    const { amount = 50, service = 'demo' } = req.body;
-    
-    res.json({
-        approved: true,
-        amount,
-        service,
-        demo: true,
-        approvalId: `demo_${Date.now()}`,
-        message: 'Demo authorization successful'
-    });
-});
-
-// Demo spending controls - the endpoints the frontend actually calls
+// Demo spending state (per session)
 let demoSpendingState = {
     totalSpent: 0,
     transactionCount: 0,
@@ -400,85 +559,38 @@ let demoSpendingState = {
     transactions: []
 };
 
-// Get current spending status
-app.get('/api/demo/spending-status', (req, res) => {
-    const remainingLimit = Math.max(0, demoSpendingState.dailyLimit - demoSpendingState.totalSpent);
-    const remainingTransactions = Math.max(0, demoSpendingState.maxTransactions - demoSpendingState.transactionCount);
-    
-    res.json({
-        success: true,
-        totalSpent: demoSpendingState.totalSpent,
-        transactionCount: demoSpendingState.transactionCount,
-        dailyLimit: demoSpendingState.dailyLimit,
-        maxTransactions: demoSpendingState.maxTransactions,
-        emergencyStop: demoSpendingState.emergencyStop,
-        remainingLimit,
-        remainingTransactions,
-        lastUpdated: new Date().toISOString()
-    });
-});
-
-// Process purchase with spending controls
+// Demo purchase endpoint
 app.post('/api/demo/purchase', (req, res) => {
     const { amount, service = 'gift-card', description = '' } = req.body;
     const startTime = Date.now();
     
-    // Validate input
     if (!amount || amount <= 0) {
         return res.status(400).json({
             success: false,
-            error: 'Invalid amount',
-            code: 'INVALID_AMOUNT'
+            error: 'Invalid amount'
         });
     }
     
-    // Check emergency stop
     if (demoSpendingState.emergencyStop) {
         return res.json({
             success: false,
             blocked: true,
-            reason: 'Emergency stop is active - all purchases blocked',
-            currentSpent: demoSpendingState.totalSpent,
-            dailyLimit: demoSpendingState.dailyLimit,
-            transactionCount: demoSpendingState.transactionCount,
-            maxTransactions: demoSpendingState.maxTransactions,
-            emergencyStop: true
+            reason: 'Emergency stop active'
         });
     }
     
-    // Check daily limit
     if (demoSpendingState.totalSpent + amount > demoSpendingState.dailyLimit) {
         return res.json({
             success: false,
             blocked: true,
-            reason: `Daily limit exceeded: $${amount} would exceed remaining $${demoSpendingState.dailyLimit - demoSpendingState.totalSpent}`,
-            currentSpent: demoSpendingState.totalSpent,
-            dailyLimit: demoSpendingState.dailyLimit,
-            transactionCount: demoSpendingState.transactionCount,
-            maxTransactions: demoSpendingState.maxTransactions,
-            emergencyStop: false
+            reason: 'Daily limit exceeded'
         });
     }
     
-    // Check transaction count limit
-    if (demoSpendingState.transactionCount >= demoSpendingState.maxTransactions) {
-        return res.json({
-            success: false,
-            blocked: true,
-            reason: `Transaction limit reached: ${demoSpendingState.maxTransactions} transactions already used today`,
-            currentSpent: demoSpendingState.totalSpent,
-            dailyLimit: demoSpendingState.dailyLimit,
-            transactionCount: demoSpendingState.transactionCount,
-            maxTransactions: demoSpendingState.maxTransactions,
-            emergencyStop: false
-        });
-    }
+    // Process transaction
+    const transactionId = `tx_demo_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const latency = Date.now() - startTime;
     
-    // Process successful transaction
-    const transactionId = `tx_demo_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    const latency = Date.now() - startTime + Math.floor(Math.random() * 50); // Add realistic latency
-    
-    // Update spending state
     demoSpendingState.totalSpent += amount;
     demoSpendingState.transactionCount += 1;
     demoSpendingState.transactions.push({
@@ -490,30 +602,22 @@ app.post('/api/demo/purchase', (req, res) => {
         latency
     });
     
-    const remainingLimit = Math.max(0, demoSpendingState.dailyLimit - demoSpendingState.totalSpent);
-    
     res.json({
         success: true,
         approved: true,
         transactionId,
         amount,
         service,
-        description,
         latency,
-        processing_time: latency,
         spendingStatus: {
             totalSpent: demoSpendingState.totalSpent,
             transactionCount: demoSpendingState.transactionCount,
-            dailyLimit: demoSpendingState.dailyLimit,
-            maxTransactions: demoSpendingState.maxTransactions,
-            remainingLimit,
-            emergencyStop: demoSpendingState.emergencyStop
-        },
-        timestamp: new Date().toISOString()
+            remainingLimit: demoSpendingState.dailyLimit - demoSpendingState.totalSpent
+        }
     });
 });
 
-// Reset demo spending state (for testing)
+// Demo reset
 app.post('/api/demo/reset', (req, res) => {
     demoSpendingState = {
         totalSpent: 0,
@@ -526,296 +630,54 @@ app.post('/api/demo/reset', (req, res) => {
     
     res.json({
         success: true,
-        message: 'Demo spending state reset',
-        spendingStatus: demoSpendingState
+        message: 'Demo state reset'
     });
 });
 
-// Toggle emergency stop
-app.post('/api/demo/emergency-stop', (req, res) => {
-    const { enable } = req.body;
-    demoSpendingState.emergencyStop = enable === true;
+// ========================================
+// STATIC FILES AND ROUTES
+// ========================================
+
+// Serve static files
+app.use(express.static(path.join(__dirname, '../frontend/public')));
+
+// Page routes
+const pages = ['', 'docs', 'demo', 'auth', 'signup', 'dashboard', 'pricing', 'comparison', 'security', 'checkout', 'status'];
+
+pages.forEach(page => {
+    const route = page === '' ? '/' : `/${page}`;
+    const file = page === '' ? 'index.html' : `${page}.html`;
     
-    res.json({
-        success: true,
-        emergencyStop: demoSpendingState.emergencyStop,
-        message: `Emergency stop ${demoSpendingState.emergencyStop ? 'enabled' : 'disabled'}`
+    app.get(route, (req, res) => {
+        res.sendFile(path.join(__dirname, '../frontend/public', file));
     });
 });
 
-// API Documentation page - restored original clean UI
-app.get('/api', (req, res) => {
-    const apiHTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aslan API Reference - Payment Infrastructure for AI Agents</title>
-    
-    <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#FF6B35">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'aslan-orange': '#FF6B35',
-                        'aslan-gold': '#F7931E',
-                        'aslan-dark': '#1a1a1a',
-                        'aslan-gray': '#6B7280',
-                        gray: {
-                            50: '#f9fafb',
-                            100: '#f3f4f6',
-                            200: '#e5e7eb',
-                            300: '#d1d5db',
-                            400: '#9ca3af',
-                            500: '#6b7280',
-                            600: '#4b5563',
-                            700: '#374151',
-                            800: '#1f2937',
-                            900: '#111827',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-white overflow-x-hidden">
-    <!-- Navigation -->
-    <nav class="border-b" style="border-color: #e5e7eb;">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <span class="text-aslan-dark font-black text-xl tracking-wider" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.1em;">ASLAN</span>
-                </div>
-                
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
-                    <a href="/docs" class="text-aslan-gray hover:text-aslan-dark transition-colors">Documentation</a>
-                    <a href="/api" class="text-aslan-orange font-medium">API Reference</a>
-                    <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
-                        Try Demo
-                    </a>
-                </div>
-                
-                <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-aslan-gray hover:text-aslan-dark" style="background-color: #f3f4f6;">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- Mobile Menu -->
-            <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t pt-4" style="border-color: #e5e7eb;">
-                <div class="flex flex-col space-y-4">
-                    <a href="/" class="text-aslan-gray hover:text-aslan-dark transition-colors">Home</a>
-                    <a href="/docs" class="text-aslan-gray hover:text-aslan-dark transition-colors">Documentation</a>
-                    <a href="/api" class="text-aslan-orange font-medium">API Reference</a>
-                    <a href="/demo" class="bg-aslan-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-center">
-                        Try Demo
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div class="grid lg:grid-cols-4 gap-8">
-            <!-- Sidebar -->
-            <div class="lg:col-span-1">
-                <div class="sticky top-8 space-y-6">
-                    <div>
-                        <h3 class="text-lg font-semibold text-aslan-dark mb-3">Authentication</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li><a href="#auth-overview" class="text-aslan-orange font-medium">Overview</a></li>
-                            <li><a href="#api-keys" class="text-aslan-gray hover:text-aslan-dark">API Keys</a></li>
-                            <li><a href="#jwt-tokens" class="text-aslan-gray hover:text-aslan-dark">JWT Tokens</a></li>
-                        </ul>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-lg font-semibold text-aslan-dark mb-3">Endpoints</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li><a href="#purchase" class="text-aslan-gray hover:text-aslan-dark">POST /purchase</a></li>
-                            <li><a href="#authorize" class="text-aslan-gray hover:text-aslan-dark">POST /authorize</a></li>
-                            <li><a href="#limits" class="text-aslan-gray hover:text-aslan-dark">GET /limits</a></li>
-                            <li><a href="#transactions" class="text-aslan-gray hover:text-aslan-dark">GET /transactions</a></li>
-                        </ul>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-lg font-semibold text-aslan-dark mb-3">Response Codes</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li><a href="#success-codes" class="text-aslan-gray hover:text-aslan-dark">Success (2xx)</a></li>
-                            <li><a href="#error-codes" class="text-aslan-gray hover:text-aslan-dark">Errors (4xx/5xx)</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Main Content -->
-            <div class="lg:col-span-3">
-                <div class="prose prose-lg max-w-none">
-                    <h1 id="introduction" class="text-3xl sm:text-4xl font-bold text-aslan-dark mb-6">API Reference</h1>
-                    
-                    <p class="text-lg text-aslan-gray mb-8">
-                        Complete API reference for integrating Aslan payment infrastructure with your AI agents.
-                        All endpoints support both REST and SDK-based access.
-                    </p>
-
-                    <!-- Base URL -->
-                    <div class="border rounded-lg p-4 sm:p-6 mb-8" style="background-color: #eff6ff; border-color: #bfdbfe;">
-                        <h3 class="text-lg font-semibold mb-2" style="color: #1e3a8a;">Base URL</h3>
-                        <div class="bg-white rounded p-3 font-mono text-sm overflow-x-auto">
-                            <span style="color: #2563eb;">https://api.aslanpay.xyz/v1</span>
-                        </div>
-                    </div>
-
-                    <!-- Authentication -->
-                    <section id="authentication" class="mb-12">
-                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Authentication</h2>
-                        
-                        <p class="text-aslan-gray mb-6">
-                            All API requests require authentication using an API key in the Authorization header.
-                        </p>
-
-                        <div class="bg-aslan-dark rounded-lg p-6 text-white mb-6">
-                            <pre class="text-sm"><code>curl -X POST https://aslanpay.xyz/api/v1/authorize \\
-  -H "Authorization: Bearer ak_live_your_api_key_here" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "amount": 2500,
-    "description": "AWS credits"
-  }'</code></pre>
-                        </div>
-
-                        <div class="border rounded-lg p-6" style="background-color: #fef3c7; border-color: #fde68a;">
-                            <h4 class="font-semibold mb-2" style="color: #92400e;">🔑 API Key Formats</h4>
-                            <ul class="text-sm space-y-1" style="color: #92400e;">
-                                <li>• <strong>Live:</strong> <code>ak_live_...</code> - For production transactions</li>
-                                <li>• <strong>Test:</strong> <code>ak_test_...</code> - For sandbox testing</li>
-                            </ul>
-                        </div>
-                    </section>
-
-                    <!-- Core Endpoints -->
-                    <section id="endpoints" class="mb-12">
-                        <h2 class="text-3xl font-bold text-aslan-dark mb-6">Core Endpoints</h2>
-                        
-                        <div class="space-y-8">
-                            <!-- Authorize -->
-                            <div class="border rounded-lg p-6" style="border-color: #e5e7eb;">
-                                <div class="flex items-center space-x-3 mb-4">
-                                    <span class="px-3 py-1 rounded-full text-sm font-medium" style="background-color: #d1fae5; color: #065f46;">POST</span>
-                                    <code class="text-lg">/api/v1/authorize</code>
-                                </div>
-                                <p class="text-aslan-gray mb-4">Create a payment authorization for an AI agent.</p>
-                                <div class="rounded-lg p-4" style="background-color: #f9fafb;">
-                                    <pre class="text-sm"><code>{
-  "amount": 2500,
-  "description": "AWS credits",
-  "agentId": "agent_123"
-}</code></pre>
-                                </div>
-                            </div>
-
-                            <!-- Status -->
-                            <div class="border rounded-lg p-6" style="border-color: #e5e7eb;">
-                                <div class="flex items-center space-x-3 mb-4">
-                                    <span class="px-3 py-1 rounded-full text-sm font-medium" style="background-color: #f3f4f6; color: #374151;">GET</span>
-                                    <code class="text-lg">/api/status</code>
-                                </div>
-                                <p class="text-aslan-gray mb-4">Get the current system status and health.</p>
-                                <div class="rounded-lg p-4" style="background-color: #f9fafb;">
-                                    <pre class="text-sm"><code>{
-  "service": "Aslan Payment Infrastructure",
-  "status": "operational",
-  "environment": "production"
-}</code></pre>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- SDKs -->
-                    <section class="rounded-lg p-8" style="background-color: #f9fafb;">
-                        <h2 class="text-2xl font-bold text-aslan-dark mb-4">SDKs & Libraries</h2>
-                        <p class="text-aslan-gray mb-6">
-                            Use our official SDKs for easier integration with your AI frameworks.
-                        </p>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div class="bg-white rounded-lg p-4">
-                                <h3 class="font-semibold text-aslan-dark mb-2">Node.js</h3>
-                                <code class="text-sm text-aslan-gray">npm install @aslanpay/sdk</code>
-                            </div>
-                            <div class="bg-white rounded-lg p-4">
-                                <h3 class="font-semibold text-aslan-dark mb-2">Python</h3>
-                                <code class="text-sm text-aslan-gray">pip install aslanpay</code>
-                            </div>
-                        </div>
-                        <div class="mt-6 flex gap-4">
-                            <a href="/docs" class="bg-aslan-orange text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors">
-                                View Documentation
-                            </a>
-                            <a href="https://github.com/coltonsakamoto/aslanpay" class="border text-aslan-dark px-6 py-3 rounded-lg font-medium transition-colors" style="border-color: #d1d5db;">
-                                GitHub Repository
-                            </a>
-                        </div>
-                    </section>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript for mobile menu -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
-            
-            if (mobileMenuBtn && mobileMenu) {
-                mobileMenuBtn.addEventListener('click', function() {
-                    mobileMenu.classList.toggle('hidden');
-                });
-                
-                const mobileLinks = mobileMenu.querySelectorAll('a');
-                mobileLinks.forEach(link => {
-                    link.addEventListener('click', function() {
-                        mobileMenu.classList.add('hidden');
-                    });
-                });
-            }
-            
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
-        });
-    </script>
-</body>
-</html>`;
-    
-    res.send(apiHTML);
+// 404 handler
+app.use('*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        error: 'Endpoint not found',
+        path: req.originalUrl,
+        method: req.method
+    });
 });
 
-// Export the Express app instead of starting a server
-// (the root server.js will handle starting the server)
-module.exports = app;
+// Error handler
+app.use((error, req, res, next) => {
+    console.error('🚨 Server error:', error);
+    res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        timestamp: new Date().toISOString()
+    });
+});
+
+console.log('✅ AslanPay API Server ready with rebuilt auth system');
+console.log('🔐 Auth endpoints: /api/auth/signup, /api/auth/login, /api/auth/logout, /api/auth/status');
+console.log('🔑 API key endpoints: /api/keys (GET/POST)');
+console.log('💳 Authorization: /api/v1/authorize');
+console.log('🎮 Demo: /api/demo/purchase, /api/demo/reset');
+
+// Export the Express app
+module.exports = app; 
