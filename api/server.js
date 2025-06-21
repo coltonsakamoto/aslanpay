@@ -3,7 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const app = express();
 
-console.log('🚀 Starting AslanPay API Server - Rebuilt Auth System');
+console.log('🚀 Starting AslanPay API Server - Rebuilt Auth System v2.0.0');
 
 // Basic middleware
 app.use(express.json({ limit: '10mb' }));
