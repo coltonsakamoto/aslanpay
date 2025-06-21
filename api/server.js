@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const cors = require('cors');
 const app = express();
 
 console.log('🚀 Starting AslanPay API Server - Rebuilt Auth System v2.0.0');
@@ -8,6 +9,12 @@ console.log('🚀 Starting AslanPay API Server - Rebuilt Auth System v2.0.0');
 // Basic middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Use the cors middleware
+app.use(cors({
+    origin: true, // Reflect the request origin
+    credentials: true
+}));
 
 // Session middleware
 app.use(require('express-session')({
@@ -20,18 +27,6 @@ app.use(require('express-session')({
         httpOnly: true
     }
 }));
-
-// CORS for staging
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    if (req.method === 'OPTIONS') {
-        res.sendStatus(200);
-    } else {
-        next();
-    }
-});
 
 // ========================================
 // REBUILT AUTH SYSTEM - PERSISTENT STORAGE
