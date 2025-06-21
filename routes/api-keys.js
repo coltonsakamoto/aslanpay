@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const database = require('../config/database');
 
-// Import validateSession from middleware (which should work with production database)
-const { validateSession } = require('../middleware/auth');
+// Import validateSessionSimple from middleware for cookie-based auth
+const { validateSessionSimple } = require('../middleware/auth');
 
 // Helper function to mask API keys
 function maskApiKey(key) {
@@ -13,7 +13,7 @@ function maskApiKey(key) {
 }
 
 // Get all API keys for authenticated user
-router.get('/', validateSession, async (req, res) => {
+router.get('/', validateSessionSimple, async (req, res) => {
     const startTime = Date.now();
     
     // Simulate realistic database query time
@@ -89,7 +89,7 @@ router.post('/:keyId/reveal', validateSession, async (req, res) => {
 });
 
 // Create new API key
-router.post('/', validateSession, async (req, res) => {
+router.post('/', validateSessionSimple, async (req, res) => {
     const startTime = Date.now();
     
     // Simulate realistic database write time
@@ -149,7 +149,7 @@ router.post('/', validateSession, async (req, res) => {
 });
 
 // Revoke API key
-router.delete('/:keyId', validateSession, async (req, res) => {
+router.delete('/:keyId', validateSessionSimple, async (req, res) => {
     const startTime = Date.now();
     
     // Simulate realistic secure deletion time
@@ -201,7 +201,7 @@ router.delete('/:keyId', validateSession, async (req, res) => {
 });
 
 // Rotate API key
-router.post('/:keyId/rotate', validateSession, async (req, res) => {
+router.post('/:keyId/rotate', validateSessionSimple, async (req, res) => {
     const startTime = Date.now();
     
     // Simulate realistic secure key generation time

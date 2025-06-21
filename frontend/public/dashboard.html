@@ -304,9 +304,7 @@
             try {
                 console.log('🔍 Loading user data...');
                 const response = await fetch('/api/auth/status', {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
-                    }
+                    credentials: 'include' // Use cookies instead of Authorization header
                 });
                 
                 console.log('📊 Auth response status:', response.status);
@@ -314,15 +312,20 @@
                 if (response.ok) {
                     const data = await response.json();
                     console.log('✅ User data received:', data);
-                    currentUser = data.user;
                     
-                    document.getElementById('user-name').textContent = currentUser.name;
-                    document.getElementById('user-display-name').textContent = currentUser.name;
-                    document.getElementById('user-email').textContent = currentUser.email;
-                    
-                    // Handle missing subscription data gracefully
-                    const plan = currentUser.subscriptionPlan || 'sandbox';
-                    document.getElementById('user-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+                    if (data.authenticated && data.user) {
+                        currentUser = data.user;
+                        
+                        document.getElementById('user-name').textContent = currentUser.name;
+                        document.getElementById('user-display-name').textContent = currentUser.name;
+                        document.getElementById('user-email').textContent = currentUser.email;
+                        
+                        // Handle missing subscription data gracefully
+                        const plan = currentUser.subscriptionPlan || 'sandbox';
+                        document.getElementById('user-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+                    } else {
+                        throw new Error('Authentication failed - user not authenticated');
+                    }
                 } else {
                     console.error('❌ Auth failed with status:', response.status);
                     const errorData = await response.json().catch(() => ({}));
@@ -343,9 +346,7 @@
         async function loadApiKeys() {
             try {
                 const response = await fetch('/api/keys', {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
-                    }
+                    credentials: 'include' // Use cookies for session-based auth
                 });
                 
                 if (response.ok) {
@@ -516,9 +517,9 @@
                 const response = await fetch('/api/keys', {
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
+                        'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({ name, environment })
                 });
                 
@@ -546,9 +547,7 @@
             try {
                 const response = await fetch(`/api/keys/${keyId}/rotate`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
-                    }
+                    credentials: 'include'
                 });
                 
                 if (response.ok) {
@@ -572,9 +571,7 @@
             try {
                 const response = await fetch(`/api/keys/${keyId}`, {
                     method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
-                    }
+                    credentials: 'include'
                 });
                 
                 if (response.ok) {
@@ -594,9 +591,7 @@
             try {
                 await fetch('/api/auth/logout', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
-                    }
+                    credentials: 'include'
                 });
                 window.location.href = '/auth.html';
             } catch (error) {
