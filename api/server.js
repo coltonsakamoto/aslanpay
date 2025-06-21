@@ -42,6 +42,11 @@ const users = new Map();
 const sessions = new Map();
 const apiKeys = new Map();
 
+// Simple password hashing (for staging - would use bcrypt in production)
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password + 'aslan-salt').digest('hex');
+}
+
 // Add test users for staging
 users.set('test@aslanpay.xyz', {
     id: 'user_test_001',
@@ -66,11 +71,6 @@ users.set('staging@aslanpay.xyz', {
 console.log('✅ Auth system initialized with test users');
 console.log('📧 Test login: test@aslanpay.xyz / password123');
 console.log('📧 Staging login: staging@aslanpay.xyz / staging123');
-
-// Simple password hashing (for staging - would use bcrypt in production)
-function hashPassword(password) {
-    return crypto.createHash('sha256').update(password + 'aslan-salt').digest('hex');
-}
 
 // Generate secure tokens
 function generateToken() {
