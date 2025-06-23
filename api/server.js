@@ -383,23 +383,25 @@ try {
     setupEnhancedSimpleApiKeys();
 }
 
-function setupSimpleApiKeys() {
-    // In-memory API key storage for production
-    const tempApiKeys = new Map();
-    
-    // Session authentication middleware
-    function requireAuth(req, res, next) {
-        if (!req.session.userId || !req.session.user) {
-            return res.status(401).json({
-                error: 'Authentication required',
-                code: 'NOT_AUTHENTICATED'
-            });
-        }
-        next();
+// FIXED: Enhanced API Keys endpoint moved outside function so it actually gets registered!
+console.log('🔑 Setting up enhanced simple API keys as primary system...');
+
+// In-memory API key storage for production
+const tempApiKeys = new Map();
+
+// Session authentication middleware
+function requireAuth(req, res, next) {
+    if (!req.session.userId || !req.session.user) {
+        return res.status(401).json({
+            error: 'Authentication required',
+            code: 'NOT_AUTHENTICATED'
+        });
     }
-    
-        // API Keys management endpoints with enhanced debugging
-    app.get('/api/keys', (req, res) => {
+    next();
+}
+
+// API Keys management endpoints with enhanced debugging - NOW ACTIVE!
+app.get('/api/keys', (req, res) => {
         console.log('🔍 [SIMPLE-API-KEYS] Session validation started for:', req.method, req.path);
         console.log('🔍 [SIMPLE-API-KEYS] Session data:', {
             hasSession: !!req.session,
@@ -1028,8 +1030,6 @@ app.get('/api', (req, res) => {
     
     res.send(apiHTML);
 });
-
-} // End of setupSimpleApiKeys function
 
 // Export the Express app instead of starting a server
 // (the root server.js will handle starting the server)
