@@ -63,38 +63,27 @@ function maskApiKey(key) {
     return key.substring(0, 8) + '•'.repeat(key.length - 12) + key.substring(key.length - 4);
 }
 
-// 🔐 SECURE: Get all API keys - AUTHENTICATION REQUIRED
+// 🔐 SECURE: Get all API keys - AUTHENTICATION REQUIRED  
 router.get('/', simpleAuthCheck, async (req, res) => {
-    console.log('🔐 SECURE: API key list request - returning mock data');
+    console.log('🔐 SECURE: Getting REAL API keys from database');
     
     try {
-        // Return immediate mock response to stop spinning
-        const mockApiKeys = [
-            {
-                id: 'key_1',
-                name: 'Default API Key',
-                key: 'ak_live_1234567890abcdef1234567890abcdef12345678',
-                permissions: ['authorize', 'confirm', 'refund'],
-                createdAt: new Date().toISOString(),
-                lastUsed: null,
-                usageCount: 0,
-                isActive: true
-            }
-        ];
+        console.log(`📋 Getting API keys for user: ${req.user.id}`);
         
-        console.log(`✅ Returning ${mockApiKeys.length} mock API keys`);
+        // Get REAL API keys from database
+        const apiKeys = await database.getApiKeysByUserId(req.user.id);
+        console.log(`✅ Found ${apiKeys.length} REAL API keys`);
         
         res.json({
             success: true,
-            apiKeys: mockApiKeys,
-            total: mockApiKeys.length,
+            apiKeys,
+            total: apiKeys.length,
             userId: req.user.id,
-            authenticated: true,
-            note: 'Mock data - database integration pending'
+            authenticated: true
         });
         
     } catch (error) {
-        console.error('❌ Mock API keys error:', error);
+        console.error('❌ Real API keys error:', error);
         res.status(500).json({
             error: 'Failed to retrieve API keys',
             code: 'RETRIEVAL_ERROR',
@@ -105,10 +94,10 @@ router.get('/', simpleAuthCheck, async (req, res) => {
 
 // 🔐 SECURE: Create new API key - AUTHENTICATION REQUIRED
 router.post('/', simpleAuthCheck, async (req, res) => {
-    console.log('🔐 SECURE: API key creation request - returning mock key');
+    console.log('🔐 SECURE: Creating REAL API key in database');
     
     try {
-        const { name = 'New API Key' } = req.body;
+        const { name } = req.body;
         
         if (!name || name.trim() === '') {
             return res.status(400).json({
@@ -117,33 +106,35 @@ router.post('/', simpleAuthCheck, async (req, res) => {
             });
         }
         
-        console.log(`🔑 Creating mock API key "${name}"`);
+        console.log(`🔑 Creating REAL API key "${name}" for user ${req.user.id}`);
         
-        // Return immediate mock API key
-        const mockApiKey = {
-            id: 'key_' + Date.now(),
-            name: name.trim(),
-            key: 'ak_live_' + require('crypto').randomBytes(20).toString('hex'),
-            permissions: ['authorize', 'confirm', 'refund'],
-            createdAt: new Date().toISOString(),
-            lastUsed: null,
-            usageCount: 0,
-            isActive: true
-        };
+        // Check for duplicate names
+        const existingKeys = await database.getApiKeysByUserId(req.user.id);
+        const duplicate = existingKeys.find(key => 
+            key.name.toLowerCase() === name.trim().toLowerCase()
+        );
         
-        console.log(`✅ Mock API key created: ${mockApiKey.id}`);
+        if (duplicate) {
+            return res.status(400).json({
+                error: 'An API key with this name already exists',
+                code: 'DUPLICATE_NAME'
+            });
+        }
+        
+        // Create REAL API key in database
+        const apiKey = await database.createApiKey(req.user.id, name.trim());
+        console.log(`✅ REAL API key created: ${apiKey.id}`);
         
         res.status(201).json({
             success: true,
-            apiKey: mockApiKey,
-            message: 'Mock API key created successfully',
+            apiKey,
+            message: 'API key created successfully',
             userId: req.user.id,
-            authenticated: true,
-            note: 'Mock data - database integration pending'
+            authenticated: true
         });
         
     } catch (error) {
-        console.error('❌ Create mock API key error:', error);
+        console.error('❌ Create real API key error:', error);
         res.status(500).json({
             error: 'Failed to create API key',
             code: 'CREATION_ERROR',
@@ -154,109 +145,91 @@ router.post('/', simpleAuthCheck, async (req, res) => {
 
 // 🔐 SECURE: Revoke API key - AUTHENTICATION REQUIRED
 router.delete('/:keyId', simpleAuthCheck, async (req, res) => {
-    console.log('🔐 SECURE: API key revoke request - auth required');
-    const startTime = Date.now();
+    console.log('🔐 SECURE: Revoking REAL API key from database');
     
-    setTimeout(async () => {
-        try {
-            const { keyId } = req.params;
-            
-            console.log(`🗑️ Revoke API key ${keyId} for user ${req.user.id}`);
-            
-            // Verify the key belongs to this user
-            const userApiKeys = await database.getApiKeysByUserId(req.user.id);
-            const keyToRevoke = userApiKeys.find(k => k.id === keyId);
-            
-            if (!keyToRevoke) {
-                console.log(`❌ API key not found: ${keyId} for user ${req.user.id}`);
-                const latency = Date.now() - startTime;
-                return res.status(404).json({
-                    error: 'API key not found or access denied',
-                    code: 'KEY_NOT_FOUND',
-                    latency: latency
-                });
-            }
-            
-            await database.revokeApiKey(req.user.id, keyId);
-            console.log(`🗑️ API key revoked: ${keyId} for user ${req.user.id}`);
-            
-            const latency = Date.now() - startTime;
-            
-            res.json({
-                success: true,
-                message: 'API key revoked successfully',
-                latency: latency,
-                userId: req.user.id,
-                authenticated: true
-            });
-            
-        } catch (error) {
-            console.error('❌ Revoke API key error:', error);
-            const latency = Date.now() - startTime;
-            res.status(500).json({
-                error: 'Failed to revoke API key',
-                code: 'REVOKE_ERROR',
-                details: error.message,
-                latency: latency
+    try {
+        const { keyId } = req.params;
+        
+        console.log(`🗑️ Revoking API key ${keyId} for user ${req.user.id}`);
+        
+        // Verify the key belongs to this user
+        const userApiKeys = await database.getApiKeysByUserId(req.user.id);
+        const keyToRevoke = userApiKeys.find(k => k.id === keyId);
+        
+        if (!keyToRevoke) {
+            console.log(`❌ API key not found: ${keyId} for user ${req.user.id}`);
+            return res.status(404).json({
+                error: 'API key not found or access denied',
+                code: 'KEY_NOT_FOUND'
             });
         }
-    }, 60);
+        
+        // Revoke REAL API key in database
+        await database.revokeApiKey(req.user.id, keyId);
+        console.log(`🗑️ REAL API key revoked: ${keyId}`);
+        
+        res.json({
+            success: true,
+            message: 'API key revoked successfully',
+            userId: req.user.id,
+            authenticated: true
+        });
+        
+    } catch (error) {
+        console.error('❌ Revoke real API key error:', error);
+        res.status(500).json({
+            error: 'Failed to revoke API key',
+            code: 'REVOKE_ERROR',
+            details: error.message
+        });
+    }
 });
 
 // 🔐 SECURE: Rotate API key - AUTHENTICATION REQUIRED
 router.post('/:keyId/rotate', simpleAuthCheck, async (req, res) => {
-    console.log('🔐 SECURE: API key rotate request - auth required');
-    const startTime = Date.now();
+    console.log('🔐 SECURE: Rotating REAL API key in database');
     
-    setTimeout(async () => {
-        try {
-            const { keyId } = req.params;
-            
-            console.log(`🔄 Rotate API key ${keyId} for user ${req.user.id}`);
-            
-            // Verify the key belongs to this user
-            const userApiKeys = await database.getApiKeysByUserId(req.user.id);
-            const keyToRotate = userApiKeys.find(k => k.id === keyId);
-            
-            if (!keyToRotate) {
-                console.log(`❌ API key not found: ${keyId} for user ${req.user.id}`);
-                const latency = Date.now() - startTime;
-                return res.status(404).json({
-                    error: 'API key not found or access denied',
-                    code: 'KEY_NOT_FOUND',
-                    latency: latency
-                });
-            }
-            
-            const newKey = await database.rotateApiKey(req.user.id, keyId);
-            console.log(`🔄 API key rotated: ${keyId} -> ${newKey.id} for user ${req.user.id}`);
-            
-            const latency = Date.now() - startTime;
-            
-            res.json({
-                success: true,
-                apiKey: {
-                    ...newKey,
-                    maskedKey: maskApiKey(newKey.key)
-                },
-                message: 'API key rotated successfully',
-                warning: 'The old key has been revoked and will no longer work',
-                latency: latency,
-                userId: req.user.id,
-                authenticated: true
-            });
-            
-        } catch (error) {
-            console.error('❌ Rotate API key error:', error);
-            const latency = Date.now() - startTime;
-            res.status(500).json({
-                error: 'Failed to rotate API key',
-                code: 'ROTATE_ERROR',
-                details: error.message,
-                latency: latency
+    try {
+        const { keyId } = req.params;
+        
+        console.log(`🔄 Rotating API key ${keyId} for user ${req.user.id}`);
+        
+        // Verify the key belongs to this user
+        const userApiKeys = await database.getApiKeysByUserId(req.user.id);
+        const keyToRotate = userApiKeys.find(k => k.id === keyId);
+        
+        if (!keyToRotate) {
+            console.log(`❌ API key not found: ${keyId} for user ${req.user.id}`);
+            return res.status(404).json({
+                error: 'API key not found or access denied',
+                code: 'KEY_NOT_FOUND'
             });
         }
-    }, 95);
+        
+        // Rotate REAL API key in database
+        const newKey = await database.rotateApiKey(req.user.id, keyId);
+        console.log(`🔄 REAL API key rotated: ${keyId} -> ${newKey.id}`);
+        
+        res.json({
+            success: true,
+            apiKey: {
+                ...newKey,
+                maskedKey: maskApiKey(newKey.key)
+            },
+            message: 'API key rotated successfully',
+            warning: 'The old key has been revoked and will no longer work',
+            userId: req.user.id,
+            authenticated: true
+        });
+        
+    } catch (error) {
+        console.error('❌ Rotate real API key error:', error);
+        res.status(500).json({
+            error: 'Failed to rotate API key',
+            code: 'ROTATE_ERROR',
+            details: error.message
+        });
+    }
 });
 
 console.log('🔐 Secure API key routes loaded - AUTHENTICATION REQUIRED');

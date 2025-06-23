@@ -68,6 +68,7 @@ router.post('/signup', async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'Account created successfully!',
+            token: token, // Return token for frontend localStorage
             user: {
                 id: user.id,
                 email: user.email,
@@ -140,6 +141,7 @@ router.post('/login', async (req, res) => {
         res.json({
             success: true,
             message: 'Login successful',
+            token: token, // Return token for frontend localStorage
             user: {
                 id: user.id,
                 email: user.email,
