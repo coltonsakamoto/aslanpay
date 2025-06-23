@@ -28,7 +28,8 @@ router.get('/', validateSession, async (req, res) => {
             const latency = Date.now() - startTime;
             
             res.json({
-                apiKeys,
+                success: true,
+                keys: apiKeys,
                 total: apiKeys.length,
                 latency: latency
             });
@@ -130,6 +131,7 @@ router.post('/', validateSession, async (req, res) => {
             const latency = Date.now() - startTime;
             
             res.status(201).json({
+                success: true,
                 apiKey,
                 message: 'API key created successfully',
                 latency: latency
@@ -183,6 +185,7 @@ router.delete('/:keyId', validateSession, async (req, res) => {
             const latency = Date.now() - startTime;
             
             res.json({
+                success: true,
                 message: 'API key revoked successfully',
                 latency: latency
             });
@@ -235,6 +238,7 @@ router.post('/:keyId/rotate', validateSession, async (req, res) => {
             const latency = Date.now() - startTime;
             
             res.json({
+                success: true,
                 apiKey: {
                     ...newKey,
                     maskedKey: maskApiKey(newKey.key)

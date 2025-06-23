@@ -340,8 +340,10 @@
         // Load API keys
         async function loadApiKeys() {
             try {
-                const response = await fetch('/api/keys', {
-                    credentials: 'include'
+                console.log('🔍 PRODUCTION: Loading API keys with proper auth...');
+                const response = await fetch('/api/keys?' + Date.now(), {
+                    credentials: 'include',
+                    cache: 'no-cache'
                 });
                 
                 if (response.ok) {
@@ -349,11 +351,13 @@
                     
                     // ✅ CRITICAL: Validate response format to prevent future breakage
                     if (data && typeof data === 'object') {
-                        // Handle multiple possible response formats
-                        if (Array.isArray(data.apiKeys)) {
-                            apiKeys = data.apiKeys;
+                        // Handle multiple possible response formats for compatibility
+                        if (data.success && Array.isArray(data.keys)) {
+                            apiKeys = data.keys; // New format: {success: true, keys: [...]}
+                        } else if (Array.isArray(data.apiKeys)) {
+                            apiKeys = data.apiKeys; // Legacy format: {apiKeys: [...]}
                         } else if (Array.isArray(data.data)) {
-                            apiKeys = data.data; // Fallback format
+                            apiKeys = data.data; // Alternative format
                         } else if (Array.isArray(data)) {
                             apiKeys = data; // Direct array format
                         } else {
@@ -509,10 +513,12 @@
             const environment = document.getElementById('key-environment').value;
             
             try {
-                const response = await fetch('/api/keys', {
+                console.log('🔑 PRODUCTION: Creating API key:', name);
+                const response = await fetch('/api/keys?' + Date.now(), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
+                    cache: 'no-cache',
                     body: JSON.stringify({ name, environment })
                 });
                 
@@ -521,7 +527,8 @@
                     document.getElementById('key-name').value = '';
                     document.getElementById('key-environment').value = 'live'; // Reset to default
                     showToast('🔑 API key created successfully!', 'success');
-                    loadApiKeys(); // Reload the list
+                    // Small delay to ensure backend processing completes
+                    setTimeout(() => loadApiKeys(), 150);
                 } else {
                     const data = await response.json();
                     showToast('❌ Failed to create API key: ' + data.error, 'error');
@@ -538,14 +545,17 @@
             }
             
             try {
-                const response = await fetch(`/api/keys/${keyId}/rotate`, {
+                console.log('🔄 PRODUCTION: Rotating API key:', keyId);
+                const response = await fetch(`/api/keys/${keyId}/rotate?` + Date.now(), {
                     method: 'POST',
-                    credentials: 'include'
+                    credentials: 'include',
+                    cache: 'no-cache'
                 });
                 
                 if (response.ok) {
                     showToast('🔄 API key rotated successfully!', 'success');
-                    loadApiKeys(); // Reload the list
+                    // Small delay to ensure backend processing completes
+                    setTimeout(() => loadApiKeys(), 150);
                 } else {
                     const data = await response.json();
                     showToast('❌ Failed to rotate API key: ' + data.error, 'error');
@@ -562,14 +572,17 @@
             }
             
             try {
-                const response = await fetch(`/api/keys/${keyId}`, {
+                console.log('🗑️ PRODUCTION: Revoking API key:', keyId);
+                const response = await fetch(`/api/keys/${keyId}?` + Date.now(), {
                     method: 'DELETE',
-                    credentials: 'include'
+                    credentials: 'include',
+                    cache: 'no-cache'
                 });
                 
                 if (response.ok) {
                     showToast('🗑️ API key revoked successfully!', 'success');
-                    loadApiKeys(); // Reload the list
+                    // Small delay to ensure backend processing completes
+                    setTimeout(() => loadApiKeys(), 150);
                 } else {
                     const data = await response.json();
                     showToast('❌ Failed to revoke API key: ' + data.error, 'error');
