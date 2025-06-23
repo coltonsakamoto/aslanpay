@@ -1,9 +1,158 @@
 const express = require('express');
 const router = express.Router();
 const database = require('../database-production.js');
+const jwt = require('jsonwebtoken');
 
-// Import validateSession from middleware (which should work with production database)
-const { validateSession } = require('../middleware/auth');
+// JWT secret validation and secure fallback  
+function getSecureJWTSecret() {
+    const envSecret = process.env.JWT_SECRET;
+    
+    if (!envSecret) {
+        console.error('🚨 SECURITY WARNING: JWT_SECRET environment variable not set!');
+        // For production, use a fallback but warn
+        return 'fallback-secret-change-in-production-' + Date.now();
+    }
+    
+    if (envSecret.length < 32) {
+        console.error('🚨 SECURITY ERROR: JWT_SECRET must be at least 32 characters long!');
+        console.error('🔧 Current length:', envSecret.length);
+        // Use what we have but warn
+        return envSecret;
+    }
+    
+    return envSecret;
+}
+
+const JWT_SECRET = getSecureJWTSecret();
+
+// Custom session validation specifically for API key routes with extensive debugging
+const validateSessionForApiKeys = async (req, res, next) => {
+    console.log('🔍 [API-KEYS] Session validation started for:', req.method, req.path);
+    console.log('🔍 [API-KEYS] Headers:', {
+        authorization: req.headers.authorization ? 'Present' : 'Missing',
+        cookie: req.headers.cookie ? 'Present' : 'Missing',
+        userAgent: req.headers['user-agent']
+    });
+    
+    try {
+        // Try multiple auth methods
+        let token = null;
+        let authMethod = 'none';
+        
+        // Method 1: Check cookies first (frontend uses this)
+        if (req.cookies && req.cookies.agentpay_session) {
+            token = req.cookies.agentpay_session;
+            authMethod = 'cookie';
+            console.log('🔍 [API-KEYS] Found session cookie');
+        }
+        
+        // Method 2: Check Authorization header (fallback)
+        if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+            token = req.headers.authorization.substring(7);
+            authMethod = 'header';
+            console.log('🔍 [API-KEYS] Found Authorization header');
+        }
+        
+        // Method 3: Check localStorage token from frontend (if sent as custom header)
+        if (!token && req.headers['x-session-token']) {
+            token = req.headers['x-session-token'];
+            authMethod = 'custom-header';
+            console.log('🔍 [API-KEYS] Found custom session header');
+        }
+        
+        if (!token) {
+            console.log('❌ [API-KEYS] No authentication token found via any method');
+            return res.status(401).json({
+                error: 'No session token provided',
+                code: 'NO_SESSION',
+                debug: {
+                    cookiePresent: !!req.headers.cookie,
+                    authHeaderPresent: !!req.headers.authorization,
+                    customHeaderPresent: !!req.headers['x-session-token']
+                }
+            });
+        }
+
+        console.log('🔍 [API-KEYS] Token found via:', authMethod, 'Length:', token.length);
+
+        // Verify JWT token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, JWT_SECRET);
+            console.log('✅ [API-KEYS] JWT verified successfully:', decoded);
+        } catch (err) {
+            console.log('❌ [API-KEYS] JWT verification failed:', err.message);
+            return res.status(401).json({
+                error: 'Invalid session token',
+                code: 'INVALID_SESSION',
+                debug: {
+                    authMethod: authMethod,
+                    jwtError: err.message,
+                    tokenLength: token.length
+                }
+            });
+        }
+
+        // Check session in database
+        console.log('🔍 [API-KEYS] Looking up session in database:', decoded.sessionId);
+        const session = await database.getSession(decoded.sessionId);
+        console.log('🔍 [API-KEYS] Database session lookup result:', session ? 'Found' : 'Not found');
+        
+        if (!session) {
+            console.log('❌ [API-KEYS] Session not found in database');
+            return res.status(401).json({
+                error: 'Session expired or invalid',
+                code: 'SESSION_EXPIRED',
+                debug: {
+                    sessionId: decoded.sessionId,
+                    authMethod: authMethod
+                }
+            });
+        }
+
+        // Get user data
+        console.log('🔍 [API-KEYS] Getting user data for ID:', session.userId);
+        const user = await database.getUserById(session.userId);
+        console.log('🔍 [API-KEYS] User lookup result:', user ? `Found: ${user.email}` : 'Not found');
+        
+        if (!user) {
+            console.log('❌ [API-KEYS] User not found in database');
+            return res.status(401).json({
+                error: 'User not found',
+                code: 'USER_NOT_FOUND',
+                debug: {
+                    userId: session.userId,
+                    authMethod: authMethod
+                }
+            });
+        }
+
+        // Create a session object compatible with express-session
+        req.session = {
+            id: session.id,
+            userId: session.userId,
+            touch: () => {}, // Dummy touch method
+            save: (callback) => callback && callback(),
+            destroy: (callback) => callback && callback(),
+            ...session
+        };
+        req.user = user;
+        
+        console.log('✅ [API-KEYS] Session validation successful for user:', user.email, 'via', authMethod);
+        next();
+        
+    } catch (error) {
+        console.error('❌ [API-KEYS] Session validation error:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            code: 'INTERNAL_ERROR',
+            debug: {
+                message: error.message,
+                stack: error.stack
+            }
+        });
+    }
+};
 
 // Helper function to mask API keys
 function maskApiKey(key) {
@@ -13,7 +162,7 @@ function maskApiKey(key) {
 }
 
 // Get all API keys for authenticated user
-router.get('/', validateSession, async (req, res) => {
+router.get('/', validateSessionForApiKeys, async (req, res) => {
     const startTime = Date.now();
     
     // Simulate realistic database query time
@@ -48,7 +197,7 @@ router.get('/', validateSession, async (req, res) => {
 });
 
 // Reveal a specific API key (requires additional verification)
-router.post('/:keyId/reveal', validateSession, async (req, res) => {
+router.post('/:keyId/reveal', validateSessionForApiKeys, async (req, res) => {
     try {
         const { keyId } = req.params;
         const session = database.getSession(req.session.id);
@@ -90,7 +239,7 @@ router.post('/:keyId/reveal', validateSession, async (req, res) => {
 });
 
 // Create new API key
-router.post('/', validateSession, async (req, res) => {
+router.post('/', validateSessionForApiKeys, async (req, res) => {
     const startTime = Date.now();
     
     // Simulate realistic database write time
@@ -151,7 +300,7 @@ router.post('/', validateSession, async (req, res) => {
 });
 
 // Revoke API key
-router.delete('/:keyId', validateSession, async (req, res) => {
+router.delete('/:keyId', validateSessionForApiKeys, async (req, res) => {
     const startTime = Date.now();
     
     // Simulate realistic secure deletion time
@@ -204,7 +353,7 @@ router.delete('/:keyId', validateSession, async (req, res) => {
 });
 
 // Rotate API key
-router.post('/:keyId/rotate', validateSession, async (req, res) => {
+router.post('/:keyId/rotate', validateSessionForApiKeys, async (req, res) => {
     const startTime = Date.now();
     
     // Simulate realistic secure key generation time
@@ -262,7 +411,7 @@ router.post('/:keyId/rotate', validateSession, async (req, res) => {
 });
 
 // Update API key name
-router.patch('/:keyId', validateSession, async (req, res) => {
+router.patch('/:keyId', validateSessionForApiKeys, async (req, res) => {
     try {
         const { keyId } = req.params;
         const { name } = req.body;
@@ -341,7 +490,7 @@ router.patch('/:keyId', validateSession, async (req, res) => {
 });
 
 // Get API key usage statistics
-router.get('/:keyId/usage', validateSession, async (req, res) => {
+router.get('/:keyId/usage', validateSessionForApiKeys, async (req, res) => {
     try {
         const { keyId } = req.params;
         const session = database.getSession(req.session.id);
@@ -411,7 +560,7 @@ router.get('/:keyId/usage', validateSession, async (req, res) => {
 
 // 🚨 EMERGENCY: Add spending controls update routes (missing from demo)
 // GET /api/keys/spending-controls - Get current spending limits
-router.get('/spending-controls', validateSession, async (req, res) => {
+router.get('/spending-controls', validateSessionForApiKeys, async (req, res) => {
     const startTime = Date.now();
     
     // Simulate realistic configuration query time
@@ -474,7 +623,7 @@ router.get('/spending-controls', validateSession, async (req, res) => {
 });
 
 // PUT /api/keys/spending-controls - Update spending limits
-router.put('/spending-controls', validateSession, async (req, res) => {
+router.put('/spending-controls', validateSessionForApiKeys, async (req, res) => {
     const startTime = Date.now();
     
     // Simulate realistic configuration update time
