@@ -276,7 +276,17 @@ app.get('/api/status', (req, res) => {
         service: 'AslanPay API',
         version: '1.0.0',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        deploymentCheck: 'API_KEYS_DEBUG_ACTIVE'
+    });
+});
+
+// Test route to verify our deployment
+app.get('/api/debug-test', (req, res) => {
+    res.json({
+        message: 'Debug route working',
+        timestamp: new Date().toISOString(),
+        deployment: 'LATEST'
     });
 });
 
