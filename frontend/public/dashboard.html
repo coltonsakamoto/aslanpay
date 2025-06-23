@@ -351,10 +351,13 @@
                 if (response.ok) {
                     const data = await response.json();
                     
-                    // ✅ CRITICAL: Validate response format to prevent future breakage
+                    // ✅ CRITICAL: Handle the ACTUAL response format {success: true, keys: Array}
                     if (data && typeof data === 'object') {
-                        // Handle multiple possible response formats
-                        if (Array.isArray(data.apiKeys)) {
+                        // Handle the current emergency format first
+                        if (data.success && Array.isArray(data.keys)) {
+                            apiKeys = data.keys;
+                            console.log('✅ EMERGENCY: Loaded', data.keys.length, 'keys successfully');
+                        } else if (Array.isArray(data.apiKeys)) {
                             apiKeys = data.apiKeys;
                         } else if (Array.isArray(data.data)) {
                             apiKeys = data.data; // Fallback format
