@@ -15,20 +15,31 @@ class DeveloperDashboard {
     
     async loadApiKeysFromServer() {
         try {
-            console.log('🔍 Loading API keys from server...');
-            const response = await fetch('/api/keys', {
-                credentials: 'include'
+            console.log('🔍 EMERGENCY: Loading API keys from server... (v2)');
+            const response = await fetch('/api/keys?' + Date.now(), {
+                credentials: 'include',
+                cache: 'no-cache'
             });
             
-            console.log('🔍 Server response status:', response.status);
+            console.log('🔍 EMERGENCY: Server response status:', response.status);
             
             if (response.ok) {
                 const data = await response.json();
                 console.log('🔍 Server response data:', data);
                 console.log('🔍 Keys from server:', data.keys);
                 
-                // Server should only return masked keys
-                this.apiKeys = data.keys || [];
+                // Handle both legacy and new response formats
+                if (data.success && Array.isArray(data.keys)) {
+                    this.apiKeys = data.keys;
+                } else if (Array.isArray(data.apiKeys)) {
+                    this.apiKeys = data.apiKeys;
+                } else if (Array.isArray(data)) {
+                    this.apiKeys = data;
+                } else {
+                    console.error('❌ Unexpected response format:', data);
+                    this.apiKeys = [];
+                }
+                
                 console.log('✅ Loaded API keys:', this.apiKeys.length);
             } else {
                 console.error('❌ Failed to load API keys, status:', response.status);
