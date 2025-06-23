@@ -22,7 +22,7 @@ class DeveloperDashboard {
             if (response.ok) {
                 const data = await response.json();
                 // Server should only return masked keys
-                this.apiKeys = data.apiKeys || [];
+                this.apiKeys = data.keys || [];
             } else {
                 console.error('Failed to load API keys');
                 this.apiKeys = [];
