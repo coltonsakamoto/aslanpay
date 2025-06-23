@@ -3,6 +3,32 @@ const router = express.Router();
 
 console.log('🚨 ULTRA-SIMPLE API KEY ROUTES LOADING...');
 
+// 🚨 EMERGENCY: In-memory key storage that actually changes
+let emergencyKeys = [
+    {
+        id: 'emergency_key_1',
+        name: 'Emergency Test Key 1',
+        key: 'ak_live_emergency123456789abcdef123456789abcdef123456789abcdef',
+        permissions: ['authorize', 'confirm', 'refund'],
+        createdAt: new Date().toISOString(),
+        lastUsed: null,
+        usageCount: 0,
+        isActive: true
+    },
+    {
+        id: 'emergency_key_2',
+        name: 'Emergency Test Key 2', 
+        key: 'ak_live_emergency987654321fedcba987654321fedcba987654321fedcba',
+        permissions: ['authorize', 'confirm'],
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        lastUsed: new Date(Date.now() - 3600000).toISOString(),
+        usageCount: 42,
+        isActive: true
+    }
+];
+
+console.log('🚨 EMERGENCY: Initialized with', emergencyKeys.length, 'keys');
+
 // Helper function to mask API keys - SIMPLE VERSION
 function maskApiKey(key) {
     if (!key || key.length <= 8) return key;
@@ -11,39 +37,15 @@ function maskApiKey(key) {
 
 // 🚨 EMERGENCY: Get all API keys - NO AUTH, NO IMPORTS
 router.get('/', (req, res) => {
-    console.log('🚨 EMERGENCY: GET /api/keys called - SIMPLE VERSION');
+    console.log('🚨 EMERGENCY: GET /api/keys called - DYNAMIC VERSION');
     
     try {
-        // Return hardcoded API keys to test frontend - GUARANTEED TO WORK
-        const hardcodedKeys = [
-            {
-                id: 'emergency_key_1',
-                name: 'Emergency Test Key 1',
-                key: 'ak_live_emergency123456789abcdef123456789abcdef123456789abcdef',
-                permissions: ['authorize', 'confirm', 'refund'],
-                createdAt: new Date().toISOString(),
-                lastUsed: null,
-                usageCount: 0,
-                isActive: true
-            },
-            {
-                id: 'emergency_key_2',
-                name: 'Emergency Test Key 2', 
-                key: 'ak_live_emergency987654321fedcba987654321fedcba987654321fedcba',
-                permissions: ['authorize', 'confirm'],
-                createdAt: new Date(Date.now() - 86400000).toISOString(),
-                lastUsed: new Date(Date.now() - 3600000).toISOString(),
-                usageCount: 42,
-                isActive: true
-            }
-        ];
-        
-        console.log('🚨 EMERGENCY: Returning', hardcodedKeys.length, 'hardcoded keys');
+        console.log('🚨 EMERGENCY: Returning', emergencyKeys.length, 'dynamic keys');
         
         res.json({
             success: true,
-            keys: hardcodedKeys,
-            total: hardcodedKeys.length,
+            keys: emergencyKeys,
+            total: emergencyKeys.length,
             emergency: true,
             timestamp: new Date().toISOString()
         });
@@ -81,7 +83,10 @@ router.post('/', (req, res) => {
             isActive: true
         };
         
-        console.log('🚨 EMERGENCY: Created key:', newKey.id);
+        // ACTUALLY ADD THE KEY TO THE ARRAY
+        emergencyKeys.push(newKey);
+        console.log('🚨 EMERGENCY: Created and added key:', newKey.id);
+        console.log('🚨 EMERGENCY: Total keys now:', emergencyKeys.length);
         
         res.status(201).json({
             success: true,
@@ -106,18 +111,31 @@ router.post('/:keyId/rotate', (req, res) => {
     console.log('🚨 EMERGENCY: POST /api/keys/:keyId/rotate called');
     const { keyId } = req.params;
     
+    // FIND AND UPDATE THE ACTUAL KEY
+    const keyIndex = emergencyKeys.findIndex(key => key.id === keyId);
+    
+    if (keyIndex === -1) {
+        console.log('🚨 EMERGENCY: Key not found for rotation:', keyId);
+        return res.status(404).json({
+            success: false,
+            message: 'API key not found'
+        });
+    }
+    
+    const oldKey = emergencyKeys[keyIndex];
     const newKey = {
-        id: keyId,
-        name: 'Rotated ' + keyId,
+        ...oldKey,
         key: 'ak_live_rotated' + Date.now() + Math.random().toString(36).substring(2),
-        permissions: ['authorize', 'confirm', 'refund'],
-        createdAt: new Date().toISOString(),
-        lastUsed: null,
+        name: oldKey.name + ' (Rotated)',
         usageCount: 0,
-        isActive: true
+        lastUsed: null
     };
     
+    // ACTUALLY UPDATE THE KEY IN THE ARRAY
+    emergencyKeys[keyIndex] = newKey;
+    
     console.log('🚨 EMERGENCY: Rotated key:', newKey.id);
+    console.log('🚨 EMERGENCY: New key value:', newKey.key.substring(0, 20) + '...');
     
     res.json({
         success: true,
@@ -131,11 +149,19 @@ router.delete('/:keyId', (req, res) => {
     console.log('🚨 EMERGENCY: DELETE /api/keys/:keyId called');
     const { keyId } = req.params;
     
-    console.log('🚨 EMERGENCY: Deleted key:', keyId);
+    const originalLength = emergencyKeys.length;
+    // ACTUALLY REMOVE THE KEY FROM THE ARRAY
+    emergencyKeys = emergencyKeys.filter(key => key.id !== keyId);
+    
+    const deleted = originalLength > emergencyKeys.length;
+    console.log('🚨 EMERGENCY: Deleted key:', keyId, deleted ? 'SUCCESS' : 'NOT_FOUND');
+    console.log('🚨 EMERGENCY: Total keys now:', emergencyKeys.length);
     
     res.json({
         success: true,
-        message: 'Emergency API key deleted successfully'
+        message: deleted ? 'Emergency API key deleted successfully' : 'Key not found but operation completed',
+        deleted: deleted,
+        remaining: emergencyKeys.length
     });
 });
 
