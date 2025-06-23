@@ -61,7 +61,12 @@ class DeveloperDashboard {
         console.log('🎨 Rendering API keys:', this.apiKeys);
         const container = document.getElementById('api-keys-list');
         
-        if (this.apiKeys.length === 0) {
+        if (!container) {
+            console.error('❌ CRITICAL: api-keys-list container not found!');
+            return;
+        }
+        
+        if (!this.apiKeys || this.apiKeys.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-8 text-gray-500">
                     <div class="text-4xl mb-3">🔑</div>
@@ -81,42 +86,57 @@ class DeveloperDashboard {
             return;
         }
         
-        container.innerHTML = this.apiKeys.map(key => `
-            <div class="border border-gray-200 rounded-lg p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <h3 class="font-medium text-gray-900">${this.escapeHtml(key.name)}</h3>
-                        <div class="flex items-center space-x-2 mt-1">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                key.key?.startsWith('ak_live_') ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                            }">
-                                ${key.key?.startsWith('ak_live_') ? '🟢 Live' : '🔵 Test'}
-                            </span>
-                            <span class="text-xs text-gray-500">Created ${this.formatDate(key.createdAt)}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button onclick="dashboard.requestFullKey('${key.id}')" class="text-gray-400 hover:text-gray-600" title="Request full key">
-                            🔓
-                        </button>
-                        <button onclick="dashboard.deleteKey('${key.id}')" class="text-red-400 hover:text-red-600">
-                            🗑️
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="bg-gray-50 rounded p-3 font-mono text-sm">
-                    <span id="key-${key.id}">
-                        ${key.maskedKey || this.maskKey(key.key)}
-                    </span>
-                </div>
-                
-                <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
-                    <span>Last used: ${key.lastUsed ? this.formatDate(key.lastUsed) : 'Never'}</span>
-                    <span>Permissions: ${Array.isArray(key.permissions) ? key.permissions.join(', ') : key.permissions || 'None'}</span>
-                </div>
-            </div>
-        `).join('');
+                 console.log('🎨 About to render', this.apiKeys.length, 'keys to container');
+         
+         try {
+             const html = this.apiKeys.map((key, index) => {
+                 console.log(`🎨 Rendering key ${index}:`, key);
+                 return `
+             <div class="border border-gray-200 rounded-lg p-4">
+                 <div class="flex items-center justify-between mb-3">
+                     <div>
+                         <h3 class="font-medium text-gray-900">${this.escapeHtml(key.name)}</h3>
+                         <div class="flex items-center space-x-2 mt-1">
+                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                 key.key?.startsWith('ak_live_') ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                             }">
+                                 ${key.key?.startsWith('ak_live_') ? '🟢 Live' : '🔵 Test'}
+                             </span>
+                             <span class="text-xs text-gray-500">Created ${this.formatDate(key.createdAt)}</span>
+                         </div>
+                     </div>
+                     <div class="flex items-center space-x-2">
+                         <button onclick="dashboard.requestFullKey('${key.id}')" class="text-gray-400 hover:text-gray-600" title="Request full key">
+                             🔓
+                         </button>
+                         <button onclick="dashboard.deleteKey('${key.id}')" class="text-red-400 hover:text-red-600">
+                             🗑️
+                         </button>
+                     </div>
+                 </div>
+                 
+                 <div class="bg-gray-50 rounded p-3 font-mono text-sm">
+                     <span id="key-${key.id}">
+                         ${key.maskedKey || this.maskKey(key.key)}
+                     </span>
+                 </div>
+                 
+                 <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+                     <span>Last used: ${key.lastUsed ? this.formatDate(key.lastUsed) : 'Never'}</span>
+                     <span>Permissions: ${Array.isArray(key.permissions) ? key.permissions.join(', ') : key.permissions || 'None'}</span>
+                 </div>
+             </div>
+         `;
+             }).join('');
+             
+             console.log('🎨 Generated HTML length:', html.length);
+             container.innerHTML = html;
+             console.log('🎨 Successfully set container innerHTML');
+             
+         } catch (error) {
+             console.error('❌ Error rendering API keys:', error);
+             container.innerHTML = '<div class="text-red-500 p-4">Error rendering API keys - check console</div>';
+         }
     }
     
     renderActivity() {
