@@ -201,5 +201,24 @@ router.post('/:keyId/rotate', simpleAuthCheck, async (req, res) => {
     }
 });
 
+// 🔍 DEBUG: Test authentication - REMOVE IN PRODUCTION
+router.get('/debug/auth', simpleAuthCheck, async (req, res) => {
+    console.log('🔍 DEBUG AUTH ENDPOINT HIT');
+    console.log('🔍 Request cookies:', req.cookies);
+    console.log('🔍 Request headers:', req.headers);
+    console.log('🔍 req.user:', req.user);
+    console.log('🔍 req.userId:', req.userId);
+    
+    res.json({
+        success: true,
+        message: 'Authentication test successful',
+        user: req.user,
+        userId: req.userId,
+        cookies: req.cookies,
+        authHeader: req.headers.authorization,
+        timestamp: new Date().toISOString()
+    });
+});
+
 console.log('🔐 Secure API key routes loaded - AUTHENTICATION REQUIRED');
 module.exports = router; 
