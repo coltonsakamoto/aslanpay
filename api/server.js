@@ -286,7 +286,18 @@ app.get('/api/debug-test', (req, res) => {
     res.json({
         message: 'Debug route working',
         timestamp: new Date().toISOString(),
-        deployment: 'LATEST'
+        deployment: 'LATEST',
+        hotfixHealthBranch: true
+    });
+});
+
+// FORCE OVERRIDE: Add this route AFTER all other potential routes
+app.get('/api/keys-debug', (req, res) => {
+    res.json({
+        message: 'ENHANCED API KEYS DEBUG ACTIVE',
+        deployment: 'hotfix/health',
+        timestamp: new Date().toISOString(),
+        routeRegistered: true
     });
 });
 
