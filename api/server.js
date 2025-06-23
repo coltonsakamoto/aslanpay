@@ -65,7 +65,7 @@ function setupSimpleAuth() {
         password: 'password123'
     });
     
-    // Simple auth endpoints (no sessions required)
+    // Session-based auth endpoints (matching frontend expectations)
     app.post('/api/auth/login', (req, res) => {
         try {
             const { email, password } = req.body;
@@ -85,15 +85,14 @@ function setupSimpleAuth() {
                 });
             }
             
-            const token = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            tempSessions.set(token, { user, createdAt: new Date() });
+            // Set session
+            req.session.userId = user.id;
+            req.session.user = { id: user.id, email: user.email, name: user.name };
             
             res.json({
                 success: true,
                 user: { id: user.id, email: user.email, name: user.name },
-                token: token,
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-                message: 'Login successful (simple auth mode)'
+                message: 'Login successful (production mode)'
             });
         } catch (error) {
             console.error('Auth login error:', error);
@@ -104,15 +103,36 @@ function setupSimpleAuth() {
         }
     });
     
-    app.get('/api/auth/status', (req, res) => {
+    // Frontend expects /api/auth/me endpoint
+    app.get('/api/auth/me', (req, res) => {
         try {
-            const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
-            const userSession = token ? tempSessions.get(token) : null;
+            if (!req.session.userId || !req.session.user) {
+                return res.status(401).json({
+                    error: 'Not authenticated',
+                    code: 'NOT_AUTHENTICATED'
+                });
+            }
             
             res.json({
-                authenticated: !!userSession,
-                user: userSession?.user || null,
-                message: 'Simple auth mode - no DATABASE_URL'
+                success: true,
+                user: req.session.user,
+                message: 'Authenticated (production mode)'
+            });
+        } catch (error) {
+            console.error('Auth me error:', error);
+            res.status(500).json({
+                error: 'Internal server error',
+                code: 'INTERNAL_ERROR'
+            });
+        }
+    });
+    
+    app.get('/api/auth/status', (req, res) => {
+        try {
+            res.json({
+                authenticated: !!(req.session.userId),
+                user: req.session.user || null,
+                message: 'Production auth mode'
             });
         } catch (error) {
             console.error('Auth status error:', error);
@@ -125,13 +145,19 @@ function setupSimpleAuth() {
     
     app.post('/api/auth/logout', (req, res) => {
         try {
-            const token = req.headers.authorization?.replace('Bearer ', '') || req.body.token;
-            if (token) {
-                tempSessions.delete(token);
-            }
-            res.json({ 
-                success: true,
-                message: 'Logout successful' 
+            req.session.destroy((err) => {
+                if (err) {
+                    console.error('Logout error:', err);
+                    return res.status(500).json({
+                        error: 'Logout failed',
+                        code: 'LOGOUT_ERROR'
+                    });
+                }
+                res.clearCookie('connect.sid');
+                res.json({ 
+                    success: true,
+                    message: 'Logout successful' 
+                });
             });
         } catch (error) {
             console.error('Auth logout error:', error);
@@ -175,17 +201,13 @@ function setupSimpleAuth() {
             });
             
             // Create session
-            tempSessions.set(token, { 
-                user: { id: userId, email: email.toLowerCase(), name },
-                createdAt: new Date() 
-            });
+            req.session.userId = userId;
+            req.session.user = { id: userId, email: email.toLowerCase(), name };
             
             res.status(201).json({
                 success: true,
-                message: 'Account created successfully! (Simple auth mode)',
-                user: { id: userId, email: email.toLowerCase(), name },
-                token: token,
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                message: 'Account created successfully! (Production mode)',
+                user: { id: userId, email: email.toLowerCase(), name }
             });
         } catch (error) {
             console.error('Auth signup error:', error);
@@ -336,34 +358,180 @@ app.post('/api/v1/authorize', (req, res) => {
     });
 });
 
-// API Keys management endpoints
-app.get('/api/keys', (req, res) => {
-    res.json({
-        message: 'API Keys endpoint',
-        action: 'list',
-        keys: []
-    });
-});
-
-app.post('/api/keys', (req, res) => {
-    const { name, permissions = ['read'] } = req.body;
+// Load enhanced API keys routes
+console.log('🔑 Loading enhanced API keys system...');
+try {
+    const apiKeyRoutes = require('../routes/api-keys');
+    app.use('/api/keys', apiKeyRoutes);
+    console.log('✅ Enhanced API keys system loaded');
+} catch (error) {
+    console.error('❌ Failed to load enhanced API keys system:', error);
+    console.log('⚠️ Falling back to simple API keys...');
     
-    if (!name) {
-        return res.status(400).json({
-            error: 'Key name required'
-        });
+    // Fallback to simple API keys if enhanced system fails
+    setupSimpleApiKeys();
+}
+
+function setupSimpleApiKeys() {
+    // In-memory API key storage for production
+    const tempApiKeys = new Map();
+    
+    // Session authentication middleware
+    function requireAuth(req, res, next) {
+        if (!req.session.userId || !req.session.user) {
+            return res.status(401).json({
+                error: 'Authentication required',
+                code: 'NOT_AUTHENTICATED'
+            });
+        }
+        next();
     }
     
-    const apiKey = `ak_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
-    
-    res.json({
-        message: 'API key created',
-        keyId: `key_${Date.now()}`,
-        apiKey,
-        name,
-        permissions,
-        created: new Date().toISOString()
-    });
+    // API Keys management endpoints
+    app.get('/api/keys', requireAuth, (req, res) => {
+    try {
+        console.log('🔍 PRODUCTION: Loading API keys for user:', req.session.user.id);
+        
+        // Get user's API keys
+        const userKeys = Array.from(tempApiKeys.values()).filter(key => key.userId === req.session.user.id);
+        
+        console.log('✅ Found', userKeys.length, 'API keys for user');
+        
+        res.json({
+            success: true,
+            keys: userKeys,
+            total: userKeys.length
+        });
+    } catch (error) {
+        console.error('❌ Get API keys error:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+app.post('/api/keys', requireAuth, (req, res) => {
+    try {
+        console.log('🔑 PRODUCTION: Creating API key for user:', req.session.user.id);
+        
+        const { name, environment = 'live' } = req.body;
+        
+        if (!name || name.trim() === '') {
+            return res.status(400).json({
+                error: 'API key name is required',
+                code: 'MISSING_NAME'
+            });
+        }
+        
+        const keyId = `key_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+        const keyPrefix = environment === 'test' ? 'ak_test_' : 'ak_live_';
+        const apiKeyValue = `${keyPrefix}${Date.now()}_${Math.random().toString(36).substr(2, 20)}`;
+        
+        const apiKey = {
+            id: keyId,
+            userId: req.session.user.id,
+            name: name.trim(),
+            key: apiKeyValue,
+            environment,
+            permissions: ['authorize', 'confirm', 'refund'],
+            createdAt: new Date().toISOString(),
+            lastUsed: null,
+            usageCount: 0,
+            isActive: true
+        };
+        
+        tempApiKeys.set(keyId, apiKey);
+        
+        console.log('✅ API key created:', keyId);
+        
+        res.status(201).json({
+            success: true,
+            apiKey,
+            message: 'API key created successfully'
+        });
+    } catch (error) {
+        console.error('❌ Create API key error:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+app.delete('/api/keys/:keyId', requireAuth, (req, res) => {
+    try {
+        console.log('🗑️ PRODUCTION: Revoking API key:', req.params.keyId);
+        
+        const { keyId } = req.params;
+        const apiKey = tempApiKeys.get(keyId);
+        
+        if (!apiKey || apiKey.userId !== req.session.user.id) {
+            return res.status(404).json({
+                error: 'API key not found or access denied',
+                code: 'KEY_NOT_FOUND'
+            });
+        }
+        
+        tempApiKeys.delete(keyId);
+        
+        console.log('✅ API key revoked:', keyId);
+        
+        res.json({
+            success: true,
+            message: 'API key revoked successfully'
+        });
+    } catch (error) {
+        console.error('❌ Revoke API key error:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+app.post('/api/keys/:keyId/rotate', requireAuth, (req, res) => {
+    try {
+        console.log('🔄 PRODUCTION: Rotating API key:', req.params.keyId);
+        
+        const { keyId } = req.params;
+        const oldKey = tempApiKeys.get(keyId);
+        
+        if (!oldKey || oldKey.userId !== req.session.user.id) {
+            return res.status(404).json({
+                error: 'API key not found or access denied',
+                code: 'KEY_NOT_FOUND'
+            });
+        }
+        
+        // Generate new key
+        const keyPrefix = oldKey.environment === 'test' ? 'ak_test_' : 'ak_live_';
+        const newKeyValue = `${keyPrefix}${Date.now()}_${Math.random().toString(36).substr(2, 20)}`;
+        
+        const newKey = {
+            ...oldKey,
+            key: newKeyValue,
+            createdAt: new Date().toISOString(),
+            lastUsed: null,
+            usageCount: 0
+        };
+        
+        tempApiKeys.set(keyId, newKey);
+        
+        console.log('✅ API key rotated:', keyId);
+        
+        res.json({
+            success: true,
+            apiKey: newKey,
+            message: 'API key rotated successfully'
+        });
+    } catch (error) {
+        console.error('❌ Rotate API key error:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            code: 'INTERNAL_ERROR'
+        });
+    }
 });
 
 // Spending controls endpoint
@@ -816,6 +984,8 @@ app.get('/api', (req, res) => {
     
     res.send(apiHTML);
 });
+
+} // End of setupSimpleApiKeys function
 
 // Export the Express app instead of starting a server
 // (the root server.js will handle starting the server)
