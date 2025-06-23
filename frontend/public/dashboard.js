@@ -15,20 +15,27 @@ class DeveloperDashboard {
     
     async loadApiKeysFromServer() {
         try {
+            console.log('🔍 Loading API keys from server...');
             const response = await fetch('/api/keys', {
                 credentials: 'include'
             });
             
+            console.log('🔍 Server response status:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
+                console.log('🔍 Server response data:', data);
+                console.log('🔍 Keys from server:', data.keys);
+                
                 // Server should only return masked keys
                 this.apiKeys = data.keys || [];
+                console.log('✅ Loaded API keys:', this.apiKeys.length);
             } else {
-                console.error('Failed to load API keys');
+                console.error('❌ Failed to load API keys, status:', response.status);
                 this.apiKeys = [];
             }
         } catch (error) {
-            console.error('Error loading API keys:', error);
+            console.error('❌ Error loading API keys:', error);
             this.apiKeys = [];
         }
     }
@@ -51,6 +58,7 @@ class DeveloperDashboard {
     }
     
     renderApiKeys() {
+        console.log('🎨 Rendering API keys:', this.apiKeys);
         const container = document.getElementById('api-keys-list');
         
         if (this.apiKeys.length === 0) {
