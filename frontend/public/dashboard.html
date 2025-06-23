@@ -342,10 +342,10 @@
         // Load API keys
         async function loadApiKeys() {
             try {
-                const response = await fetch('/api/keys', {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
-                    }
+                console.log('🚨 EMERGENCY: Loading API keys without auth...');
+                const response = await fetch('/api/keys?' + Date.now(), {
+                    credentials: 'include',
+                    cache: 'no-cache'
                 });
                 
                 if (response.ok) {
@@ -516,12 +516,13 @@
             const environment = document.getElementById('key-environment').value;
             
             try {
+                console.log('🚨 EMERGENCY: Creating key without auth:', { name, environment });
                 const response = await fetch('/api/keys', {
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
+                        'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({ name, environment })
                 });
                 
@@ -547,11 +548,10 @@
             }
             
             try {
+                console.log('🚨 EMERGENCY: Rotating key without auth:', keyId);
                 const response = await fetch(`/api/keys/${keyId}/rotate`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
-                    }
+                    credentials: 'include'
                 });
                 
                 if (response.ok) {
@@ -573,11 +573,10 @@
             }
             
             try {
+                console.log('🚨 EMERGENCY: Revoking key without auth:', keyId);
                 const response = await fetch(`/api/keys/${keyId}`, {
                     method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
-                    }
+                    credentials: 'include'
                 });
                 
                 if (response.ok) {

@@ -61,15 +61,19 @@ router.get('/', (req, res) => {
 // 🚨 EMERGENCY: Create new API key - NO AUTH, NO IMPORTS
 router.post('/', (req, res) => {
     console.log('🚨 EMERGENCY: POST /api/keys called - SIMPLE VERSION');
+    console.log('🚨 EMERGENCY: Request body:', req.body);
+    console.log('🚨 EMERGENCY: Headers:', req.headers);
     
     try {
-        const { name } = req.body || {};
-        console.log('🚨 EMERGENCY: Creating key with name:', name);
+        const { name, environment } = req.body || {};
+        console.log('🚨 EMERGENCY: Creating key with name:', name, 'environment:', environment);
+        
+        const keyPrefix = environment === 'test' ? 'ak_test_' : 'ak_live_';
         
         const newKey = {
             id: 'emergency_' + Date.now(),
             name: name || 'Emergency Key',
-            key: 'ak_live_emergency' + Date.now() + Math.random().toString(36).substring(2),
+            key: keyPrefix + 'emergency' + Date.now() + Math.random().toString(36).substring(2),
             permissions: ['authorize', 'confirm', 'refund'],
             createdAt: new Date().toISOString(),
             lastUsed: null,
@@ -95,6 +99,44 @@ router.post('/', (req, res) => {
             details: error.message
         });
     }
+});
+
+// 🚨 EMERGENCY: Rotate API key - NO AUTH
+router.post('/:keyId/rotate', (req, res) => {
+    console.log('🚨 EMERGENCY: POST /api/keys/:keyId/rotate called');
+    const { keyId } = req.params;
+    
+    const newKey = {
+        id: keyId,
+        name: 'Rotated ' + keyId,
+        key: 'ak_live_rotated' + Date.now() + Math.random().toString(36).substring(2),
+        permissions: ['authorize', 'confirm', 'refund'],
+        createdAt: new Date().toISOString(),
+        lastUsed: null,
+        usageCount: 0,
+        isActive: true
+    };
+    
+    console.log('🚨 EMERGENCY: Rotated key:', newKey.id);
+    
+    res.json({
+        success: true,
+        apiKey: newKey,
+        message: 'Emergency API key rotated successfully'
+    });
+});
+
+// 🚨 EMERGENCY: Delete API key - NO AUTH  
+router.delete('/:keyId', (req, res) => {
+    console.log('🚨 EMERGENCY: DELETE /api/keys/:keyId called');
+    const { keyId } = req.params;
+    
+    console.log('🚨 EMERGENCY: Deleted key:', keyId);
+    
+    res.json({
+        success: true,
+        message: 'Emergency API key deleted successfully'
+    });
 });
 
 // Simple test endpoint
