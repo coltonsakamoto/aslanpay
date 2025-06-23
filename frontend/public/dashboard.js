@@ -33,10 +33,7 @@ class DeveloperDashboard {
         }
     }
     
-    generateKeyId() {
-        // This should NEVER be used - keys must be generated server-side
-        throw new Error('API keys must be generated on the server');
-    }
+    // Removed generateKeyId() - all keys are now generated server-side
     
     generateActivity() {
         const activities = [
@@ -77,11 +74,11 @@ class DeveloperDashboard {
                         <h3 class="font-medium text-gray-900">${this.escapeHtml(key.name)}</h3>
                         <div class="flex items-center space-x-2 mt-1">
                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                key.environment === 'live' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                                key.key?.startsWith('ak_live_') ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
                             }">
-                                ${key.environment === 'live' ? '🟢 Live' : '🔵 Test'}
+                                ${key.key?.startsWith('ak_live_') ? '🟢 Live' : '🔵 Test'}
                             </span>
-                            <span class="text-xs text-gray-500">Created ${this.formatDate(key.created)}</span>
+                            <span class="text-xs text-gray-500">Created ${this.formatDate(key.createdAt)}</span>
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
@@ -102,7 +99,7 @@ class DeveloperDashboard {
                 
                 <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
                     <span>Last used: ${key.lastUsed ? this.formatDate(key.lastUsed) : 'Never'}</span>
-                    <span>Permissions: ${key.permissions.join(', ')}</span>
+                    <span>Permissions: ${Array.isArray(key.permissions) ? key.permissions.join(', ') : key.permissions || 'None'}</span>
                 </div>
             </div>
         `).join('');
@@ -213,44 +210,85 @@ class DeveloperDashboard {
         
         document.body.appendChild(modal);
         
-        document.getElementById('create-key-form').addEventListener('submit', (e) => {
+        document.getElementById('create-key-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            this.createApiKey();
+            await this.createApiKey();
             document.body.removeChild(modal);
         });
     }
     
-    createApiKey() {
+    async createApiKey() {
         const name = document.getElementById('key-name').value;
-        const environment = document.getElementById('key-environment').value;
-        const permissions = [];
         
-        if (document.getElementById('perm-read').checked) permissions.push('read');
-        if (document.getElementById('perm-write').checked) permissions.push('write');
+        if (!name || name.trim() === '') {
+            this.showNotification('❌ Please enter a key name', 'error');
+            return;
+        }
         
-        const newKey = {
-            id: 'key_' + Date.now(),
-            name: name,
-            key: (environment === 'live' ? 'sk_live_' : 'sk_test_') + this.generateKeyId(),
-            environment: environment,
-            created: new Date().toISOString(),
-            lastUsed: null,
-            permissions: permissions,
-            status: 'active'
-        };
-        
-        this.apiKeys.push(newKey);
-        this.renderApiKeys();
-        
-        // Show success notification
-        this.showNotification('✅ API key created successfully!', 'success');
+        try {
+            console.log('🔑 Creating API key via server:', name);
+            
+            const response = await fetch('/api/keys', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ name: name.trim() })
+            });
+            
+            const data = await response.json();
+            console.log('🔑 Server response:', data);
+            
+            if (response.ok) {
+                this.showNotification('✅ API key created successfully!', 'success');
+                
+                // Reload API keys from server to get the real data
+                await this.loadApiKeysFromServer();
+                this.renderApiKeys();
+                
+                console.log('✅ API keys refreshed after creation');
+            } else {
+                console.error('❌ API key creation failed:', data);
+                this.showNotification(`❌ Failed to create API key: ${data.error || 'Unknown error'}`, 'error');
+            }
+        } catch (error) {
+            console.error('❌ Network error creating API key:', error);
+            this.showNotification('❌ Network error. Please try again.', 'error');
+        }
     }
     
-    deleteKey(keyId) {
-        if (confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
-            this.apiKeys = this.apiKeys.filter(key => key.id !== keyId);
-            this.renderApiKeys();
-            this.showNotification('🗑️ API key deleted', 'warning');
+    async deleteKey(keyId) {
+        if (!confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            console.log('🗑️ Deleting API key via server:', keyId);
+            
+            const response = await fetch(`/api/keys/${keyId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            
+            const data = await response.json();
+            console.log('🗑️ Server response:', data);
+            
+            if (response.ok) {
+                this.showNotification('🗑️ API key deleted successfully', 'warning');
+                
+                // Reload API keys from server
+                await this.loadApiKeysFromServer();
+                this.renderApiKeys();
+                
+                console.log('✅ API keys refreshed after deletion');
+            } else {
+                console.error('❌ API key deletion failed:', data);
+                this.showNotification(`❌ Failed to delete API key: ${data.error || 'Unknown error'}`, 'error');
+            }
+        } catch (error) {
+            console.error('❌ Network error deleting API key:', error);
+            this.showNotification('❌ Network error. Please try again.', 'error');
         }
     }
     
