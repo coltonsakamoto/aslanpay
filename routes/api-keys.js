@@ -14,20 +14,31 @@ function maskApiKey(key) {
 
 // 🔐 SECURE: Get all API keys - AUTHENTICATION REQUIRED  
 router.get('/', simpleAuthCheck, async (req, res) => {
-    console.log('🔐 SECURE: Getting REAL API keys from database');
+    console.log('🔐 API KEYS GET: Starting request');
+    console.log('🔐 Request user:', req.user);
+    console.log('🔐 Request userId:', req.userId);
     
     try {
-        console.log(`📋 Getting API keys for user: ${req.user.id}`);
+        const userId = req.user?.id || req.userId;
+        console.log(`📋 Getting API keys for user: ${userId}`);
+        
+        if (!userId) {
+            console.log('❌ No user ID found in request');
+            return res.status(401).json({
+                error: 'User ID not found',
+                code: 'NO_USER_ID'
+            });
+        }
         
         // Get REAL API keys from database
-        const apiKeys = await database.getApiKeysByUserId(req.user.id);
+        const apiKeys = await database.getApiKeysByUserId(userId);
         console.log(`✅ Found ${apiKeys.length} REAL API keys`);
         
         res.json({
             success: true,
             keys: apiKeys,
             total: apiKeys.length,
-            userId: req.user.id,
+            userId: userId,
             authenticated: true
         });
         
@@ -43,10 +54,19 @@ router.get('/', simpleAuthCheck, async (req, res) => {
 
 // 🔐 SECURE: Create new API key - AUTHENTICATION REQUIRED
 router.post('/', simpleAuthCheck, async (req, res) => {
-    console.log('🔐 SECURE: Creating REAL API key in database');
+    console.log('🔐 API KEYS CREATE: Starting request');
     
     try {
         const { name } = req.body;
+        const userId = req.user?.id || req.userId;
+        
+        if (!userId) {
+            console.log('❌ No user ID found in request');
+            return res.status(401).json({
+                error: 'User ID not found',
+                code: 'NO_USER_ID'
+            });
+        }
         
         if (!name || name.trim() === '') {
             return res.status(400).json({
@@ -55,10 +75,10 @@ router.post('/', simpleAuthCheck, async (req, res) => {
             });
         }
         
-        console.log(`🔑 Creating REAL API key "${name}" for user ${req.user.id}`);
+        console.log(`🔑 Creating REAL API key "${name}" for user ${userId}`);
         
         // Check for duplicate names
-        const existingKeys = await database.getApiKeysByUserId(req.user.id);
+        const existingKeys = await database.getApiKeysByUserId(userId);
         const duplicate = existingKeys.find(key => 
             key.name.toLowerCase() === name.trim().toLowerCase()
         );
@@ -71,14 +91,14 @@ router.post('/', simpleAuthCheck, async (req, res) => {
         }
         
         // Create REAL API key in database
-        const apiKey = await database.createApiKey(req.user.id, name.trim());
+        const apiKey = await database.createApiKey(userId, name.trim());
         console.log(`✅ REAL API key created: ${apiKey.id}`);
         
         res.status(201).json({
             success: true,
             apiKey,
             message: 'API key created successfully',
-            userId: req.user.id,
+            userId: userId,
             authenticated: true
         });
         
