@@ -25,30 +25,8 @@ console.log('🔧 Setting up robust auth system...');
 // STEP 1: Always setup simple auth as baseline (ensures signup always works)
 setupSimpleAuth();
 
-// STEP 2: Try to enhance with PostgreSQL if available (non-blocking)
-const hasDatabaseUrl = process.env.DATABASE_URL && process.env.DATABASE_URL.length > 0;
-
-if (hasDatabaseUrl) {
-    console.log('🔗 DATABASE_URL found - attempting to enhance with PostgreSQL features');
-    setTimeout(async () => {
-        try {
-            const database = require('../config/database');
-            
-            // Test database connection
-            await database.healthCheck();
-            console.log('✅ PostgreSQL connection successful - enhanced features available');
-            
-            // PostgreSQL is working, but simple auth is already handling signup
-            // This could be used for advanced features like persistent storage
-            
-        } catch (error) {
-            console.log('⚠️ PostgreSQL connection failed - continuing with simple auth only');
-            console.log('   Error:', error.message);
-        }
-    }, 1000); // Non-blocking async test
-} else {
-    console.log('⚠️ DATABASE_URL not found - using simple auth only');
-}
+// 🔥 PRISMA REMOVED: Skipping all database connections to avoid Prisma conflicts
+console.log('✅ Using pure in-memory storage - no external database dependencies');
 
 function setupSimpleAuth() {
     console.log('🔧 Setting up simple auth system');
@@ -303,45 +281,14 @@ app.get('/api/keys-debug', (req, res) => {
     });
 });
 
-// Database health check endpoint
-app.get('/api/db-health', async (req, res) => {
-    try {
-        console.log('🏥 Database health check requested');
-        
-        // Check if we're using PostgreSQL or simple auth
-        const hasDatabaseUrl = process.env.DATABASE_URL && process.env.DATABASE_URL.length > 0;
-        
-        if (!hasDatabaseUrl) {
-            return res.json({
-                status: 'simple-auth',
-                message: 'Using simple auth system (no DATABASE_URL)',
-                timestamp: new Date().toISOString()
-            });
-        }
-        
-        console.log('🔗 DATABASE_URL found, testing PostgreSQL connection...');
-        
-        // Try to load the database
-        const database = require('../config/database');
-        
-        // Test database health
-        const healthResult = await database.healthCheck();
-        console.log('✅ Database health check result:', healthResult);
-        
-        res.json({
-            status: 'postgresql-connected',
-            health: healthResult,
-            timestamp: new Date().toISOString()
-        });
-        
-    } catch (error) {
-        console.error('❌ Database health check failed:', error);
-        res.status(500).json({
-            status: 'database-error',
-            error: error.message,
-            timestamp: new Date().toISOString()
-        });
-    }
+// Database health check endpoint - pure in-memory version
+app.get('/api/db-health', (req, res) => {
+    res.json({
+        status: 'in-memory',
+        message: 'Using pure in-memory storage (no Prisma dependencies)',
+        timestamp: new Date().toISOString(),
+        reliable: true
+    });
 });
 
 // Main authorization endpoint (simplified but functional)
@@ -381,20 +328,8 @@ app.post('/api/v1/authorize', (req, res) => {
     });
 });
 
-// Load enhanced API keys routes
-console.log('🔑 Loading enhanced API keys system...');
-try {
-    const apiKeyRoutes = require('../routes/api-keys');
-    app.use('/api/keys', apiKeyRoutes);
-    console.log('✅ Enhanced API keys system loaded successfully');
-} catch (error) {
-    console.error('❌ Failed to load enhanced API keys system:', error.message);
-    console.error('❌ Stack trace:', error.stack);
-    console.log('⚠️ Falling back to enhanced simple API keys...');
-    
-    // Fallback to enhanced simple API keys if database system fails
-    setupEnhancedSimpleApiKeys();
-}
+// 🔥 PRISMA REMOVED: Using pure in-memory system for maximum reliability
+console.log('🔑 Using pure in-memory API keys system (no Prisma dependencies)');
 
 // FIXED: Enhanced API Keys endpoint moved outside function so it actually gets registered!
 console.log('🔑 Setting up enhanced simple API keys as primary system...');
