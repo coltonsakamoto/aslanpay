@@ -348,62 +348,7 @@ function requireAuth(req, res, next) {
     next();
 }
 
-// API Keys management endpoints with enhanced debugging - NOW ACTIVE!
-app.get('/api/keys', (req, res) => {
-        console.log('🔍 [SIMPLE-API-KEYS] Session validation started for:', req.method, req.path);
-        console.log('🔍 [SIMPLE-API-KEYS] Session data:', {
-            hasSession: !!req.session,
-            hasUserId: !!(req.session && req.session.userId),
-            hasUser: !!(req.session && req.session.user),
-            sessionKeys: req.session ? Object.keys(req.session) : []
-        });
-        
-        // Enhanced session checking with detailed debugging
-        if (!req.session || !req.session.userId || !req.session.user) {
-            console.log('❌ [SIMPLE-API-KEYS] Authentication failed');
-            return res.status(401).json({
-                error: 'Authentication required',
-                code: 'NOT_AUTHENTICATED',
-                debug: {
-                    hasSession: !!req.session,
-                    hasUserId: !!(req.session && req.session.userId),
-                    hasUser: !!(req.session && req.session.user),
-                    message: 'Please log in to access API keys'
-                }
-            });
-        }
-        
-        try {
-            console.log('✅ [SIMPLE-API-KEYS] User authenticated:', req.session.user.email);
-            console.log('🔍 [SIMPLE-API-KEYS] Loading API keys for user:', req.session.user.id);
-            
-            // Get user's API keys
-            const userKeys = Array.from(tempApiKeys.values()).filter(key => key.userId === req.session.user.id);
-            
-            console.log('✅ [SIMPLE-API-KEYS] Found', userKeys.length, 'API keys for user');
-            
-            res.json({
-                success: true,
-                keys: userKeys,
-                total: userKeys.length,
-                debug: {
-                    authMethod: 'session',
-                    userId: req.session.user.id,
-                    userEmail: req.session.user.email
-                }
-            });
-        } catch (error) {
-            console.error('❌ [SIMPLE-API-KEYS] Get API keys error:', error);
-            res.status(500).json({
-                error: 'Internal server error',
-                code: 'INTERNAL_ERROR',
-                debug: {
-                    message: error.message,
-                    stack: error.stack
-                }
-            });
-        }
-    });
+// 🔥 REMOVED: Duplicate API keys route - using nuclear override at end of file instead
 
 app.post('/api/keys', requireAuth, (req, res) => {
     try {
