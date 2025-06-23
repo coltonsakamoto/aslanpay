@@ -363,13 +363,14 @@ console.log('🔑 Loading enhanced API keys system...');
 try {
     const apiKeyRoutes = require('../routes/api-keys');
     app.use('/api/keys', apiKeyRoutes);
-    console.log('✅ Enhanced API keys system loaded');
+    console.log('✅ Enhanced API keys system loaded successfully');
 } catch (error) {
-    console.error('❌ Failed to load enhanced API keys system:', error);
-    console.log('⚠️ Falling back to simple API keys...');
+    console.error('❌ Failed to load enhanced API keys system:', error.message);
+    console.error('❌ Stack trace:', error.stack);
+    console.log('⚠️ Falling back to enhanced simple API keys...');
     
-    // Fallback to simple API keys if enhanced system fails
-    setupSimpleApiKeys();
+    // Fallback to enhanced simple API keys if database system fails
+    setupEnhancedSimpleApiKeys();
 }
 
 function setupSimpleApiKeys() {
