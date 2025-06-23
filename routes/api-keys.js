@@ -4,58 +4,8 @@ const database = require('../config/database');
 
 console.log('🔐 SECURE API KEY ROUTES - PROPER AUTHENTICATION REQUIRED');
 
-// Proper middleware that works with your frontend's localStorage auth
-const validateFrontendAuth = async (req, res, next) => {
-    try {
-        console.log('🔍 Validating frontend authentication for:', req.path);
-        
-        // Check for Authorization header (your frontend format)
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            console.log('❌ Missing or invalid Authorization header');
-            return res.status(401).json({
-                error: 'Authentication required',
-                code: 'MISSING_AUTH',
-                message: 'Please provide a valid Authorization header'
-            });
-        }
-
-        const token = authHeader.substring(7);
-        console.log('🔍 Token received:', token.substring(0, 10) + '...');
-        
-        // Simple validation - check if token exists and has minimum length
-        if (!token || token.length < 10) {
-            console.log('❌ Invalid token format');
-            return res.status(401).json({
-                error: 'Invalid authentication token',
-                code: 'INVALID_TOKEN'
-            });
-        }
-
-        // For now, create a consistent user based on the token
-        // This maintains security while working with your existing frontend
-        const userId = 'user_' + Buffer.from(token.substring(0, 20)).toString('base64').substring(0, 12);
-        
-        req.user = {
-            id: userId,
-            email: `user-${userId}@frontend.com`,
-            name: 'Authenticated User',
-            emailVerified: true,
-            subscriptionPlan: 'builder'
-        };
-        req.session = { userId: userId };
-        
-        console.log('✅ Frontend authentication successful for user:', userId);
-        next();
-        
-    } catch (error) {
-        console.error('❌ Authentication error:', error);
-        res.status(500).json({
-            error: 'Authentication system error',
-            code: 'AUTH_ERROR'
-        });
-    }
-};
+// Use the same session validation as the main auth system
+const { validateSessionSimple } = require('../middleware/auth');
 
 // Helper function to mask API keys
 function maskApiKey(key) {
@@ -64,7 +14,7 @@ function maskApiKey(key) {
 }
 
 // 🔐 SECURE: Get all API keys - AUTHENTICATION REQUIRED
-router.get('/', validateFrontendAuth, async (req, res) => {
+router.get('/', validateSessionSimple, async (req, res) => {
     console.log('🔐 SECURE: API key list request - auth required');
     const startTime = Date.now();
     
@@ -100,7 +50,7 @@ router.get('/', validateFrontendAuth, async (req, res) => {
 });
 
 // 🔐 SECURE: Create new API key - AUTHENTICATION REQUIRED
-router.post('/', validateFrontendAuth, async (req, res) => {
+router.post('/', validateSessionSimple, async (req, res) => {
     console.log('🔐 SECURE: API key creation request - auth required');
     const startTime = Date.now();
     
@@ -162,7 +112,7 @@ router.post('/', validateFrontendAuth, async (req, res) => {
 });
 
 // 🔐 SECURE: Revoke API key - AUTHENTICATION REQUIRED
-router.delete('/:keyId', validateFrontendAuth, async (req, res) => {
+router.delete('/:keyId', validateSessionSimple, async (req, res) => {
     console.log('🔐 SECURE: API key revoke request - auth required');
     const startTime = Date.now();
     
@@ -213,7 +163,7 @@ router.delete('/:keyId', validateFrontendAuth, async (req, res) => {
 });
 
 // 🔐 SECURE: Rotate API key - AUTHENTICATION REQUIRED
-router.post('/:keyId/rotate', validateFrontendAuth, async (req, res) => {
+router.post('/:keyId/rotate', validateSessionSimple, async (req, res) => {
     console.log('🔐 SECURE: API key rotate request - auth required');
     const startTime = Date.now();
     
