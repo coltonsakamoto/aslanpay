@@ -517,21 +517,28 @@
             
             try {
                 console.log('🚨 EMERGENCY: Creating key without auth:', { name, environment });
-                const response = await fetch('/api/keys', {
+                const response = await fetch('/api/keys?' + Date.now(), {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include',
+                    cache: 'no-cache',
                     body: JSON.stringify({ name, environment })
                 });
                 
                 if (response.ok) {
+                    const data = await response.json();
+                    console.log('🚨 EMERGENCY: Create response:', data);
                     document.getElementById('create-key-modal').classList.add('hidden');
                     document.getElementById('key-name').value = '';
                     document.getElementById('key-environment').value = 'live'; // Reset to default
                     showToast('🔑 API key created successfully!', 'success');
-                    loadApiKeys(); // Reload the list
+                    // Wait a moment then reload to ensure backend update is complete
+                    setTimeout(() => {
+                        console.log('🚨 EMERGENCY: Refreshing after create...');
+                        loadApiKeys();
+                    }, 500);
                 } else {
                     const data = await response.json();
                     showToast('❌ Failed to create API key: ' + data.error, 'error');
@@ -549,14 +556,21 @@
             
             try {
                 console.log('🚨 EMERGENCY: Rotating key without auth:', keyId);
-                const response = await fetch(`/api/keys/${keyId}/rotate`, {
+                const response = await fetch(`/api/keys/${keyId}/rotate?` + Date.now(), {
                     method: 'POST',
-                    credentials: 'include'
+                    credentials: 'include',
+                    cache: 'no-cache'
                 });
                 
                 if (response.ok) {
+                    const data = await response.json();
+                    console.log('🚨 EMERGENCY: Rotate response:', data);
                     showToast('🔄 API key rotated successfully!', 'success');
-                    loadApiKeys(); // Reload the list
+                    // Wait a moment then reload
+                    setTimeout(() => {
+                        console.log('🚨 EMERGENCY: Refreshing after rotate...');
+                        loadApiKeys();
+                    }, 500);
                 } else {
                     const data = await response.json();
                     showToast('❌ Failed to rotate API key: ' + data.error, 'error');
@@ -574,14 +588,21 @@
             
             try {
                 console.log('🚨 EMERGENCY: Revoking key without auth:', keyId);
-                const response = await fetch(`/api/keys/${keyId}`, {
+                const response = await fetch(`/api/keys/${keyId}?` + Date.now(), {
                     method: 'DELETE',
-                    credentials: 'include'
+                    credentials: 'include',
+                    cache: 'no-cache'
                 });
                 
                 if (response.ok) {
+                    const data = await response.json();
+                    console.log('🚨 EMERGENCY: Revoke response:', data);
                     showToast('🗑️ API key revoked successfully!', 'success');
-                    loadApiKeys(); // Reload the list
+                    // Wait a moment then reload
+                    setTimeout(() => {
+                        console.log('🚨 EMERGENCY: Refreshing after revoke...');
+                        loadApiKeys();
+                    }, 500);
                 } else {
                     const data = await response.json();
                     showToast('❌ Failed to revoke API key: ' + data.error, 'error');
