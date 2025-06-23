@@ -277,7 +277,9 @@ app.get('/api/status', (req, res) => {
         version: '1.0.0',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development',
-        deploymentCheck: 'API_KEYS_DEBUG_ACTIVE'
+        deploymentCheck: 'HOTFIX_HEALTH_BRANCH_ACTIVE',
+        nuclearOverrideDeployed: true,
+        deploymentTimestamp: '2025-06-23T21:45:00Z'
     });
 });
 
