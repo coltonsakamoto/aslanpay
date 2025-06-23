@@ -220,5 +220,42 @@ router.get('/debug/auth', simpleAuthCheck, async (req, res) => {
     });
 });
 
+// 🔍 DEBUG: Test API key data format - REMOVE IN PRODUCTION
+router.get('/debug/test-data', async (req, res) => {
+    console.log('🔍 DEBUG: Test data endpoint hit');
+    
+    // Create mock API key data in the exact format we expect
+    const mockKeys = [
+        {
+            id: 'test_key_1',
+            name: 'Test API Key 1',
+            key: 'ak_live_123456789abcdef123456789abcdef123456789abcdef123456789abcdef12',
+            permissions: ['authorize', 'confirm', 'refund'],
+            createdAt: new Date(),
+            lastUsed: null,
+            usageCount: 0,
+            isActive: true
+        },
+        {
+            id: 'test_key_2', 
+            name: 'Test API Key 2',
+            key: 'ak_live_987654321fedcba987654321fedcba987654321fedcba987654321fedcba98',
+            permissions: ['authorize', 'confirm'],
+            createdAt: new Date(Date.now() - 86400000), // 1 day ago
+            lastUsed: new Date(Date.now() - 3600000), // 1 hour ago
+            usageCount: 5,
+            isActive: true
+        }
+    ];
+    
+    res.json({
+        success: true,
+        keys: mockKeys,
+        total: mockKeys.length,
+        debug: true,
+        timestamp: new Date().toISOString()
+    });
+});
+
 console.log('🔐 Secure API key routes loaded - AUTHENTICATION REQUIRED');
 module.exports = router; 

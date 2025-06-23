@@ -70,6 +70,12 @@ class DeveloperDashboard {
                     <button onclick="dashboard.showCreateKeyModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         Create API Key
                     </button>
+                    <button onclick="dashboard.debugRefresh()" class="bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm ml-2">
+                        🔍 Debug Refresh
+                    </button>
+                    <button onclick="dashboard.testMockData()" class="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm ml-2">
+                        🧪 Test Mock Data
+                    </button>
                 </div>
             `;
             return;
@@ -220,8 +226,27 @@ class DeveloperDashboard {
         
         document.getElementById('create-key-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            await this.createApiKey();
-            document.body.removeChild(modal);
+            
+            // Disable the submit button to prevent double clicks
+            const submitBtn = document.querySelector('#create-key-form button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating...';
+            
+            try {
+                const success = await this.createApiKey();
+                if (success) {
+                    document.body.removeChild(modal);
+                } else {
+                    // Keep modal open if creation failed
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            } catch (error) {
+                console.error('❌ Error in modal submit:', error);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
         });
     }
     
@@ -230,11 +255,12 @@ class DeveloperDashboard {
         
         if (!name || name.trim() === '') {
             this.showNotification('❌ Please enter a key name', 'error');
-            return;
+            return false;
         }
         
         try {
-            console.log('🔑 Creating API key via server:', name);
+            console.log('🔑 STEP 1: Creating API key via server with name:', name.trim());
+            console.log('🔑 STEP 1: Current API keys before creation:', this.apiKeys.length);
             
             const response = await fetch('/api/keys', {
                 method: 'POST',
@@ -245,24 +271,36 @@ class DeveloperDashboard {
                 body: JSON.stringify({ name: name.trim() })
             });
             
+            console.log('🔑 STEP 2: Server response status:', response.status);
+            console.log('🔑 STEP 2: Server response headers:', Object.fromEntries(response.headers.entries()));
+            
             const data = await response.json();
-            console.log('🔑 Server response:', data);
+            console.log('🔑 STEP 3: Server response data:', JSON.stringify(data, null, 2));
             
             if (response.ok) {
-                this.showNotification('✅ API key created successfully!', 'success');
+                console.log('🔑 STEP 4: Creation successful, now refreshing...');
+                
+                // Small delay to ensure server has processed the creation
+                await new Promise(resolve => setTimeout(resolve, 100));
                 
                 // Reload API keys from server to get the real data
                 await this.loadApiKeysFromServer();
-                this.renderApiKeys();
+                console.log('🔑 STEP 5: Keys after reload:', this.apiKeys.length, this.apiKeys);
                 
-                console.log('✅ API keys refreshed after creation');
+                this.renderApiKeys();
+                console.log('🔑 STEP 6: Rendering complete');
+                
+                this.showNotification('✅ API key created successfully!', 'success');
+                return true;
             } else {
                 console.error('❌ API key creation failed:', data);
                 this.showNotification(`❌ Failed to create API key: ${data.error || 'Unknown error'}`, 'error');
+                return false;
             }
         } catch (error) {
             console.error('❌ Network error creating API key:', error);
             this.showNotification('❌ Network error. Please try again.', 'error');
+            return false;
         }
     }
     
@@ -352,6 +390,47 @@ class DeveloperDashboard {
         setTimeout(() => {
             notification.remove();
         }, 3000);
+    }
+    
+    async debugRefresh() {
+        console.log('🔍 DEBUG: Manual refresh triggered');
+        console.log('🔍 DEBUG: Current keys before refresh:', this.apiKeys);
+        
+        await this.loadApiKeysFromServer();
+        console.log('🔍 DEBUG: Keys after server load:', this.apiKeys);
+        
+        this.renderApiKeys();
+        console.log('🔍 DEBUG: Rendering complete');
+        
+        this.showNotification('🔍 Debug refresh completed - check console', 'info');
+    }
+    
+    async testMockData() {
+        console.log('🧪 TEST: Loading mock data from debug endpoint');
+        
+        try {
+            const response = await fetch('/api/keys/debug/test-data');
+            console.log('🧪 TEST: Mock data response status:', response.status);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('🧪 TEST: Mock data received:', data);
+                
+                this.apiKeys = data.keys || [];
+                console.log('🧪 TEST: Set apiKeys to:', this.apiKeys);
+                
+                this.renderApiKeys();
+                console.log('🧪 TEST: Rendering complete');
+                
+                this.showNotification('🧪 Mock data loaded - check if keys appear', 'success');
+            } else {
+                console.error('🧪 TEST: Mock data failed:', response.status);
+                this.showNotification('🧪 Mock data failed', 'error');
+            }
+        } catch (error) {
+            console.error('🧪 TEST: Mock data error:', error);
+            this.showNotification('🧪 Mock data error', 'error');
+        }
     }
     
     escapeHtml(unsafe) {
