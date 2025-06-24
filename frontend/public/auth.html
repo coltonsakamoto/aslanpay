@@ -381,6 +381,12 @@
                 const data = await response.json();
                 
                 if (response.ok) {
+                    // Store token in localStorage for API calls
+                    if (data.token) {
+                        localStorage.setItem('aslanpay_token', data.token);
+                        console.log('✅ Token stored in localStorage');
+                    }
+                    
                     showMessage('✅ Login successful! Redirecting to your dashboard...', 'success');
                     setTimeout(() => {
                         window.location.href = '/dashboard.html';
@@ -435,6 +441,12 @@
                 const data = await response.json();
                 
                 if (response.ok) {
+                    // Store token in localStorage for API calls  
+                    if (data.token) {
+                        localStorage.setItem('aslanpay_token', data.token);
+                        console.log('✅ Token stored in localStorage');
+                    }
+                    
                     showMessage('🎉 Account created successfully! You now have production-ready API keys. Redirecting...', 'success');
                     setTimeout(() => {
                         window.location.href = '/dashboard.html';

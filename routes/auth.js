@@ -15,45 +15,44 @@ const {
 
 const router = express.Router();
 
-// PUBLIC SAAS SIGNUP - New main entry point
-router.post('/signup', 
-    InputValidation.validateBody(InputValidation.authSchemas.signup),
-    async (req, res) => {
+// ========================================
+// SIMPLIFIED SIGNUP FOR STAGING
+// ========================================
+router.post('/signup', async (req, res) => {
     try {
         const { email, password, name, organizationName } = req.body;
         
-        console.log('🚀 Public SaaS signup attempt for:', email);
+        console.log('🚀 Signup attempt for:', email);
         
-        // Create tenant + owner + API key in one transaction
-        const result = await database.createTenantWithOwner({
+        // Validation
+        if (!email || !password || !name) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email, password, and name are required',
+                code: 'MISSING_FIELDS'
+            });
+        }
+        
+        if (password.length < 8) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 8 characters long',
+                code: 'WEAK_PASSWORD'
+            });
+        }
+        
+        // Create user with database
+        const user = await database.createUser({
             email: email.toLowerCase(),
             password,
             name,
-            organizationName
+            provider: 'email'
         });
         
-        console.log('✅ Tenant created:', result.tenant.id);
-        console.log('✅ User created:', result.user.id);
-        console.log('✅ API key created:', result.apiKey.id);
+        console.log('✅ User created:', user.id);
         
-        // Create email verification token
-        const verificationToken = database.createEmailVerification(result.user.id, result.user.email);
-        
-        // Send welcome email with API key
-        try {
-            await emailService.sendWelcomeEmail(result.user.email, result.user.name, {
-                apiKey: result.apiKey.key,
-                organizationName: result.tenant.name,
-                dashboardUrl: `${process.env.BASE_URL || 'http://localhost:3000'}/dashboard.html`
-            });
-            console.log('✅ Welcome email sent with API key');
-        } catch (emailError) {
-            console.warn('⚠️ Failed to send welcome email:', emailError.message);
-            // Continue anyway
-        }
-        
-        // Create session for immediate login
-        const sessionId = database.createSession(result.user.id);
+        // Create session
+        const sessionId = await database.createSession(user.id);
         const token = generateToken(sessionId);
         
         // Set HTTP-only cookie
@@ -61,213 +60,72 @@ router.post('/signup',
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            sameSite: 'strict'
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
         });
         
-        console.log('✅ SaaS signup successful for:', email);
+        console.log('✅ Signup successful for:', email);
         
         res.status(201).json({
             success: true,
-            message: 'Account created successfully! Check your email for your API key.',
-            user: result.user,
-            tenant: {
-                id: result.tenant.id,
-                name: result.tenant.name,
-                plan: result.tenant.plan
-            },
-            apiKey: {
-                id: result.apiKey.id,
-                name: result.apiKey.name,
-                key: result.apiKey.key  // Return API key immediately
-            },
-            nextSteps: {
-                dashboard: `${process.env.BASE_URL || 'http://localhost:3000'}/dashboard.html`,
-                docs: `${process.env.BASE_URL || 'http://localhost:3000'}/docs.html`,
-                demo: `${process.env.BASE_URL || 'http://localhost:3000'}/demo.html`
+            message: 'Account created successfully!',
+            token: token, // Return token for frontend localStorage
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                organizationName: organizationName || `${name}'s Organization`
             }
         });
         
     } catch (error) {
         if (error.message === 'User already exists') {
             return res.status(409).json({
+                success: false,
                 error: 'An account with this email already exists',
-                code: 'USER_EXISTS',
-                suggestion: 'Try logging in instead, or use a different email address'
+                code: 'EMAIL_EXISTS'
             });
         }
         
-        console.error('❌ SaaS signup error:', error);
-        console.error('Stack trace:', error.stack);
-        
-        // Return more specific error for debugging
-        const errorMessage = error.message || 'Unknown error';
+        console.error('❌ Signup error:', error);
         res.status(500).json({
-            error: `Failed to create account: ${errorMessage}`,
-            code: 'SIGNUP_FAILED',
-            debug: process.env.NODE_ENV === 'development' ? {
-                originalError: errorMessage,
-                stack: error.stack
-            } : undefined
+            success: false,
+            error: 'Internal server error during signup',
+            code: 'SIGNUP_ERROR'
         });
     }
 });
 
-// Get tenant info for current user
-router.get('/tenant', validateSessionSimple, async (req, res) => {
+// ========================================
+// SIMPLIFIED LOGIN FOR STAGING
+// ========================================
+router.post('/login', async (req, res) => {
     try {
-        const session = database.getSession(req.session.id);
-        const tenant = database.getTenant(session.tenantId);
+        const { email, password } = req.body;
         
-        if (!tenant) {
-            return res.status(404).json({
-                error: 'Tenant not found',
-                code: 'TENANT_NOT_FOUND'
-            });
-        }
+        console.log('🔐 Login attempt for:', email);
         
-        res.json({
-            tenant: {
-                id: tenant.id,
-                name: tenant.name,
-                plan: tenant.plan,
-                settings: tenant.settings,
-                usage: tenant.usage
-            }
-        });
-    } catch (error) {
-        console.error('Get tenant error:', error);
-        res.status(500).json({
-            error: 'Failed to retrieve tenant information',
-            code: 'TENANT_ERROR'
-        });
-    }
-});
-
-// Register new user (LEGACY - for existing single-tenant setups)
-router.post('/register', 
-    InputValidation.validateBody(InputValidation.authSchemas.register),
-    async (req, res) => {
-    try {
-        const { email, password, name } = req.body;
-        
-        console.log('📝 Legacy registration attempt for:', email);
-        
-        // For backward compatibility, create user without explicit tenant
-        let user;
-        try {
-            user = await database.createUser({
-                email: email.toLowerCase(),
-                password,
-                name,
-                provider: 'email'
-            });
-            console.log('✅ User created successfully:', user.id);
-        } catch (createError) {
-            console.error('❌ User creation failed:', createError);
-            throw createError;
-        }
-        
-        // Create email verification token
-        let verificationToken;
-        try {
-            verificationToken = database.createEmailVerification(user.id, user.email);
-            console.log('✅ Verification token created');
-        } catch (tokenError) {
-            console.error('⚠️ Verification token creation failed:', tokenError);
-        }
-        
-        // Send verification email
-        if (verificationToken) {
-            try {
-                await emailService.sendVerificationEmail(user.email, verificationToken);
-                console.log('✅ Verification email sent');
-            } catch (emailError) {
-                console.warn('⚠️ Failed to send verification email:', emailError.message);
-            }
-        }
-        
-        // Create session
-        const sessionId = database.createSession(user.id);
-        const token = generateToken(sessionId);
-        
-        // Set HTTP-only cookie
-        res.cookie('agentpay_session', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            sameSite: 'strict'
-        });
-        
-        console.log('✅ Registration successful for:', email);
-        
-        res.status(201).json({
-            user,
-            message: 'Account created successfully. Please check your email to verify your account.',
-            emailSent: true
-        });
-        
-    } catch (error) {
-        if (error.message === 'User already exists') {
-            return res.status(409).json({
-                error: 'An account with this email already exists',
-                code: 'USER_EXISTS'
-            });
-        }
-        
-        console.error('❌ Registration error:', error);
-        res.status(500).json({
-            error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
-        });
-    }
-});
-
-// Login user (Updated for multi-tenant)
-router.post('/login', 
-    InputValidation.validateBody(InputValidation.authSchemas.login),
-    rateLimitLogin, 
-    AccountLockout.checkLockout(), 
-    async (req, res) => {
-    try {
-        const { email, password, tenantId } = req.body;
-        
+        // Validation
         if (!email || !password) {
             return res.status(400).json({
+                success: false,
                 error: 'Email and password are required',
                 code: 'MISSING_CREDENTIALS'
             });
         }
         
-        // Verify credentials (optionally scoped to tenant)
-        const user = await database.verifyPassword(email.toLowerCase(), password, tenantId);
+        // Verify credentials
+        const user = await database.verifyPassword(email.toLowerCase(), password);
         
         if (!user) {
-            // Record failed attempt
-            const lockoutResult = AccountLockout.recordFailedAttempt(email);
-            
-            const errorResponse = {
+            return res.status(401).json({
+                success: false,
                 error: 'Invalid email or password',
                 code: 'INVALID_CREDENTIALS'
-            };
-            
-            if (lockoutResult.isLocked) {
-                errorResponse.lockout = {
-                    isLocked: true,
-                    lockedUntil: new Date(lockoutResult.lockedUntil).toISOString(),
-                    message: 'Account locked due to too many failed attempts'
-                };
-            } else if (lockoutResult.attempts > 2) {
-                errorResponse.warning = `${5 - lockoutResult.attempts} attempts remaining before account lockout`;
-            }
-            
-            return res.status(401).json(errorResponse);
+            });
         }
         
-        // Clear failed attempts on successful login
-        AccountLockout.clearFailedAttempts(email);
-        
-        // Create new session
-        const sessionId = database.createSession(user.id);
+        // Create session
+        const sessionId = await database.createSession(user.id);
         const token = generateToken(sessionId);
         
         // Set HTTP-only cookie
@@ -275,44 +133,149 @@ router.post('/login',
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            sameSite: 'strict'
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
         });
         
-        // Get tenant info
-        const tenant = database.getTenant(user.tenantId);
+        console.log('✅ Login successful for:', user.email);
         
         res.json({
-            user,
-            tenant: tenant ? {
-                id: tenant.id,
-                name: tenant.name,
-                plan: tenant.plan
-            } : null,
-            message: 'Login successful'
+            success: true,
+            message: 'Login successful',
+            token: token, // Return token for frontend localStorage
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                emailVerified: user.emailVerified
+            }
         });
         
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         res.status(500).json({
-            error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
+            success: false,
+            error: 'Internal server error during login',
+            code: 'LOGIN_ERROR'
         });
     }
 });
 
-// Logout user
-router.post('/logout', validateSession, (req, res) => {
+// ========================================
+// AUTH STATUS CHECK
+// ========================================
+router.get('/status', async (req, res) => {
     try {
-        // Revoke session
-        database.revokeSession(req.session.id);
+        const token = req.cookies?.agentpay_session;
+        
+        if (!token) {
+            return res.json({
+                authenticated: false,
+                user: null
+            });
+        }
+        
+        // Verify JWT token
+        const jwt = require('jsonwebtoken');
+        let decoded;
+        try {
+            decoded = jwt.verify(token, authMiddleware.JWT_SECRET);
+        } catch (err) {
+            return res.json({
+                authenticated: false,
+                user: null
+            });
+        }
+        
+        // Check session in database
+        const session = await database.getSession(decoded.sessionId);
+        if (!session) {
+            return res.json({
+                authenticated: false,
+                user: null
+            });
+        }
+        
+        // Get user data
+        const user = await database.getUserById(session.userId);
+        if (!user) {
+            return res.json({
+                authenticated: false,
+                user: null
+            });
+        }
+        
+        res.json({
+            authenticated: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                emailVerified: user.emailVerified
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Auth status error:', error);
+        res.json({
+            authenticated: false,
+            user: null
+        });
+    }
+});
+
+// ========================================
+// LOGOUT
+// ========================================
+router.post('/logout', async (req, res) => {
+    try {
+        const token = req.cookies?.agentpay_session;
+        
+        if (token) {
+            // Verify and get session ID
+            const jwt = require('jsonwebtoken');
+            try {
+                const decoded = jwt.verify(token, authMiddleware.JWT_SECRET);
+                await database.revokeSession(decoded.sessionId);
+            } catch (err) {
+                // Token invalid, but continue with logout
+            }
+        }
         
         // Clear cookie
         res.clearCookie('agentpay_session');
         
-        res.json({ message: 'Logout successful' });
+        res.json({
+            success: true,
+            message: 'Logged out successfully'
+        });
         
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error('❌ Logout error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Logout error',
+            code: 'LOGOUT_ERROR'
+        });
+    }
+});
+
+// ========================================
+// USER PROFILE
+// ========================================
+router.get('/me', validateSessionSimple, (req, res) => {
+    try {
+        res.json({ 
+            user: {
+                id: req.user.id,
+                email: req.user.email,
+                name: req.user.name,
+                emailVerified: req.user.emailVerified,
+                subscriptionPlan: req.user.subscriptionPlan,
+                subscriptionStatus: req.user.subscriptionStatus
+            }
+        });
+    } catch (error) {
+        console.error('❌ Get current user error:', error);
         res.status(500).json({
             error: 'Internal server error',
             code: 'INTERNAL_ERROR'
@@ -320,45 +283,10 @@ router.post('/logout', validateSession, (req, res) => {
     }
 });
 
-// Get current user (Updated with tenant info)
-router.get('/me', validateSessionSimple, (req, res) => {
-    const startTime = Date.now();
-    
-    // Simulate realistic database query time for auth check
-    setTimeout(() => {
-        try {
-            const session = database.getSession(req.session.id);
-            const tenant = database.getTenant(session.tenantId);
-            
-            const latency = Date.now() - startTime;
-            
-            res.json({ 
-                user: req.user,
-                tenant: tenant ? {
-                    id: tenant.id,
-                    name: tenant.name,
-                    plan: tenant.plan,
-                    usage: tenant.usage
-                } : null,
-                latency: latency
-            });
-        } catch (error) {
-            console.error('Get current user error:', error);
-            const latency = Date.now() - startTime;
-            res.status(500).json({
-                error: 'Internal server error',
-                code: 'INTERNAL_ERROR',
-                latency: latency
-            });
-        }
-    }, 35 + Math.random() * 25); // 35-60ms realistic auth check latency
-});
-
-// Request password reset
-router.post('/forgot-password', 
-    InputValidation.validateBody(InputValidation.authSchemas.forgotPassword),
-    rateLimitPasswordReset, 
-    async (req, res) => {
+// ========================================
+// PASSWORD RESET (Placeholder)
+// ========================================
+router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
         
@@ -369,13 +297,8 @@ router.post('/forgot-password',
             });
         }
         
-        try {
-            const resetToken = database.createPasswordReset(email.toLowerCase());
-            await emailService.sendPasswordResetEmail(email, resetToken);
-        } catch (error) {
-            // Don't reveal if email exists or not for security
-            console.log('Password reset error:', error.message);
-        }
+        // For staging, just return success (don't actually send emails)
+        console.log('🔄 Password reset requested for:', email);
         
         // Always return success to prevent email enumeration
         res.json({
@@ -383,7 +306,7 @@ router.post('/forgot-password',
         });
         
     } catch (error) {
-        console.error('Password reset request error:', error);
+        console.error('❌ Password reset request error:', error);
         res.status(500).json({
             error: 'Internal server error',
             code: 'INTERNAL_ERROR'
@@ -391,10 +314,7 @@ router.post('/forgot-password',
     }
 });
 
-// Reset password with token
-router.post('/reset-password', 
-    InputValidation.validateBody(InputValidation.authSchemas.resetPassword),
-    async (req, res) => {
+router.post('/reset-password', async (req, res) => {
     try {
         const { token, password } = req.body;
         
@@ -426,7 +346,7 @@ router.post('/reset-password',
             });
         }
         
-        console.error('Password reset error:', error);
+        console.error('❌ Password reset error:', error);
         res.status(500).json({
             error: 'Internal server error',
             code: 'INTERNAL_ERROR'
@@ -434,10 +354,10 @@ router.post('/reset-password',
     }
 });
 
-// Verify email
-router.post('/verify-email', 
-    InputValidation.validateBody(InputValidation.authSchemas.verifyEmail),
-    async (req, res) => {
+// ========================================
+// EMAIL VERIFICATION (Placeholder)  
+// ========================================
+router.post('/verify-email', async (req, res) => {
     try {
         const { token } = req.body;
         
@@ -448,7 +368,7 @@ router.post('/verify-email',
             });
         }
         
-        const success = database.verifyEmail(token);
+        const success = await database.verifyEmail(token);
         
         if (!success) {
             return res.status(400).json({
@@ -462,7 +382,7 @@ router.post('/verify-email',
         });
         
     } catch (error) {
-        console.error('Email verification error:', error);
+        console.error('❌ Email verification error:', error);
         res.status(500).json({
             error: 'Internal server error',
             code: 'INTERNAL_ERROR'
@@ -470,181 +390,15 @@ router.post('/verify-email',
     }
 });
 
-// Resend verification email
-router.post('/resend-verification', validateSession, async (req, res) => {
-    try {
-        if (req.user.emailVerified) {
-            return res.status(400).json({
-                error: 'Email is already verified',
-                code: 'ALREADY_VERIFIED'
-            });
-        }
-        
-        const verificationToken = database.createEmailVerification(req.user.id, req.user.email);
-        await emailService.sendVerificationEmail(req.user.email, verificationToken);
-        
-        res.json({
-            message: 'Verification email sent successfully'
-        });
-        
-    } catch (error) {
-        console.error('Resend verification error:', error);
-        res.status(500).json({
-            error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
-        });
-    }
-});
+// ========================================
+// LEGACY ENDPOINTS FOR COMPATIBILITY
+// ========================================
 
-// OAuth callback (placeholder for Google/GitHub OAuth)
-router.post('/oauth/callback', async (req, res) => {
-    try {
-        const { provider, email, name, providerId } = req.body;
-        
-        if (!provider || !email || !name) {
-            return res.status(400).json({
-                error: 'Provider, email, and name are required',
-                code: 'MISSING_OAUTH_DATA'
-            });
-        }
-        
-        // Check if user exists
-        let user = database.getUserByEmail(email.toLowerCase());
-        
-        if (!user) {
-            // Create new tenant + user for OAuth signup
-            const result = await database.createTenantWithOwner({
-                email: email.toLowerCase(),
-                name,
-                organizationName: `${name}'s Organization`
-            });
-            user = result.user;
-            
-            // Send welcome email
-            await emailService.sendWelcomeEmail(user.email, user.name, {
-                apiKey: result.apiKey.key,
-                organizationName: result.tenant.name
-            });
-        }
-        
-        // Create session
-        const sessionId = database.createSession(user.id);
-        const token = generateToken(sessionId);
-        
-        // Set HTTP-only cookie
-        res.cookie('agentpay_session', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            sameSite: 'strict'
-        });
-        
-        res.json({
-            user,
-            message: 'OAuth login successful'
-        });
-        
-    } catch (error) {
-        console.error('OAuth callback error:', error);
-        res.status(500).json({
-            error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
-        });
-    }
-});
-
-// Google OAuth routes (Updated for SaaS)
-router.get('/google', (req, res, next) => {
-    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-        return res.status(503).json({
-            error: 'Google OAuth is not configured',
-            code: 'OAUTH_NOT_CONFIGURED',
-            message: 'Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables'
-        });
-    }
-    passport.authenticate('google', { 
-        scope: ['profile', 'email'] 
-    })(req, res, next);
-});
-
-router.get('/google/callback', (req, res, next) => {
-    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-        return res.redirect('/auth.html?error=oauth_not_configured');
-    }
-    
-    passport.authenticate('google', { session: false }, async (err, user) => {
-        try {
-            if (err || !user) {
-                return res.redirect('/auth.html?error=oauth_failed');
-            }
-            
-            // Create session for the user
-            const sessionId = database.createSession(user.id);
-            const token = generateToken(sessionId);
-            
-            // Set HTTP-only cookie
-            res.cookie('agentpay_session', token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-                sameSite: 'strict'
-            });
-            
-            // Redirect to dashboard
-            res.redirect('/dashboard.html?oauth=success');
-            
-        } catch (error) {
-            console.error('Google OAuth callback error:', error);
-            res.redirect('/auth.html?error=oauth_failed');
-        }
-    })(req, res, next);
-});
-
-// GitHub OAuth routes (Updated for SaaS)
-router.get('/github', (req, res, next) => {
-    if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
-        return res.status(503).json({
-            error: 'GitHub OAuth is not configured',
-            code: 'OAUTH_NOT_CONFIGURED',
-            message: 'Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables'
-        });
-    }
-    passport.authenticate('github', { 
-        scope: ['user:email'] 
-    })(req, res, next);
-});
-
-router.get('/github/callback', (req, res, next) => {
-    if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
-        return res.redirect('/auth.html?error=oauth_not_configured');
-    }
-    
-    passport.authenticate('github', { session: false }, async (err, user) => {
-        try {
-            if (err || !user) {
-                return res.redirect('/auth.html?error=oauth_failed');
-            }
-            
-            // Create session for the user
-            const sessionId = database.createSession(user.id);
-            const token = generateToken(sessionId);
-            
-            // Set HTTP-only cookie
-            res.cookie('agentpay_session', token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-                sameSite: 'strict'
-            });
-            
-            // Redirect to dashboard
-            res.redirect('/dashboard.html?oauth=success');
-            
-        } catch (error) {
-            console.error('GitHub OAuth callback error:', error);
-            res.redirect('/auth.html?error=oauth_failed');
-        }
-    })(req, res, next);
+// Legacy register endpoint (redirects to signup)
+router.post('/register', (req, res) => {
+    // Redirect to the new signup endpoint
+    req.url = '/signup';
+    router.handle(req, res);
 });
 
 module.exports = router; 

@@ -303,8 +303,10 @@
         async function loadUserData() {
             try {
                 console.log('🔍 Loading user data...');
-                const response = await fetch('/api/auth/me', {
-                    credentials: 'include'
+                const response = await fetch('/api/auth/status', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
+                    }
                 });
                 
                 console.log('📊 Auth response status:', response.status);
@@ -340,7 +342,7 @@
         // Load API keys
         async function loadApiKeys() {
             try {
-                console.log('🔍 PRODUCTION: Loading API keys with proper auth...');
+                console.log('🚨 EMERGENCY: Loading API keys without auth...');
                 const response = await fetch('/api/keys?' + Date.now(), {
                     credentials: 'include',
                     cache: 'no-cache'
@@ -349,15 +351,16 @@
                 if (response.ok) {
                     const data = await response.json();
                     
-                    // ✅ CRITICAL: Validate response format to prevent future breakage
+                    // ✅ CRITICAL: Handle the ACTUAL response format {success: true, keys: Array}
                     if (data && typeof data === 'object') {
-                        // Handle multiple possible response formats for compatibility
+                        // Handle the current emergency format first
                         if (data.success && Array.isArray(data.keys)) {
-                            apiKeys = data.keys; // New format: {success: true, keys: [...]}
+                            apiKeys = data.keys;
+                            console.log('✅ EMERGENCY: Loaded', data.keys.length, 'keys successfully');
                         } else if (Array.isArray(data.apiKeys)) {
-                            apiKeys = data.apiKeys; // Legacy format: {apiKeys: [...]}
+                            apiKeys = data.apiKeys;
                         } else if (Array.isArray(data.data)) {
-                            apiKeys = data.data; // Alternative format
+                            apiKeys = data.data; // Fallback format
                         } else if (Array.isArray(data)) {
                             apiKeys = data; // Direct array format
                         } else {
@@ -513,22 +516,29 @@
             const environment = document.getElementById('key-environment').value;
             
             try {
-                console.log('🔑 PRODUCTION: Creating API key:', name);
+                console.log('🚨 EMERGENCY: Creating key without auth:', { name, environment });
                 const response = await fetch('/api/keys?' + Date.now(), {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
                     credentials: 'include',
                     cache: 'no-cache',
                     body: JSON.stringify({ name, environment })
                 });
                 
                 if (response.ok) {
+                    const data = await response.json();
+                    console.log('🚨 EMERGENCY: Create response:', data);
                     document.getElementById('create-key-modal').classList.add('hidden');
                     document.getElementById('key-name').value = '';
                     document.getElementById('key-environment').value = 'live'; // Reset to default
                     showToast('🔑 API key created successfully!', 'success');
-                    // Small delay to ensure backend processing completes
-                    setTimeout(() => loadApiKeys(), 150);
+                    // Wait a moment then reload to ensure backend update is complete
+                    setTimeout(() => {
+                        console.log('🚨 EMERGENCY: Refreshing after create...');
+                        loadApiKeys();
+                    }, 500);
                 } else {
                     const data = await response.json();
                     showToast('❌ Failed to create API key: ' + data.error, 'error');
@@ -545,7 +555,7 @@
             }
             
             try {
-                console.log('🔄 PRODUCTION: Rotating API key:', keyId);
+                console.log('🚨 EMERGENCY: Rotating key without auth:', keyId);
                 const response = await fetch(`/api/keys/${keyId}/rotate?` + Date.now(), {
                     method: 'POST',
                     credentials: 'include',
@@ -553,9 +563,14 @@
                 });
                 
                 if (response.ok) {
+                    const data = await response.json();
+                    console.log('🚨 EMERGENCY: Rotate response:', data);
                     showToast('🔄 API key rotated successfully!', 'success');
-                    // Small delay to ensure backend processing completes
-                    setTimeout(() => loadApiKeys(), 150);
+                    // Wait a moment then reload
+                    setTimeout(() => {
+                        console.log('🚨 EMERGENCY: Refreshing after rotate...');
+                        loadApiKeys();
+                    }, 500);
                 } else {
                     const data = await response.json();
                     showToast('❌ Failed to rotate API key: ' + data.error, 'error');
@@ -572,7 +587,7 @@
             }
             
             try {
-                console.log('🗑️ PRODUCTION: Revoking API key:', keyId);
+                console.log('🚨 EMERGENCY: Revoking key without auth:', keyId);
                 const response = await fetch(`/api/keys/${keyId}?` + Date.now(), {
                     method: 'DELETE',
                     credentials: 'include',
@@ -580,9 +595,14 @@
                 });
                 
                 if (response.ok) {
+                    const data = await response.json();
+                    console.log('🚨 EMERGENCY: Revoke response:', data);
                     showToast('🗑️ API key revoked successfully!', 'success');
-                    // Small delay to ensure backend processing completes
-                    setTimeout(() => loadApiKeys(), 150);
+                    // Wait a moment then reload
+                    setTimeout(() => {
+                        console.log('🚨 EMERGENCY: Refreshing after revoke...');
+                        loadApiKeys();
+                    }, 500);
                 } else {
                     const data = await response.json();
                     showToast('❌ Failed to revoke API key: ' + data.error, 'error');
@@ -597,7 +617,9 @@
             try {
                 await fetch('/api/auth/logout', {
                     method: 'POST',
-                    credentials: 'include'
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('aslanpay_token')}`
+                    }
                 });
                 window.location.href = '/auth.html';
             } catch (error) {

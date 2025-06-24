@@ -15,28 +15,43 @@ class DeveloperDashboard {
     
     async loadApiKeysFromServer() {
         try {
-            const response = await fetch('/api/keys', {
-                credentials: 'include'
+            console.log('🔍 EMERGENCY: Loading API keys from server... (v2)');
+            const response = await fetch('/api/keys?' + Date.now(), {
+                credentials: 'include',
+                cache: 'no-cache'
             });
+            
+            console.log('🔍 EMERGENCY: Server response status:', response.status);
             
             if (response.ok) {
                 const data = await response.json();
-                // Server should only return masked keys
-                this.apiKeys = data.apiKeys || [];
+                console.log('🔍 Server response data:', data);
+                console.log('🔍 Keys from server:', data.keys);
+                
+                // Handle both legacy and new response formats
+                if (data.success && Array.isArray(data.keys)) {
+                    this.apiKeys = data.keys;
+                } else if (Array.isArray(data.apiKeys)) {
+                    this.apiKeys = data.apiKeys;
+                } else if (Array.isArray(data)) {
+                    this.apiKeys = data;
+                } else {
+                    console.error('❌ Unexpected response format:', data);
+                    this.apiKeys = [];
+                }
+                
+                console.log('✅ Loaded API keys:', this.apiKeys.length);
             } else {
-                console.error('Failed to load API keys');
+                console.error('❌ Failed to load API keys, status:', response.status);
                 this.apiKeys = [];
             }
         } catch (error) {
-            console.error('Error loading API keys:', error);
+            console.error('❌ Error loading API keys:', error);
             this.apiKeys = [];
         }
     }
     
-    generateKeyId() {
-        // This should NEVER be used - keys must be generated server-side
-        throw new Error('API keys must be generated on the server');
-    }
+    // Removed generateKeyId() - all keys are now generated server-side
     
     generateActivity() {
         const activities = [
@@ -54,9 +69,15 @@ class DeveloperDashboard {
     }
     
     renderApiKeys() {
+        console.log('🎨 Rendering API keys:', this.apiKeys);
         const container = document.getElementById('api-keys-list');
         
-        if (this.apiKeys.length === 0) {
+        if (!container) {
+            console.error('❌ CRITICAL: api-keys-list container not found!');
+            return;
+        }
+        
+        if (!this.apiKeys || this.apiKeys.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-8 text-gray-500">
                     <div class="text-4xl mb-3">🔑</div>
@@ -65,47 +86,68 @@ class DeveloperDashboard {
                     <button onclick="dashboard.showCreateKeyModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         Create API Key
                     </button>
+                    <button onclick="dashboard.debugRefresh()" class="bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm ml-2">
+                        🔍 Debug Refresh
+                    </button>
+                    <button onclick="dashboard.testMockData()" class="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm ml-2">
+                        🧪 Test Mock Data
+                    </button>
                 </div>
             `;
             return;
         }
         
-        container.innerHTML = this.apiKeys.map(key => `
-            <div class="border border-gray-200 rounded-lg p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <h3 class="font-medium text-gray-900">${this.escapeHtml(key.name)}</h3>
-                        <div class="flex items-center space-x-2 mt-1">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                key.environment === 'live' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                            }">
-                                ${key.environment === 'live' ? '🟢 Live' : '🔵 Test'}
-                            </span>
-                            <span class="text-xs text-gray-500">Created ${this.formatDate(key.created)}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button onclick="dashboard.requestFullKey('${key.id}')" class="text-gray-400 hover:text-gray-600" title="Request full key">
-                            🔓
-                        </button>
-                        <button onclick="dashboard.deleteKey('${key.id}')" class="text-red-400 hover:text-red-600">
-                            🗑️
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="bg-gray-50 rounded p-3 font-mono text-sm">
-                    <span id="key-${key.id}">
-                        ${key.maskedKey || this.maskKey(key.key)}
-                    </span>
-                </div>
-                
-                <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
-                    <span>Last used: ${key.lastUsed ? this.formatDate(key.lastUsed) : 'Never'}</span>
-                    <span>Permissions: ${key.permissions.join(', ')}</span>
-                </div>
-            </div>
-        `).join('');
+                 console.log('🎨 About to render', this.apiKeys.length, 'keys to container');
+         
+         try {
+             const html = this.apiKeys.map((key, index) => {
+                 console.log(`🎨 Rendering key ${index}:`, key);
+                 return `
+             <div class="border border-gray-200 rounded-lg p-4">
+                 <div class="flex items-center justify-between mb-3">
+                     <div>
+                         <h3 class="font-medium text-gray-900">${this.escapeHtml(key.name)}</h3>
+                         <div class="flex items-center space-x-2 mt-1">
+                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                 key.key?.startsWith('ak_live_') ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                             }">
+                                 ${key.key?.startsWith('ak_live_') ? '🟢 Live' : '🔵 Test'}
+                             </span>
+                             <span class="text-xs text-gray-500">Created ${this.formatDate(key.createdAt)}</span>
+                         </div>
+                     </div>
+                     <div class="flex items-center space-x-2">
+                         <button onclick="dashboard.requestFullKey('${key.id}')" class="text-gray-400 hover:text-gray-600" title="Request full key">
+                             🔓
+                         </button>
+                         <button onclick="dashboard.deleteKey('${key.id}')" class="text-red-400 hover:text-red-600">
+                             🗑️
+                         </button>
+                     </div>
+                 </div>
+                 
+                 <div class="bg-gray-50 rounded p-3 font-mono text-sm">
+                     <span id="key-${key.id}">
+                         ${key.maskedKey || this.maskKey(key.key)}
+                     </span>
+                 </div>
+                 
+                 <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+                     <span>Last used: ${key.lastUsed ? this.formatDate(key.lastUsed) : 'Never'}</span>
+                     <span>Permissions: ${Array.isArray(key.permissions) ? key.permissions.join(', ') : key.permissions || 'None'}</span>
+                 </div>
+             </div>
+         `;
+             }).join('');
+             
+             console.log('🎨 Generated HTML length:', html.length);
+             container.innerHTML = html;
+             console.log('🎨 Successfully set container innerHTML');
+             
+         } catch (error) {
+             console.error('❌ Error rendering API keys:', error);
+             container.innerHTML = '<div class="text-red-500 p-4">Error rendering API keys - check console</div>';
+         }
     }
     
     renderActivity() {
@@ -213,44 +255,117 @@ class DeveloperDashboard {
         
         document.body.appendChild(modal);
         
-        document.getElementById('create-key-form').addEventListener('submit', (e) => {
+        document.getElementById('create-key-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            this.createApiKey();
-            document.body.removeChild(modal);
+            
+            // Disable the submit button to prevent double clicks
+            const submitBtn = document.querySelector('#create-key-form button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating...';
+            
+            try {
+                const success = await this.createApiKey();
+                if (success) {
+                    document.body.removeChild(modal);
+                } else {
+                    // Keep modal open if creation failed
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            } catch (error) {
+                console.error('❌ Error in modal submit:', error);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
         });
     }
     
-    createApiKey() {
+    async createApiKey() {
         const name = document.getElementById('key-name').value;
-        const environment = document.getElementById('key-environment').value;
-        const permissions = [];
         
-        if (document.getElementById('perm-read').checked) permissions.push('read');
-        if (document.getElementById('perm-write').checked) permissions.push('write');
+        if (!name || name.trim() === '') {
+            this.showNotification('❌ Please enter a key name', 'error');
+            return false;
+        }
         
-        const newKey = {
-            id: 'key_' + Date.now(),
-            name: name,
-            key: (environment === 'live' ? 'sk_live_' : 'sk_test_') + this.generateKeyId(),
-            environment: environment,
-            created: new Date().toISOString(),
-            lastUsed: null,
-            permissions: permissions,
-            status: 'active'
-        };
-        
-        this.apiKeys.push(newKey);
-        this.renderApiKeys();
-        
-        // Show success notification
-        this.showNotification('✅ API key created successfully!', 'success');
+        try {
+            console.log('🔑 STEP 1: Creating API key via server with name:', name.trim());
+            console.log('🔑 STEP 1: Current API keys before creation:', this.apiKeys.length);
+            
+            const response = await fetch('/api/keys', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ name: name.trim() })
+            });
+            
+            console.log('🔑 STEP 2: Server response status:', response.status);
+            console.log('🔑 STEP 2: Server response headers:', Object.fromEntries(response.headers.entries()));
+            
+            const data = await response.json();
+            console.log('🔑 STEP 3: Server response data:', JSON.stringify(data, null, 2));
+            
+            if (response.ok) {
+                console.log('🔑 STEP 4: Creation successful, now refreshing...');
+                
+                // Small delay to ensure server has processed the creation
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Reload API keys from server to get the real data
+                await this.loadApiKeysFromServer();
+                console.log('🔑 STEP 5: Keys after reload:', this.apiKeys.length, this.apiKeys);
+                
+                this.renderApiKeys();
+                console.log('🔑 STEP 6: Rendering complete');
+                
+                this.showNotification('✅ API key created successfully!', 'success');
+                return true;
+            } else {
+                console.error('❌ API key creation failed:', data);
+                this.showNotification(`❌ Failed to create API key: ${data.error || 'Unknown error'}`, 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Network error creating API key:', error);
+            this.showNotification('❌ Network error. Please try again.', 'error');
+            return false;
+        }
     }
     
-    deleteKey(keyId) {
-        if (confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
-            this.apiKeys = this.apiKeys.filter(key => key.id !== keyId);
-            this.renderApiKeys();
-            this.showNotification('🗑️ API key deleted', 'warning');
+    async deleteKey(keyId) {
+        if (!confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            console.log('🗑️ Deleting API key via server:', keyId);
+            
+            const response = await fetch(`/api/keys/${keyId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            
+            const data = await response.json();
+            console.log('🗑️ Server response:', data);
+            
+            if (response.ok) {
+                this.showNotification('🗑️ API key deleted successfully', 'warning');
+                
+                // Reload API keys from server
+                await this.loadApiKeysFromServer();
+                this.renderApiKeys();
+                
+                console.log('✅ API keys refreshed after deletion');
+            } else {
+                console.error('❌ API key deletion failed:', data);
+                this.showNotification(`❌ Failed to delete API key: ${data.error || 'Unknown error'}`, 'error');
+            }
+        } catch (error) {
+            console.error('❌ Network error deleting API key:', error);
+            this.showNotification('❌ Network error. Please try again.', 'error');
         }
     }
     
@@ -306,6 +421,47 @@ class DeveloperDashboard {
         setTimeout(() => {
             notification.remove();
         }, 3000);
+    }
+    
+    async debugRefresh() {
+        console.log('🔍 DEBUG: Manual refresh triggered');
+        console.log('🔍 DEBUG: Current keys before refresh:', this.apiKeys);
+        
+        await this.loadApiKeysFromServer();
+        console.log('🔍 DEBUG: Keys after server load:', this.apiKeys);
+        
+        this.renderApiKeys();
+        console.log('🔍 DEBUG: Rendering complete');
+        
+        this.showNotification('🔍 Debug refresh completed - check console', 'info');
+    }
+    
+    async testMockData() {
+        console.log('🧪 TEST: Loading mock data from debug endpoint');
+        
+        try {
+            const response = await fetch('/api/keys/debug/test-data');
+            console.log('🧪 TEST: Mock data response status:', response.status);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('🧪 TEST: Mock data received:', data);
+                
+                this.apiKeys = data.keys || [];
+                console.log('🧪 TEST: Set apiKeys to:', this.apiKeys);
+                
+                this.renderApiKeys();
+                console.log('🧪 TEST: Rendering complete');
+                
+                this.showNotification('🧪 Mock data loaded - check if keys appear', 'success');
+            } else {
+                console.error('🧪 TEST: Mock data failed:', response.status);
+                this.showNotification('🧪 Mock data failed', 'error');
+            }
+        } catch (error) {
+            console.error('🧪 TEST: Mock data error:', error);
+            this.showNotification('🧪 Mock data error', 'error');
+        }
     }
     
     escapeHtml(unsafe) {
