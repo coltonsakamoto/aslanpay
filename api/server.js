@@ -139,11 +139,8 @@ try {
 }
 
 // ========================================
-// STATIC FILE SERVING
+// SPECIFIC HTML ROUTES (BEFORE STATIC FILES)
 // ========================================
-
-// Serve static files from frontend/public
-app.use(express.static(path.join(__dirname, '../frontend/public')));
 
 // Serve auth.html at /auth for convenience
 app.get('/auth', (req, res) => {
@@ -159,6 +156,17 @@ app.get('/dashboard.html', (req, res) => {
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
+
+// ========================================
+// STATIC FILE SERVING (AFTER API ROUTES)
+// ========================================
+
+// Serve static files from frontend/public - ONLY for non-API paths
+app.use('/static', express.static(path.join(__dirname, '../frontend/public')));
+app.use(express.static(path.join(__dirname, '../frontend/public'), {
+    index: false, // Don't serve index.html automatically
+    redirect: false // Don't redirect trailing slashes
+}));
 
 // ========================================
 // ERROR HANDLING
