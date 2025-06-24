@@ -139,11 +139,37 @@ try {
 }
 
 // ========================================
-// STATIC FILE SERVING
+// SPECIFIC HTML ROUTES (BEFORE STATIC FILES)
 // ========================================
 
-// Serve static files from frontend/public
-app.use(express.static(path.join(__dirname, '../frontend/public')));
+// Common pages without .html extension
+app.get('/pricing', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/pricing.html'));
+});
+
+app.get('/comparison', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/comparison.html'));
+});
+
+app.get('/docs', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/docs.html'));
+});
+
+app.get('/demo', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/demo.html'));
+});
+
+app.get('/security', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/security.html'));
+});
+
+app.get('/status', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/status.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/dashboard.html'));
+});
 
 // Serve auth.html at /auth for convenience
 app.get('/auth', (req, res) => {
@@ -159,6 +185,17 @@ app.get('/dashboard.html', (req, res) => {
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
+
+// ========================================
+// STATIC FILE SERVING (AFTER API ROUTES)
+// ========================================
+
+// Serve static files from frontend/public - ONLY for non-API paths
+app.use('/static', express.static(path.join(__dirname, '../frontend/public')));
+app.use(express.static(path.join(__dirname, '../frontend/public'), {
+    index: false, // Don't serve index.html automatically
+    redirect: false // Don't redirect trailing slashes
+}));
 
 // ========================================
 // ERROR HANDLING
