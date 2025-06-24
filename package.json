@@ -4,6 +4,7 @@
   "description": "Payment infrastructure for AI agents - Like the great lion, Aslan guides AI agents to accomplish their missions in the real world",
   "main": "api/server.js",
   "scripts": {
+    "build": "echo 'Build completed - no build step needed for Express server'",
     "start": "node api/server.js",
     "start-minimal": "node server-minimal.js",
     "start-hybrid": "node server-hybrid.js",
