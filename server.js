@@ -17,7 +17,8 @@ app.get('/health', (req, res) => {
         status: 'OK', 
         service: 'AslanPay', 
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        deployment: 'FORCE-REBUILD-2025-06-24-10:16'
     });
 });
 
