@@ -14,11 +14,14 @@ const port = process.env.PORT || 3000;
 // Health check endpoint - available immediately
 app.get('/health', (req, res) => {
     res.status(200).json({ 
-        status: 'OK', 
-        service: 'AslanPay', 
+        status: 'FORCED_DEPLOY_TEST', 
+        service: 'AslanPay DEPLOYMENT TEST', 
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        deployment: 'PROFESSIONAL-KEYS-2025-06-24-11:01'
+        deployment: 'FORCE-DEPLOY-TEST-' + Date.now(),
+        message: 'RAILWAY DEPLOYMENT PIPELINE TEST - DID THIS DEPLOY?',
+        branch: 'hotfix/health',
+        time: '2025-06-24T19:30'
     });
 });
 
