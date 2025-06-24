@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start-old": "node api/server.js",
     "start-rebuilt": "node api/server.js",
     "start-minimal": "node server-minimal.js",
     "start-hybrid": "node server-hybrid.js",
@@ -50,7 +51,9 @@
     "jsonwebtoken": "^9.0.2",
     "rate-limiter-flexible": "^7.1.1",
     "stripe": "^14.12.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
