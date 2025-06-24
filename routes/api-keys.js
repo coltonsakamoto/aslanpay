@@ -3,12 +3,12 @@ const router = express.Router();
 
 console.log('🚨 ULTRA-SIMPLE API KEY ROUTES LOADING...');
 
-// 🚨 EMERGENCY: In-memory key storage that actually changes
-let emergencyKeys = [
+// Professional in-memory key storage
+let apiKeys = [
     {
-        id: 'emergency_key_1',
-        name: 'Emergency Test Key 1',
-        key: 'ak_live_emergency123456789abcdef123456789abcdef123456789abcdef',
+        id: 'key_' + Date.now() + '_1',
+        name: 'Default API Key',
+        key: 'ak_live_' + require('crypto').randomBytes(32).toString('hex'),
         permissions: ['authorize', 'confirm', 'refund'],
         createdAt: new Date().toISOString(),
         lastUsed: null,
@@ -16,9 +16,9 @@ let emergencyKeys = [
         isActive: true
     },
     {
-        id: 'emergency_key_2',
-        name: 'Emergency Test Key 2', 
-        key: 'ak_live_emergency987654321fedcba987654321fedcba987654321fedcba',
+        id: 'key_' + Date.now() + '_2',
+        name: 'Production API Key', 
+        key: 'ak_live_' + require('crypto').randomBytes(32).toString('hex'),
         permissions: ['authorize', 'confirm'],
         createdAt: new Date(Date.now() - 86400000).toISOString(),
         lastUsed: new Date(Date.now() - 3600000).toISOString(),
@@ -27,7 +27,7 @@ let emergencyKeys = [
     }
 ];
 
-console.log('🚨 EMERGENCY: Initialized with', emergencyKeys.length, 'keys');
+console.log('✅ Professional API keys initialized:', apiKeys.length, 'keys');
 
 // Helper function to mask API keys - SIMPLE VERSION
 function maskApiKey(key) {
@@ -40,13 +40,12 @@ router.get('/', (req, res) => {
     console.log('🚨 EMERGENCY: GET /api/keys called - DYNAMIC VERSION');
     
     try {
-        console.log('🚨 EMERGENCY: Returning', emergencyKeys.length, 'dynamic keys');
+        console.log('🚨 EMERGENCY: Returning', apiKeys.length, 'dynamic keys');
         
         res.json({
             success: true,
-            keys: emergencyKeys,
-            total: emergencyKeys.length,
-            emergency: true,
+            keys: apiKeys,
+            total: apiKeys.length,
             timestamp: new Date().toISOString()
         });
         
@@ -73,9 +72,9 @@ router.post('/', (req, res) => {
         const keyPrefix = environment === 'test' ? 'ak_test_' : 'ak_live_';
         
         const newKey = {
-            id: 'emergency_' + Date.now(),
-            name: name || 'Emergency Key',
-            key: keyPrefix + 'emergency' + Date.now() + Math.random().toString(36).substring(2),
+            id: 'key_' + Date.now(),
+            name: name || 'API Key',
+            key: keyPrefix + require('crypto').randomBytes(32).toString('hex'),
             permissions: ['authorize', 'confirm', 'refund'],
             createdAt: new Date().toISOString(),
             lastUsed: null,
@@ -84,15 +83,14 @@ router.post('/', (req, res) => {
         };
         
         // ACTUALLY ADD THE KEY TO THE ARRAY
-        emergencyKeys.push(newKey);
+        apiKeys.push(newKey);
         console.log('🚨 EMERGENCY: Created and added key:', newKey.id);
-        console.log('🚨 EMERGENCY: Total keys now:', emergencyKeys.length);
+        console.log('🚨 EMERGENCY: Total keys now:', apiKeys.length);
         
         res.status(201).json({
             success: true,
             apiKey: newKey,
-            message: 'Emergency API key created successfully',
-            emergency: true,
+            message: 'API key created successfully',
             timestamp: new Date().toISOString()
         });
         
@@ -112,7 +110,7 @@ router.post('/:keyId/rotate', (req, res) => {
     const { keyId } = req.params;
     
     // FIND AND UPDATE THE ACTUAL KEY
-    const keyIndex = emergencyKeys.findIndex(key => key.id === keyId);
+    const keyIndex = apiKeys.findIndex(key => key.id === keyId);
     
     if (keyIndex === -1) {
         console.log('🚨 EMERGENCY: Key not found for rotation:', keyId);
@@ -122,17 +120,17 @@ router.post('/:keyId/rotate', (req, res) => {
         });
     }
     
-    const oldKey = emergencyKeys[keyIndex];
+    const oldKey = apiKeys[keyIndex];
     const newKey = {
         ...oldKey,
-        key: 'ak_live_rotated' + Date.now() + Math.random().toString(36).substring(2),
+        key: 'ak_live_' + require('crypto').randomBytes(32).toString('hex'),
         name: oldKey.name + ' (Rotated)',
         usageCount: 0,
         lastUsed: null
     };
     
     // ACTUALLY UPDATE THE KEY IN THE ARRAY
-    emergencyKeys[keyIndex] = newKey;
+    apiKeys[keyIndex] = newKey;
     
     console.log('🚨 EMERGENCY: Rotated key:', newKey.id);
     console.log('🚨 EMERGENCY: New key value:', newKey.key.substring(0, 20) + '...');
@@ -140,7 +138,7 @@ router.post('/:keyId/rotate', (req, res) => {
     res.json({
         success: true,
         apiKey: newKey,
-        message: 'Emergency API key rotated successfully'
+        message: 'API key rotated successfully'
     });
 });
 
@@ -149,19 +147,19 @@ router.delete('/:keyId', (req, res) => {
     console.log('🚨 EMERGENCY: DELETE /api/keys/:keyId called');
     const { keyId } = req.params;
     
-    const originalLength = emergencyKeys.length;
+    const originalLength = apiKeys.length;
     // ACTUALLY REMOVE THE KEY FROM THE ARRAY
-    emergencyKeys = emergencyKeys.filter(key => key.id !== keyId);
+    apiKeys = apiKeys.filter(key => key.id !== keyId);
     
-    const deleted = originalLength > emergencyKeys.length;
+    const deleted = originalLength > apiKeys.length;
     console.log('🚨 EMERGENCY: Deleted key:', keyId, deleted ? 'SUCCESS' : 'NOT_FOUND');
-    console.log('🚨 EMERGENCY: Total keys now:', emergencyKeys.length);
+    console.log('🚨 EMERGENCY: Total keys now:', apiKeys.length);
     
     res.json({
         success: true,
-        message: deleted ? 'Emergency API key deleted successfully' : 'Key not found but operation completed',
+        message: deleted ? 'API key deleted successfully' : 'Key not found but operation completed',
         deleted: deleted,
-        remaining: emergencyKeys.length
+        remaining: apiKeys.length
     });
 });
 
