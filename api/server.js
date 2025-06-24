@@ -264,10 +264,11 @@ app.get('/api/status', (req, res) => {
 // Test route to verify our deployment
 app.get('/api/debug-test', (req, res) => {
     res.json({
-        message: 'Debug route working',
+        message: 'NUCLEAR DEPLOYMENT ACTIVE',
         timestamp: new Date().toISOString(),
-        deployment: 'LATEST',
-        hotfixHealthBranch: true
+        deployment: 'DUPLICATE_ROUTE_REMOVED',
+        hotfixHealthBranch: true,
+        nuclearOverrideShouldWork: true
     });
 });
 
