@@ -142,6 +142,35 @@ try {
 // SPECIFIC HTML ROUTES (BEFORE STATIC FILES)
 // ========================================
 
+// Common pages without .html extension
+app.get('/pricing', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/pricing.html'));
+});
+
+app.get('/comparison', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/comparison.html'));
+});
+
+app.get('/docs', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/docs.html'));
+});
+
+app.get('/demo', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/demo.html'));
+});
+
+app.get('/security', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/security.html'));
+});
+
+app.get('/status', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/status.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/public/dashboard.html'));
+});
+
 // Serve auth.html at /auth for convenience
 app.get('/auth', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/public/auth.html'));
