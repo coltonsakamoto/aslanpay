@@ -257,7 +257,8 @@ function initializeApiKeys() {
             isActive: true,
             createdAt: new Date().toISOString(),
             lastUsed: null,
-            usageCount: 0
+            usageCount: 0,
+            environment: 'live'
         },
         {
             id: 'key_staging_002', 
@@ -267,7 +268,8 @@ function initializeApiKeys() {
             isActive: true,
             createdAt: new Date().toISOString(),
             lastUsed: null,
-            usageCount: 0
+            usageCount: 0,
+            environment: 'live'
         }
     ];
     
@@ -556,7 +558,8 @@ app.get('/api/keys', (req, res) => {
             createdAt: key.createdAt,
             lastUsed: key.lastUsed,
             usageCount: key.usageCount,
-            isActive: key.isActive
+            isActive: key.isActive,
+            environment: key.environment || 'live'
         }));
 
         res.json({
@@ -569,6 +572,192 @@ app.get('/api/keys', (req, res) => {
         res.status(500).json({
             error: 'Failed to retrieve API keys',
             code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// Create new API key
+app.post('/api/keys', (req, res) => {
+    try {
+        const { name, environment = 'live' } = req.body;
+        
+        // Validation
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'API key name is required',
+                code: 'MISSING_NAME'
+            });
+        }
+        
+        if (name.trim().length > 50) {
+            return res.status(400).json({
+                success: false,
+                error: 'API key name must be 50 characters or less',
+                code: 'NAME_TOO_LONG'
+            });
+        }
+        
+        // Generate new API key
+        const keyId = 'key_' + crypto.randomBytes(8).toString('hex');
+        const keyPrefix = environment === 'test' ? 'ak_test_' : 'ak_live_';
+        const keyValue = keyPrefix + crypto.randomBytes(32).toString('hex');
+        
+        const newKey = {
+            id: keyId,
+            name: name.trim(),
+            key: keyValue,
+            permissions: ['authorize', 'confirm'],
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            lastUsed: null,
+            usageCount: 0,
+            environment: environment
+        };
+        
+        // Store the key
+        apiKeys.set(keyValue, newKey);
+        
+        console.log(`🔑 New API key created: ${name.trim()} (${keyId})`);
+        
+        res.status(201).json({
+            success: true,
+            message: 'API key created successfully',
+            key: newKey,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Create API key error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create API key',
+            code: 'CREATE_ERROR'
+        });
+    }
+});
+
+// Rotate API key (generate new key value, invalidate old)
+app.post('/api/keys/:keyId/rotate', (req, res) => {
+    try {
+        const { keyId } = req.params;
+        
+        // Find existing key by ID
+        let existingKey = null;
+        let oldKeyValue = null;
+        
+        for (const [keyValue, keyData] of apiKeys.entries()) {
+            if (keyData.id === keyId) {
+                existingKey = keyData;
+                oldKeyValue = keyValue;
+                break;
+            }
+        }
+        
+        if (!existingKey) {
+            return res.status(404).json({
+                success: false,
+                error: 'API key not found',
+                code: 'KEY_NOT_FOUND'
+            });
+        }
+        
+        if (!existingKey.isActive) {
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot rotate inactive API key',
+                code: 'KEY_INACTIVE'
+            });
+        }
+        
+        // Generate new key value
+        const keyPrefix = existingKey.environment === 'test' ? 'ak_test_' : 'ak_live_';
+        const newKeyValue = keyPrefix + crypto.randomBytes(32).toString('hex');
+        
+        // Update key data
+        const rotatedKey = {
+            ...existingKey,
+            key: newKeyValue,
+            lastUsed: null, // Reset usage stats
+            usageCount: 0,
+            rotatedAt: new Date().toISOString()
+        };
+        
+        // Remove old key and add new one
+        apiKeys.delete(oldKeyValue);
+        apiKeys.set(newKeyValue, rotatedKey);
+        
+        console.log(`🔄 API key rotated: ${existingKey.name} (${keyId})`);
+        
+        res.json({
+            success: true,
+            message: 'API key rotated successfully',
+            key: rotatedKey,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Rotate API key error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to rotate API key',
+            code: 'ROTATE_ERROR'
+        });
+    }
+});
+
+// Revoke API key (deactivate)
+app.delete('/api/keys/:keyId', (req, res) => {
+    try {
+        const { keyId } = req.params;
+        
+        // Find existing key by ID
+        let existingKey = null;
+        let keyValue = null;
+        
+        for (const [kv, keyData] of apiKeys.entries()) {
+            if (keyData.id === keyId) {
+                existingKey = keyData;
+                keyValue = kv;
+                break;
+            }
+        }
+        
+        if (!existingKey) {
+            return res.status(404).json({
+                success: false,
+                error: 'API key not found',
+                code: 'KEY_NOT_FOUND'
+            });
+        }
+        
+        if (!existingKey.isActive) {
+            return res.status(400).json({
+                success: false,
+                error: 'API key is already inactive',
+                code: 'KEY_ALREADY_INACTIVE'
+            });
+        }
+        
+        // Deactivate the key (don't delete, just mark inactive)
+        existingKey.isActive = false;
+        existingKey.revokedAt = new Date().toISOString();
+        
+        console.log(`🗑️ API key revoked: ${existingKey.name} (${keyId})`);
+        
+        res.json({
+            success: true,
+            message: 'API key revoked successfully',
+            key: existingKey,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Revoke API key error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to revoke API key',
+            code: 'REVOKE_ERROR'
         });
     }
 });
