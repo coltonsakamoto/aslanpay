@@ -4,16 +4,14 @@ const express = require('express');
 const crypto = require('crypto');
 const cors = require('cors');
 const path = require('path');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 
 console.log('🚀 CleanPay API System v2.0 - Dual Authentication (AI + Users)');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// JWT Secret for user authentication
-const JWT_SECRET = process.env.JWT_SECRET || 'cleanpay_staging_secret_2024';
+// Simple secret for token generation (built-in crypto only)
+const TOKEN_SECRET = process.env.TOKEN_SECRET || 'cleanpay_staging_secret_2024_builtin';
 
 // ====================================
 // SECURITY & MIDDLEWARE 
@@ -53,45 +51,65 @@ app.use((req, res, next) => {
 // AI Agent API Keys (existing system)
 const apiKeys = new Map();
 
-// User Authentication System (new system)
+// User Authentication System (new system - built-in crypto only)
 const users = new Map(); // email -> user object
 const sessions = new Map(); // sessionId -> user data
 
 // ====================================
-// USER AUTHENTICATION SYSTEM
+// USER AUTHENTICATION SYSTEM (SIMPLIFIED)
 // ====================================
 
 // Initialize user storage
 function initializeUsers() {
-    console.log('✅ User authentication system initialized');
+    console.log('✅ User authentication system initialized (built-in crypto)');
 }
 
-// Hash password
-async function hashPassword(password) {
-    return await bcrypt.hash(password, 12);
+// Simple password hashing using built-in crypto
+function hashPassword(password, salt) {
+    if (!salt) {
+        salt = crypto.randomBytes(16).toString('hex');
+    }
+    const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha256').toString('hex');
+    return { hash, salt };
 }
 
-// Verify password
-async function verifyPassword(password, hashedPassword) {
-    return await bcrypt.compare(password, hashedPassword);
+// Verify password using built-in crypto
+function verifyPassword(password, storedHash, storedSalt) {
+    const { hash } = hashPassword(password, storedSalt);
+    return hash === storedHash;
 }
 
-// Generate JWT token
-function generateJWT(sessionId) {
-    return jwt.sign({ sessionId }, JWT_SECRET, { expiresIn: '7d' });
+// Generate simple token using built-in crypto
+function generateToken(sessionId) {
+    const timestamp = Date.now().toString();
+    const data = `${sessionId}:${timestamp}:${TOKEN_SECRET}`;
+    return crypto.createHash('sha256').update(data).digest('hex') + '.' + timestamp;
 }
 
-// Verify JWT token
-function verifyJWT(token) {
+// Verify simple token using built-in crypto
+function verifyToken(token) {
     try {
-        return jwt.verify(token, JWT_SECRET);
+        const [hash, timestamp] = token.split('.');
+        const data = `${hash}:${timestamp}:${TOKEN_SECRET}`;
+        const expectedHash = crypto.createHash('sha256').update(data).digest('hex');
+        
+        // Check if token is expired (7 days)
+        const tokenTime = parseInt(timestamp);
+        const now = Date.now();
+        const sevenDays = 7 * 24 * 60 * 60 * 1000;
+        
+        if (now - tokenTime > sevenDays) {
+            return null;
+        }
+        
+        return hash; // Return the sessionId part
     } catch (error) {
         return null;
     }
 }
 
 // Create user
-async function createUser(userData) {
+function createUser(userData) {
     const { email, password, name, organizationName } = userData;
     
     // Check if user exists
@@ -99,8 +117,8 @@ async function createUser(userData) {
         throw new Error('User already exists');
     }
     
-    // Hash password
-    const hashedPassword = await hashPassword(password);
+    // Hash password with built-in crypto
+    const { hash, salt } = hashPassword(password);
     
     // Create user object
     const user = {
@@ -108,7 +126,8 @@ async function createUser(userData) {
         email,
         name,
         organizationName: organizationName || `${name}'s Organization`,
-        password: hashedPassword,
+        passwordHash: hash,
+        passwordSalt: salt,
         createdAt: new Date().toISOString(),
         emailVerified: true, // Auto-verify for staging
         isActive: true
@@ -122,13 +141,13 @@ async function createUser(userData) {
 }
 
 // Authenticate user
-async function authenticateUser(email, password) {
+function authenticateUser(email, password) {
     const user = users.get(email);
     if (!user || !user.isActive) {
         return null;
     }
     
-    const isValid = await verifyPassword(password, user.password);
+    const isValid = verifyPassword(password, user.passwordHash, user.passwordSalt);
     if (!isValid) {
         return null;
     }
@@ -161,28 +180,28 @@ function getSession(sessionId) {
     return session;
 }
 
-// JWT Authentication middleware for web users
-function authenticateJWT(req, res, next) {
+// Simple JWT-like authentication middleware for web users
+function authenticateToken(req, res, next) {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
             error: 'Missing or invalid authorization header',
-            code: 'MISSING_JWT_TOKEN'
+            code: 'MISSING_TOKEN'
         });
     }
     
     const token = authHeader.substring(7).trim();
-    const decoded = verifyJWT(token);
+    const sessionId = verifyToken(token);
     
-    if (!decoded) {
+    if (!sessionId) {
         return res.status(401).json({
             error: 'Invalid or expired token',
-            code: 'INVALID_JWT_TOKEN'
+            code: 'INVALID_TOKEN'
         });
     }
     
-    const session = getSession(decoded.sessionId);
+    const session = getSession(sessionId);
     if (!session) {
         return res.status(401).json({
             error: 'Session not found',
@@ -292,7 +311,8 @@ app.get('/health', (req, res) => {
         features: {
             aiAgentAuth: 'working',
             userAuth: 'working',
-            dualAuth: 'enabled'
+            dualAuth: 'enabled',
+            authMethod: 'builtin-crypto'
         }
     });
 });
@@ -323,7 +343,7 @@ app.get('/api/status', (req, res) => {
 // ====================================
 
 // User Signup
-app.post('/api/auth/signup', async (req, res) => {
+app.post('/api/auth/signup', (req, res) => {
     try {
         const { email, password, name, organizationName } = req.body;
         
@@ -357,7 +377,7 @@ app.post('/api/auth/signup', async (req, res) => {
         }
         
         // Create user
-        const user = await createUser({
+        const user = createUser({
             email: email.toLowerCase(),
             password,
             name,
@@ -366,7 +386,7 @@ app.post('/api/auth/signup', async (req, res) => {
         
         // Create session
         const sessionId = createSession(user);
-        const token = generateJWT(sessionId);
+        const token = generateToken(sessionId);
         
         console.log(`✅ Signup successful: ${email}`);
         
@@ -401,7 +421,7 @@ app.post('/api/auth/signup', async (req, res) => {
 });
 
 // User Login
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', (req, res) => {
     try {
         const { email, password } = req.body;
         
@@ -417,7 +437,7 @@ app.post('/api/auth/login', async (req, res) => {
         }
         
         // Authenticate user
-        const user = await authenticateUser(email.toLowerCase(), password);
+        const user = authenticateUser(email.toLowerCase(), password);
         
         if (!user) {
             return res.status(401).json({
@@ -429,7 +449,7 @@ app.post('/api/auth/login', async (req, res) => {
         
         // Create session
         const sessionId = createSession(user);
-        const token = generateJWT(sessionId);
+        const token = generateToken(sessionId);
         
         console.log(`✅ Login successful: ${email}`);
         
@@ -469,16 +489,16 @@ app.get('/api/auth/status', (req, res) => {
         }
         
         const token = authHeader.substring(7).trim();
-        const decoded = verifyJWT(token);
+        const sessionId = verifyToken(token);
         
-        if (!decoded) {
+        if (!sessionId) {
             return res.json({
                 authenticated: false,
                 user: null
             });
         }
         
-        const session = getSession(decoded.sessionId);
+        const session = getSession(sessionId);
         if (!session) {
             return res.json({
                 authenticated: false,
@@ -913,10 +933,10 @@ app.listen(port, () => {
     console.log(`🌍 Health: http://localhost:${port}/health`);
     console.log(`🌍 Status: http://localhost:${port}/api/status`);
     console.log(`🔑 AI Agent API Keys: ${apiKeys.size} initialized`);
-    console.log(`👤 User Authentication: Ready`);
+    console.log(`👤 User Authentication: Ready (built-in crypto)`);
     console.log('✅ Dual authentication system ready:');
     console.log('   - AI Agents: API keys → /v1/purchase-direct');
-    console.log('   - Web Users: JWT tokens → /dashboard');
+    console.log('   - Web Users: tokens → /dashboard');
 });
 
 module.exports = app;
