@@ -553,4 +553,4 @@ app.listen(port, () => {
     console.log('✅ Secure, functional, ready for AI agents');
 });
 
-module.exports = app; 
+module.exports = app; // Force Railway redeploy Wed Jun 25 09:51:48 MDT 2025
