@@ -4,11 +4,16 @@ const express = require('express');
 const crypto = require('crypto');
 const cors = require('cors');
 const path = require('path');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-console.log('🚀 CleanPay API System - Secure & Functional v2.0');
+console.log('🚀 CleanPay API System v2.0 - Dual Authentication (AI + Users)');
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// JWT Secret for user authentication
+const JWT_SECRET = process.env.JWT_SECRET || 'cleanpay_staging_secret_2024';
 
 // ====================================
 // SECURITY & MIDDLEWARE 
@@ -35,11 +40,166 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Request logging
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
+    next();
+});
+
 // ====================================
-// WORKING API KEY SYSTEM
+// DUAL STORAGE SYSTEMS
 // ====================================
 
+// AI Agent API Keys (existing system)
 const apiKeys = new Map();
+
+// User Authentication System (new system)
+const users = new Map(); // email -> user object
+const sessions = new Map(); // sessionId -> user data
+
+// ====================================
+// USER AUTHENTICATION SYSTEM
+// ====================================
+
+// Initialize user storage
+function initializeUsers() {
+    console.log('✅ User authentication system initialized');
+}
+
+// Hash password
+async function hashPassword(password) {
+    return await bcrypt.hash(password, 12);
+}
+
+// Verify password
+async function verifyPassword(password, hashedPassword) {
+    return await bcrypt.compare(password, hashedPassword);
+}
+
+// Generate JWT token
+function generateJWT(sessionId) {
+    return jwt.sign({ sessionId }, JWT_SECRET, { expiresIn: '7d' });
+}
+
+// Verify JWT token
+function verifyJWT(token) {
+    try {
+        return jwt.verify(token, JWT_SECRET);
+    } catch (error) {
+        return null;
+    }
+}
+
+// Create user
+async function createUser(userData) {
+    const { email, password, name, organizationName } = userData;
+    
+    // Check if user exists
+    if (users.has(email)) {
+        throw new Error('User already exists');
+    }
+    
+    // Hash password
+    const hashedPassword = await hashPassword(password);
+    
+    // Create user object
+    const user = {
+        id: 'user_' + crypto.randomBytes(8).toString('hex'),
+        email,
+        name,
+        organizationName: organizationName || `${name}'s Organization`,
+        password: hashedPassword,
+        createdAt: new Date().toISOString(),
+        emailVerified: true, // Auto-verify for staging
+        isActive: true
+    };
+    
+    // Store user
+    users.set(email, user);
+    
+    console.log(`👤 User created: ${email} (${user.id})`);
+    return user;
+}
+
+// Authenticate user
+async function authenticateUser(email, password) {
+    const user = users.get(email);
+    if (!user || !user.isActive) {
+        return null;
+    }
+    
+    const isValid = await verifyPassword(password, user.password);
+    if (!isValid) {
+        return null;
+    }
+    
+    return user;
+}
+
+// Create session
+function createSession(user) {
+    const sessionId = 'sess_' + crypto.randomBytes(16).toString('hex');
+    const sessionData = {
+        id: sessionId,
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: new Date().toISOString(),
+        lastUsed: new Date().toISOString()
+    };
+    
+    sessions.set(sessionId, sessionData);
+    return sessionId;
+}
+
+// Get session
+function getSession(sessionId) {
+    const session = sessions.get(sessionId);
+    if (session) {
+        session.lastUsed = new Date().toISOString();
+    }
+    return session;
+}
+
+// JWT Authentication middleware for web users
+function authenticateJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+            error: 'Missing or invalid authorization header',
+            code: 'MISSING_JWT_TOKEN'
+        });
+    }
+    
+    const token = authHeader.substring(7).trim();
+    const decoded = verifyJWT(token);
+    
+    if (!decoded) {
+        return res.status(401).json({
+            error: 'Invalid or expired token',
+            code: 'INVALID_JWT_TOKEN'
+        });
+    }
+    
+    const session = getSession(decoded.sessionId);
+    if (!session) {
+        return res.status(401).json({
+            error: 'Session not found',
+            code: 'SESSION_NOT_FOUND'
+        });
+    }
+    
+    // Attach user info to request
+    req.user = session;
+    req.userId = session.userId;
+    
+    next();
+}
+
+// ====================================
+// EXISTING API KEY SYSTEM (AI AGENTS)
+// ====================================
 
 function initializeApiKeys() {
     const keys = [
@@ -69,10 +229,10 @@ function initializeApiKeys() {
         apiKeys.set(key.key, key);
     });
     
-    console.log(`✅ Initialized ${keys.length} working API keys`);
+    console.log(`✅ Initialized ${keys.length} AI agent API keys`);
 }
 
-// WORKING API key validation middleware
+// API key validation middleware for AI agents
 function validateApiKey(req, res, next) {
     try {
         const authHeader = req.headers.authorization;
@@ -128,7 +288,12 @@ app.get('/health', (req, res) => {
         service: 'CleanPay API',
         version: '2.0.0',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        features: {
+            aiAgentAuth: 'working',
+            userAuth: 'working',
+            dualAuth: 'enabled'
+        }
     });
 });
 
@@ -142,12 +307,208 @@ app.get('/api/status', (req, res) => {
         features: {
             authentication: 'WORKING',
             purchase: 'WORKING', 
-            demo: 'WORKING'
+            demo: 'WORKING',
+            userAuth: 'WORKING'
+        },
+        stats: {
+            apiKeys: apiKeys.size,
+            users: users.size,
+            activeSessions: sessions.size
         }
     });
 });
 
-// API keys listing
+// ====================================
+// USER AUTHENTICATION ENDPOINTS
+// ====================================
+
+// User Signup
+app.post('/api/auth/signup', async (req, res) => {
+    try {
+        const { email, password, name, organizationName } = req.body;
+        
+        console.log('👤 Signup attempt:', email);
+        
+        // Validation
+        if (!email || !password || !name) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email, password, and name are required',
+                code: 'MISSING_FIELDS'
+            });
+        }
+        
+        if (password.length < 8) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 8 characters long',
+                code: 'WEAK_PASSWORD'
+            });
+        }
+        
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid email format',
+                code: 'INVALID_EMAIL'
+            });
+        }
+        
+        // Create user
+        const user = await createUser({
+            email: email.toLowerCase(),
+            password,
+            name,
+            organizationName
+        });
+        
+        // Create session
+        const sessionId = createSession(user);
+        const token = generateJWT(sessionId);
+        
+        console.log(`✅ Signup successful: ${email}`);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Account created successfully!',
+            token: token,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                organizationName: user.organizationName
+            }
+        });
+        
+    } catch (error) {
+        if (error.message === 'User already exists') {
+            return res.status(409).json({
+                success: false,
+                error: 'An account with this email already exists',
+                code: 'EMAIL_EXISTS'
+            });
+        }
+        
+        console.error('❌ Signup error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error during signup',
+            code: 'SIGNUP_ERROR'
+        });
+    }
+});
+
+// User Login
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        console.log('🔐 Login attempt:', email);
+        
+        // Validation
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email and password are required',
+                code: 'MISSING_CREDENTIALS'
+            });
+        }
+        
+        // Authenticate user
+        const user = await authenticateUser(email.toLowerCase(), password);
+        
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid email or password',
+                code: 'INVALID_CREDENTIALS'
+            });
+        }
+        
+        // Create session
+        const sessionId = createSession(user);
+        const token = generateJWT(sessionId);
+        
+        console.log(`✅ Login successful: ${email}`);
+        
+        res.json({
+            success: true,
+            message: 'Login successful',
+            token: token,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                organizationName: user.organizationName,
+                emailVerified: user.emailVerified
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error during login',
+            code: 'LOGIN_ERROR'
+        });
+    }
+});
+
+// Auth Status Check
+app.get('/api/auth/status', (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.json({
+                authenticated: false,
+                user: null
+            });
+        }
+        
+        const token = authHeader.substring(7).trim();
+        const decoded = verifyJWT(token);
+        
+        if (!decoded) {
+            return res.json({
+                authenticated: false,
+                user: null
+            });
+        }
+        
+        const session = getSession(decoded.sessionId);
+        if (!session) {
+            return res.json({
+                authenticated: false,
+                user: null
+            });
+        }
+        
+        res.json({
+            authenticated: true,
+            user: {
+                id: session.userId,
+                email: session.email,
+                name: session.name
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Auth status error:', error);
+        res.json({
+            authenticated: false,
+            user: null
+        });
+    }
+});
+
+// ====================================
+// API KEYS MANAGEMENT (WEB USERS)
+// ====================================
+
+// List API keys (available to both systems)
 app.get('/api/keys', (req, res) => {
     try {
         const keyList = Array.from(apiKeys.values()).map(key => ({
@@ -175,7 +536,11 @@ app.get('/api/keys', (req, res) => {
     }
 });
 
-// WORKING Payment authorization with API key auth
+// ====================================
+// AI AGENT ENDPOINTS (EXISTING)
+// ====================================
+
+// Payment authorization (with API key auth)
 app.post('/api/authorize', validateApiKey, (req, res) => {
     try {
         const { amount, currency = 'USD', description, metadata } = req.body;
@@ -214,10 +579,7 @@ app.post('/api/authorize', validateApiKey, (req, res) => {
     }
 });
 
-// ====================================
-// WORKING AI AGENT PURCHASE ENDPOINT
-// ====================================
-
+// AI Agent Purchase Endpoint
 app.post('/v1/purchase-direct', (req, res) => {
     try {
         const { agentToken, service, params } = req.body;
@@ -231,7 +593,7 @@ app.post('/v1/purchase-direct', (req, res) => {
             });
         }
         
-        // WORKING API key validation
+        // Validate API key
         const keyData = apiKeys.get(agentToken);
         if (!keyData || !keyData.isActive) {
             return res.status(401).json({
@@ -309,7 +671,7 @@ app.post('/v1/purchase-direct', (req, res) => {
 });
 
 // ====================================
-// DEMO SPENDING CONTROLS (WORKING)
+// DEMO SPENDING CONTROLS (EXISTING)
 // ====================================
 
 let demoState = {
@@ -544,13 +906,18 @@ app.use((error, req, res, next) => {
 // ====================================
 
 initializeApiKeys();
+initializeUsers();
 
 app.listen(port, () => {
-    console.log(`🚀 CleanPay API running on port ${port}`);
+    console.log(`🚀 CleanPay API v2.0 running on port ${port}`);
     console.log(`🌍 Health: http://localhost:${port}/health`);
     console.log(`🌍 Status: http://localhost:${port}/api/status`);
-    console.log(`🔑 API Keys: ${apiKeys.size} initialized and WORKING`);
-    console.log('✅ Secure, functional, ready for AI agents');
+    console.log(`🔑 AI Agent API Keys: ${apiKeys.size} initialized`);
+    console.log(`👤 User Authentication: Ready`);
+    console.log('✅ Dual authentication system ready:');
+    console.log('   - AI Agents: API keys → /v1/purchase-direct');
+    console.log('   - Web Users: JWT tokens → /dashboard');
 });
 
-module.exports = app; // Force Railway redeploy Wed Jun 25 09:51:48 MDT 2025
+module.exports = app;
+// Force Railway redeploy Tue Dec 25 09:23:13 PST 2024
