@@ -1,0 +1,8 @@
+run = "node demo.js"
+language = "nodejs"
+
+[nix]
+channel = "stable-22_11"
+
+[deployment]
+run = ["sh", "-c", "node demo.js"] 
