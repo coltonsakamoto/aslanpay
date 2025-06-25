@@ -250,21 +250,10 @@ function authenticateToken(req, res, next) {
 function initializeApiKeys() {
     const keys = [
         {
-            id: 'key_staging_001',
-            name: 'Staging Test Key',
+            id: 'key_default_001',
+            name: 'Default API Key',
             key: 'ak_live_0c24567d3ead94e0e134b8e8a4d4f699d052b14d057d44d499cd413130ea2545',
             permissions: ['authorize', 'confirm', 'refund'],
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            lastUsed: null,
-            usageCount: 0,
-            environment: 'live'
-        },
-        {
-            id: 'key_staging_002', 
-            name: 'AI Agent Key',
-            key: 'ak_live_eaf129a17cfd9e6923d9ec659aff96f8fb11be81407363fc66b0427c6f42cbde',
-            permissions: ['authorize', 'confirm'],
             isActive: true,
             createdAt: new Date().toISOString(),
             lastUsed: null,
@@ -277,7 +266,7 @@ function initializeApiKeys() {
         apiKeys.set(key.key, key);
     });
     
-    console.log(`✅ Initialized ${keys.length} AI agent API keys`);
+    console.log(`✅ Initialized ${keys.length} default API key`);
 }
 
 // API key validation middleware for AI agents
