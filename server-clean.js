@@ -79,22 +79,51 @@ function verifyPassword(password, storedHash, storedSalt) {
     return hash === storedHash;
 }
 
-// Generate simple token using built-in crypto
-function generateToken(sessionId) {
+// Generate self-contained token using built-in crypto (no session dependency)
+function generateToken(user) {
     const timestamp = Date.now().toString();
-    const data = `${sessionId}:${timestamp}:${TOKEN_SECRET}`;
-    return crypto.createHash('sha256').update(data).digest('hex') + '.' + timestamp;
+    const userData = JSON.stringify({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        ts: timestamp
+    });
+    
+    // Create signature
+    const signature = crypto.createHmac('sha256', TOKEN_SECRET)
+        .update(userData)
+        .digest('hex');
+    
+    // Encode user data in base64
+    const encodedData = Buffer.from(userData).toString('base64');
+    
+    return `${encodedData}.${signature}`;
 }
 
-// Verify simple token using built-in crypto
+// Verify self-contained token
 function verifyToken(token) {
     try {
-        const [hash, timestamp] = token.split('.');
-        const data = `${hash}:${timestamp}:${TOKEN_SECRET}`;
-        const expectedHash = crypto.createHash('sha256').update(data).digest('hex');
+        const [encodedData, signature] = token.split('.');
+        
+        if (!encodedData || !signature) {
+            return null;
+        }
+        
+        // Decode user data
+        const userData = Buffer.from(encodedData, 'base64').toString();
+        const data = JSON.parse(userData);
+        
+        // Verify signature
+        const expectedSignature = crypto.createHmac('sha256', TOKEN_SECRET)
+            .update(userData)
+            .digest('hex');
+        
+        if (signature !== expectedSignature) {
+            return null;
+        }
         
         // Check if token is expired (7 days)
-        const tokenTime = parseInt(timestamp);
+        const tokenTime = parseInt(data.ts);
         const now = Date.now();
         const sevenDays = 7 * 24 * 60 * 60 * 1000;
         
@@ -102,7 +131,13 @@ function verifyToken(token) {
             return null;
         }
         
-        return hash; // Return the sessionId part
+        // Return user data
+        return {
+            id: data.id,
+            email: data.email,
+            name: data.name
+        };
+        
     } catch (error) {
         return null;
     }
@@ -192,26 +227,18 @@ function authenticateToken(req, res, next) {
     }
     
     const token = authHeader.substring(7).trim();
-    const sessionId = verifyToken(token);
+    const userData = verifyToken(token);
     
-    if (!sessionId) {
+    if (!userData) {
         return res.status(401).json({
             error: 'Invalid or expired token',
             code: 'INVALID_TOKEN'
         });
     }
     
-    const session = getSession(sessionId);
-    if (!session) {
-        return res.status(401).json({
-            error: 'Session not found',
-            code: 'SESSION_NOT_FOUND'
-        });
-    }
-    
-    // Attach user info to request
-    req.user = session;
-    req.userId = session.userId;
+    // Attach user info to request (token is self-contained)
+    req.user = userData;
+    req.userId = userData.id;
     
     next();
 }
@@ -384,9 +411,8 @@ app.post('/api/auth/signup', (req, res) => {
             organizationName
         });
         
-        // Create session
-        const sessionId = createSession(user);
-        const token = generateToken(sessionId);
+        // Generate self-contained token (no session needed)
+        const token = generateToken(user);
         
         console.log(`✅ Signup successful: ${email}`);
         
@@ -447,9 +473,8 @@ app.post('/api/auth/login', (req, res) => {
             });
         }
         
-        // Create session
-        const sessionId = createSession(user);
-        const token = generateToken(sessionId);
+        // Generate self-contained token (no session needed)
+        const token = generateToken(user);
         
         console.log(`✅ Login successful: ${email}`);
         
@@ -489,17 +514,9 @@ app.get('/api/auth/status', (req, res) => {
         }
         
         const token = authHeader.substring(7).trim();
-        const sessionId = verifyToken(token);
+        const userData = verifyToken(token);
         
-        if (!sessionId) {
-            return res.json({
-                authenticated: false,
-                user: null
-            });
-        }
-        
-        const session = getSession(sessionId);
-        if (!session) {
+        if (!userData) {
             return res.json({
                 authenticated: false,
                 user: null
@@ -509,9 +526,9 @@ app.get('/api/auth/status', (req, res) => {
         res.json({
             authenticated: true,
             user: {
-                id: session.userId,
-                email: session.email,
-                name: session.name
+                id: userData.id,
+                email: userData.email,
+                name: userData.name
             }
         });
         
