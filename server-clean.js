@@ -55,13 +55,44 @@ const apiKeys = new Map();
 const users = new Map(); // email -> user object
 const sessions = new Map(); // sessionId -> user data
 
+// File path for persistent user storage
+const USERS_FILE = './users-persistent.json';
+
 // ====================================
 // USER AUTHENTICATION SYSTEM (SIMPLIFIED)
 // ====================================
 
+// Load users from persistent storage
+function loadUsers() {
+    try {
+        if (require('fs').existsSync(USERS_FILE)) {
+            const data = require('fs').readFileSync(USERS_FILE, 'utf8');
+            const usersArray = JSON.parse(data);
+            usersArray.forEach(user => {
+                users.set(user.email, user);
+            });
+            console.log(`📂 Loaded ${usersArray.length} existing users from persistent storage`);
+        }
+    } catch (error) {
+        console.log('📂 No existing users file found, starting fresh');
+    }
+}
+
+// Save users to persistent storage
+function saveUsers() {
+    try {
+        const usersArray = Array.from(users.values());
+        require('fs').writeFileSync(USERS_FILE, JSON.stringify(usersArray, null, 2));
+        console.log(`💾 Saved ${usersArray.length} users to persistent storage`);
+    } catch (error) {
+        console.error('❌ Error saving users:', error.message);
+    }
+}
+
 // Initialize user storage
 function initializeUsers() {
-    console.log('✅ User authentication system initialized (built-in crypto)');
+    loadUsers(); // Load existing users on startup
+    console.log('✅ User authentication system initialized (built-in crypto + persistent storage)');
 }
 
 // Simple password hashing using built-in crypto
@@ -170,6 +201,9 @@ function createUser(userData) {
     
     // Store user
     users.set(email, user);
+    
+    // Save to persistent storage
+    saveUsers();
     
     console.log(`👤 User created: ${email} (${user.id})`);
     return user;
