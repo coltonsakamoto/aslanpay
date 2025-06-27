@@ -370,8 +370,8 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/api/status', (req, res) => {
-    // TEMPORARY: Auto-restore user if missing and in production
-    if (users.size === 0 && process.env.NODE_ENV === 'production') {
+    // TEMPORARY: Auto-restore user if missing
+    if (users.size === 0) {
         try {
             const restoredUser = {
                 "id": "e61e6584-c7e1-4242-a378-b85ed1094254",
