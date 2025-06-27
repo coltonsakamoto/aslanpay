@@ -1195,6 +1195,48 @@ app.use((error, req, res, next) => {
     }
 });
 
+// TEMPORARY: User restore endpoint
+app.post('/emergency-restore-users', (req, res) => {
+    try {
+        const restoredUsers = [
+            {
+                "id": "e61e6584-c7e1-4242-a378-b85ed1094254",
+                "email": "coltonsak@gmail.com", 
+                "name": "Colton Sakamoto",
+                "organizationName": "Colton Sakamoto's Organization",
+                "passwordHash": "7ZZsYahRtZQsm3FCAcGkmOEGjr7yn5UVNaZs7sYP/omWgUG287tzG",
+                "passwordSalt": "bcrypt_salt_placeholder",
+                "createdAt": "2025-06-16T20:10:10.453Z",
+                "emailVerified": true,
+                "isActive": true
+            }
+        ];
+        
+        // Clear existing users
+        users.clear();
+        
+        // Add restored users
+        restoredUsers.forEach(user => {
+            users.set(user.email, user);
+        });
+        
+        // Save to file
+        saveUsers();
+        
+        res.json({
+            success: true,
+            message: 'Users restored',
+            userCount: users.size
+        });
+        
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // ====================================
 // STARTUP
 // ====================================
