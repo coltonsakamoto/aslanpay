@@ -34,6 +34,9 @@ sessions/
 dev.db
 test.db
 
+# User data
+users-persistent.json
+
 # Logs - DEVELOPMENT FILES
 logs
 *.log

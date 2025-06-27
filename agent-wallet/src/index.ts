@@ -2325,14 +2325,226 @@ app.get('/v1/control-tower/analytics', async (req: Request, res: Response) => {
   }
 });
 
+// ========================================
+// DEMO API ENDPOINTS - SPENDING CONTROLS SHOWCASE
+// ========================================
+
+// Demo state tracking - IN-MEMORY for demo
+let demoState = {
+    totalSpent: 0,
+    transactionCount: 0,
+    emergencyStop: false,
+    dailyLimit: 100,
+    maxTransactions: 10,
+    recentTransactions: [] as any[] // Track for spam detection
+};
+
+// Spending validation with anti-spam protection
+function validateDemoSpending(amount: number, service: string, description: string) {
+    const result = { approved: false, reason: '', spamDetected: false };
+    
+    // Emergency stop check
+    if (demoState.emergencyStop) {
+        result.reason = 'Emergency stop is active - all transactions blocked';
+        return result;
+    }
+    
+    // ANTI-SPAM: Check for duplicate transactions in 30 seconds
+    const now = Date.now();
+    const spamWindow = 30 * 1000;
+    const identicalTransactions = demoState.recentTransactions.filter(tx => {
+        return (now - tx.timestamp < spamWindow) &&
+               tx.amount === amount &&
+               tx.service === service &&
+               tx.description === description;
+    });
+    
+    if (identicalTransactions.length > 0) {
+        result.reason = `DUPLICATE BLOCKED: Identical transaction already processed within 30 seconds`;
+        result.spamDetected = true;
+        return result;
+    }
+    
+    // Daily limit check
+    const newTotal = demoState.totalSpent + amount;
+    if (newTotal > demoState.dailyLimit) {
+        result.reason = `Would exceed daily limit of $${demoState.dailyLimit} (attempting $${newTotal})`;
+        return result;
+    }
+    
+    // Transaction count check
+    if (demoState.transactionCount >= demoState.maxTransactions) {
+        result.reason = `Maximum ${demoState.maxTransactions} transactions per day reached`;
+        return result;
+    }
+    
+    result.approved = true;
+    return result;
+}
+
+// POST /api/demo/purchase - Process demo purchases with spending controls
+app.post('/api/demo/purchase', (req: Request, res: Response) => {
+    const { amount, service, description } = req.body;
+    const startTime = Date.now();
+    
+    console.log(`🛒 Demo purchase attempt: $${amount} for ${service}`);
+    
+    // Validate spending limits - THE CORE PRODUCT FEATURE
+    const validation = validateDemoSpending(amount, service, description);
+    
+    if (!validation.approved) {
+        // Realistic processing time even for blocked transactions
+        const processingDelay = 25 + Math.random() * 35; // 25-60ms
+        
+        setTimeout(() => {
+            const latency = Date.now() - startTime;
+            console.log(`🚨 Transaction BLOCKED: ${validation.reason}`);
+            
+            res.status(402).json({
+                success: false,
+                blocked: true,
+                reason: validation.reason,
+                currentSpent: demoState.totalSpent,
+                dailyLimit: demoState.dailyLimit,
+                transactionCount: demoState.transactionCount,
+                maxTransactions: demoState.maxTransactions,
+                emergencyStop: demoState.emergencyStop,
+                spamDetected: validation.spamDetected || false,
+                latency: latency,
+                message: '🚨 TRANSACTION BLOCKED BY SPENDING CONTROLS'
+            });
+        }, processingDelay);
+        return;
+    }
+    
+    // Process approved transaction
+    const processingDelay = 45 + Math.random() * 55; // 45-100ms realistic processing
+    
+    setTimeout(() => {
+        // Update spending state
+        demoState.totalSpent += amount;
+        demoState.transactionCount++;
+        
+        // Track transaction for spam detection
+        const transactionId = `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const transaction = {
+            id: transactionId,
+            amount: amount,
+            service: service,
+            description: description,
+            timestamp: Date.now()
+        };
+        
+        // Add to recent transactions (keep last 50)
+        demoState.recentTransactions.push(transaction);
+        if (demoState.recentTransactions.length > 50) {
+            demoState.recentTransactions = demoState.recentTransactions.slice(-50);
+        }
+        
+        const latency = Date.now() - startTime;
+        console.log(`✅ Demo purchase SUCCESS: ${transactionId} - $${amount} in ${latency}ms`);
+        
+        res.json({
+            success: true,
+            transactionId: transactionId,
+            amount: amount,
+            service: service,
+            latency: latency,
+            spendingStatus: {
+                totalSpent: demoState.totalSpent,
+                remainingLimit: demoState.dailyLimit - demoState.totalSpent,
+                transactionCount: demoState.transactionCount,
+                remainingTransactions: demoState.maxTransactions - demoState.transactionCount
+            },
+            message: '✅ Transaction approved and processed'
+        });
+    }, processingDelay);
+});
+
+// GET /api/demo/spending-status - Get current spending state
+app.get('/api/demo/spending-status', (req: Request, res: Response) => {
+    const startTime = Date.now();
+    
+    // Simulate realistic database query
+    setTimeout(() => {
+        const now = Date.now();
+        const recentTransactions = demoState.recentTransactions.filter(tx => now - tx.timestamp < 60000);
+        const latency = Date.now() - startTime;
+        
+        res.json({
+            totalSpent: demoState.totalSpent,
+            dailyLimit: demoState.dailyLimit,
+            remainingLimit: demoState.dailyLimit - demoState.totalSpent,
+            transactionCount: demoState.transactionCount,
+            maxTransactions: demoState.maxTransactions,
+            remainingTransactions: demoState.maxTransactions - demoState.transactionCount,
+            emergencyStop: demoState.emergencyStop,
+            status: demoState.emergencyStop ? 'EMERGENCY_STOP' : 
+                    (demoState.totalSpent >= demoState.dailyLimit ? 'LIMIT_REACHED' : 'ACTIVE'),
+            spamProtection: {
+                recentTransactionsCount: recentTransactions.length,
+                totalTrackedTransactions: demoState.recentTransactions.length,
+                antiSpamActive: true
+            },
+            latency: latency
+        });
+    }, 20 + Math.random() * 15); // 20-35ms realistic query time
+});
+
+// PUT /api/demo/spending-controls - Update spending limits
+app.put('/api/demo/spending-controls', (req: Request, res: Response) => {
+    const { dailyLimit, maxTransactions, emergencyStop } = req.body;
+    const startTime = Date.now();
+    
+    console.log(`⚙️ Updating demo spending controls:`, { dailyLimit, maxTransactions, emergencyStop });
+    
+    // Simulate realistic configuration update
+    setTimeout(() => {
+        if (dailyLimit !== undefined && dailyLimit > 0) {
+            demoState.dailyLimit = dailyLimit;
+        }
+        if (maxTransactions !== undefined && maxTransactions > 0) {
+            demoState.maxTransactions = maxTransactions;
+        }
+        if (emergencyStop !== undefined) {
+            demoState.emergencyStop = emergencyStop;
+        }
+        
+        const latency = Date.now() - startTime;
+        console.log(`✅ Demo controls updated in ${latency}ms`);
+        
+        res.json({
+            success: true,
+            message: 'Spending controls updated',
+            currentState: {
+                totalSpent: demoState.totalSpent,
+                dailyLimit: demoState.dailyLimit,
+                maxTransactions: demoState.maxTransactions,
+                emergencyStop: demoState.emergencyStop,
+                transactionCount: demoState.transactionCount
+            },
+            latency: latency
+        });
+    }, 40 + Math.random() * 30); // 40-70ms for config update
+});
+
+console.log('✅ Demo API endpoints added to real server: /api/demo/purchase, /api/demo/spending-status, /api/demo/spending-controls');
+
 // Start server
-app.listen(port, async () => {
-  console.log(`Server live on :${port}`);
-  try {
-    await connectToLightning();
-    startInvoiceListener();
-  } catch (error) {
-    console.error('Failed to initialize Lightning Network connection:', error);
-    console.log('Server will continue running without Lightning Network connection.');
-  }
-}); 
+app.listen(port, () => {
+  console.log(`✅ Server running on port ${port}`);
+  
+  // Initialize Lightning Network connections
+  connectToLightning().catch(console.error);
+  
+  // Start invoice listener
+  setTimeout(() => {
+    if (lnd) {
+      startInvoiceListener();
+    } else {
+      console.log('Skipping invoice listener - Lightning Network not connected');
+    }
+  }, 2000);
+});
+
+export default app; 

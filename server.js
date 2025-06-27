@@ -1,47 +1,54 @@
 require('dotenv').config();
 
-const express = require('express');
-const path = require('path');
-
-console.log('🚀 AslanPay Root Server Starting...');
+console.log('🚀 AslanPay Complete System Starting...');
 console.log('📍 Environment:', process.env.NODE_ENV || 'development');
 console.log('📍 Port:', process.env.PORT || 3000);
 
-// Create Express app
-const app = express();
-const port = process.env.PORT || 3000;
-
-// Health check endpoint - available immediately
-app.get('/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'OK', 
-        service: 'AslanPay', 
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
-});
-
-// Load the main API server
-console.log('🔧 Loading API server from api/server.js...');
+// Try to load the complete working system
 try {
-    const apiServer = require('./api/server');
+    console.log('🔧 Loading complete working system from agent-wallet...');
     
-    // Mount the API server
-    app.use('/', apiServer);
+    // Register ts-node to handle TypeScript files
+    require('ts-node').register({
+        project: './agent-wallet/tsconfig.json',
+        transpileOnly: true
+    });
     
-    console.log('✅ API server loaded successfully');
+    // Load the complete working server
+    const workingServer = require('./agent-wallet/src/index.ts');
+    
+    console.log('✅ Complete AgentPay system loaded successfully');
+    console.log('📍 Available endpoints:');
+    console.log('   - /v1/purchase-direct (Real AI agent purchases)');
+    console.log('   - /api/demo/purchase (Demo purchases)'); 
+    console.log('   - /api/keys (API key management)');
+    console.log('   - /health (Health check)');
+    
+    // The agent-wallet server will handle everything
+    
 } catch (error) {
-    console.error('❌ Failed to load API server:', error.message);
+    console.error('❌ Failed to load complete system:', error.message);
     console.error('Stack:', error.stack);
     
-    // Emergency fallback
-    app.get('*', (req, res) => {
-        res.status(500).json({
-            error: 'Server configuration error',
-            message: 'API server failed to load',
-            timestamp: new Date().toISOString()
+    // Emergency fallback - load basic wrapper
+    console.log('🚨 Loading emergency fallback...');
+    
+    try {
+        const apiServer = require('./api/server');
+        const express = require('express');
+        const app = express();
+        const port = process.env.PORT || 3000;
+        
+        app.use('/', apiServer);
+        
+        app.listen(port, () => {
+            console.log(`🚨 Emergency server running on port ${port}`);
         });
-    });
+        
+    } catch (fallbackError) {
+        console.error('❌ Even fallback failed:', fallbackError.message);
+        process.exit(1);
+    }
 }
 
 // Global error handler
@@ -51,14 +58,6 @@ app.use((error, req, res, next) => {
         error: 'Internal server error',
         timestamp: new Date().toISOString()
     });
-});
-
-// Start server
-app.listen(port, () => {
-    console.log(`🚀 AslanPay server running on port ${port}`);
-    console.log(`🌍 Health check: http://localhost:${port}/health`);
-    console.log(`🌍 Frontend: http://localhost:${port}/`);
-    console.log(`🌍 API: http://localhost:${port}/api/status`);
 });
 
 // Handle graceful shutdown

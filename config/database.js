@@ -346,120 +346,354 @@ class InMemoryDatabase {
 // ========================================
 class PostgreSQLDatabase {
     constructor() {
-        this.prisma = null;
-        this.initializePrisma();
+        const { PrismaClient } = require('@prisma/client');
+        this.prisma = new PrismaClient();
+        console.log('✅ PostgreSQL database initialized for staging/production');
+        this.initializeDefault();
     }
     
-    async initializePrisma() {
+    async initializeDefault() {
         try {
-            const { PrismaClient } = require('@prisma/client');
-            this.prisma = new PrismaClient({
-                log: process.env.NODE_ENV === 'development' ? ['error'] : ['error'],
-                datasources: {
-                    db: {
-                        url: process.env.DATABASE_URL
-                    }
-                }
+            // Create default test user if it doesn't exist
+            const existingUser = await this.prisma.user.findUnique({
+                where: { email: 'test@local.dev' }
             });
             
-            await this.prisma.$connect();
-            console.log('✅ PostgreSQL database connected via Prisma');
-            
+            if (!existingUser) {
+                await this.createTestUser();
+            }
         } catch (error) {
-            console.error('❌ PostgreSQL initialization failed:', error.message);
-            throw error;
+            console.log('Database initialization skipped (likely no tables yet)');
         }
     }
     
-    // Delegate all methods to database-production.js
+    async createTestUser() {
+        const bcrypt = require('bcryptjs');
+        const testUser = await this.prisma.user.create({
+            data: {
+                email: 'test@local.dev',
+                name: 'Test User',
+                password: bcrypt.hashSync('password123', 10),
+                provider: 'email',
+                emailVerified: true,
+                subscriptionPlan: 'sandbox',
+                subscriptionStatus: 'active'
+            }
+        });
+        
+        // Create default API key
+        await this.createApiKey(testUser.id, 'Default API Key');
+        
+        console.log('👤 Test user created: test@local.dev / password123');
+    }
+    
+    // User Management
     async createUser(userData) {
-        const productionDb = require('../database-production');
-        return await productionDb.createUser(userData);
+        const bcrypt = require('bcryptjs');
+        const { email, password, name, provider = 'email' } = userData;
+        
+        const hashedPassword = provider === 'email' ? await bcrypt.hash(password, 10) : null;
+        
+        const user = await this.prisma.user.create({
+            data: {
+                email: email.toLowerCase(),
+                name,
+                password: hashedPassword,
+                provider,
+                emailVerified: provider !== 'email',
+                subscriptionPlan: 'sandbox',
+                subscriptionStatus: 'active'
+            }
+        });
+        
+        // Create default API key
+        await this.createApiKey(user.id, 'Default Key');
+        
+        return this.sanitizeUser(user);
     }
     
     async getUserById(userId) {
-        const productionDb = require('../database-production');
-        return await productionDb.getUserById(userId);
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId }
+        });
+        return user ? this.sanitizeUser(user) : null;
     }
     
     async getUserByEmail(email) {
-        const productionDb = require('../database-production');
-        return await productionDb.getUserByEmail(email);
+        const user = await this.prisma.user.findUnique({
+            where: { email: email.toLowerCase() }
+        });
+        return user ? this.sanitizeUser(user) : null;
     }
     
     async verifyPassword(email, password) {
-        const productionDb = require('../database-production');
-        return await productionDb.verifyPassword(email, password);
+        const bcrypt = require('bcryptjs');
+        const user = await this.prisma.user.findUnique({
+            where: { email: email.toLowerCase() }
+        });
+        
+        if (user && user.password) {
+            const isValid = await bcrypt.compare(password, user.password);
+            if (isValid) {
+                return this.sanitizeUser(user);
+            }
+        }
+        return null;
     }
     
     sanitizeUser(user) {
-        const productionDb = require('../database-production');
-        return productionDb.sanitizeUser(user);
+        if (!user) return null;
+        const { password, ...sanitized } = user;
+        return sanitized;
     }
     
+    // Session Management
     async createSession(userId) {
-        const productionDb = require('../database-production');
-        return await productionDb.createSession(userId);
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+        
+        const session = await this.prisma.session.create({
+            data: {
+                userId,
+                expiresAt,
+                lastActivity: new Date()
+            }
+        });
+        
+        return session.id;
     }
     
     async getSession(sessionId) {
-        const productionDb = require('../database-production');
-        return await productionDb.getSession(sessionId);
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId }
+        });
+        
+        if (!session || session.expiresAt < new Date()) {
+            if (session) {
+                await this.prisma.session.delete({
+                    where: { id: sessionId }
+                });
+            }
+            return null;
+        }
+        return session;
     }
     
     async revokeSession(sessionId) {
-        const productionDb = require('../database-production');
-        return await productionDb.revokeSession(sessionId);
+        await this.prisma.session.delete({
+            where: { id: sessionId }
+        });
+        return true;
     }
     
+    // API Key Management
     async createApiKey(userId, name) {
-        const productionDb = require('../database-production');
-        return await productionDb.createApiKey(userId, name);
+        const prefix = 'ak_live_';
+        const secret = crypto.randomBytes(32).toString('hex');
+        const apiKey = `${prefix}${secret}`;
+        
+        const keyData = await this.prisma.apiKey.create({
+            data: {
+                userId,
+                name,
+                key: apiKey,
+                prefix,
+                secret,
+                permissions: 'authorize,confirm,refund'
+            }
+        });
+        
+        return {
+            id: keyData.id,
+            name: keyData.name,
+            key: keyData.key,
+            permissions: keyData.permissions.split(','),
+            createdAt: keyData.createdAt,
+            lastUsed: keyData.lastUsed,
+            usageCount: keyData.usageCount,
+            isActive: keyData.isActive
+        };
     }
     
     async getApiKeysByUserId(userId) {
-        const productionDb = require('../database-production');
-        return await productionDb.getApiKeysByUserId(userId);
+        const keys = await this.prisma.apiKey.findMany({
+            where: { 
+                userId,
+                isActive: true 
+            }
+        });
+        
+        return keys.map(key => ({
+            id: key.id,
+            name: key.name,
+            key: key.key,
+            permissions: key.permissions.split(','),
+            createdAt: key.createdAt,
+            lastUsed: key.lastUsed,
+            usageCount: key.usageCount,
+            isActive: key.isActive
+        }));
     }
     
     async validateApiKey(apiKey) {
-        const productionDb = require('../database-production');
-        return await productionDb.validateApiKey(apiKey);
+        const keyData = await this.prisma.apiKey.findUnique({
+            where: { key: apiKey, isActive: true },
+            include: { user: true }
+        });
+        
+        if (!keyData) {
+            return { valid: false, error: 'API key not found or inactive' };
+        }
+        
+        // Update usage
+        await this.prisma.apiKey.update({
+            where: { id: keyData.id },
+            data: {
+                lastUsed: new Date(),
+                usageCount: { increment: 1 }
+            }
+        });
+        
+        return {
+            valid: true,
+            keyId: keyData.id,
+            userId: keyData.userId,
+            user: this.sanitizeUser(keyData.user),
+            permissions: keyData.permissions.split(',')
+        };
     }
     
     async revokeApiKey(userId, keyId) {
-        const productionDb = require('../database-production');
-        return await productionDb.revokeApiKey(userId, keyId);
+        await this.prisma.apiKey.updateMany({
+            where: { 
+                id: keyId,
+                userId 
+            },
+            data: { 
+                isActive: false,
+                revokedAt: new Date()
+            }
+        });
+        return true;
     }
     
     async rotateApiKey(userId, keyId) {
-        const productionDb = require('../database-production');
-        return await productionDb.rotateApiKey(userId, keyId);
+        const oldKey = await this.prisma.apiKey.findFirst({
+            where: { id: keyId, userId }
+        });
+        
+        if (!oldKey) {
+            throw new Error('API key not found');
+        }
+        
+        // Revoke old key
+        await this.revokeApiKey(userId, keyId);
+        
+        // Create new key
+        return await this.createApiKey(userId, oldKey.name);
     }
     
+    // Password Reset
     async createPasswordReset(email) {
-        const productionDb = require('../database-production');
-        return await productionDb.createPasswordReset(email);
+        const user = await this.prisma.user.findUnique({
+            where: { email: email.toLowerCase() }
+        });
+        
+        if (!user) {
+            throw new Error('User not found');
+        }
+        
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        
+        await this.prisma.passwordReset.create({
+            data: {
+                userId: user.id,
+                email: email.toLowerCase(),
+                token,
+                expiresAt
+            }
+        });
+        
+        return token;
     }
     
-    async resetPassword(token, password) {
-        const productionDb = require('../database-production');
-        return await productionDb.resetPassword(token, password);
+    async resetPassword(token, newPassword) {
+        const bcrypt = require('bcryptjs');
+        const reset = await this.prisma.passwordReset.findUnique({
+            where: { token }
+        });
+        
+        if (!reset || reset.expiresAt < new Date()) {
+            throw new Error('Invalid or expired reset token');
+        }
+        
+        await this.prisma.user.update({
+            where: { id: reset.userId },
+            data: { 
+                password: await bcrypt.hash(newPassword, 10),
+                updatedAt: new Date()
+            }
+        });
+        
+        await this.prisma.passwordReset.delete({
+            where: { token }
+        });
+        
+        return true;
     }
     
+    // Email Verification
     async createEmailVerification(userId, email) {
-        const productionDb = require('../database-production');
-        return await productionDb.createEmailVerification(userId, email);
+        const token = crypto.randomBytes(32).toString('hex');
+        
+        await this.prisma.emailVerification.create({
+            data: {
+                userId,
+                email,
+                token,
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+            }
+        });
+        
+        return token;
     }
     
     async verifyEmail(token) {
-        const productionDb = require('../database-production');
-        return await productionDb.verifyEmail(token);
+        const verification = await this.prisma.emailVerification.findUnique({
+            where: { token }
+        });
+        
+        if (verification) {
+            await this.prisma.user.update({
+                where: { id: verification.userId },
+                data: { 
+                    emailVerified: true,
+                    updatedAt: new Date()
+                }
+            });
+            
+            await this.prisma.emailVerification.delete({
+                where: { token }
+            });
+            
+            return true;
+        }
+        return false;
     }
     
+    // Health check
     async healthCheck() {
-        const productionDb = require('../database-production');
-        return await productionDb.healthCheck();
+        const userCount = await this.prisma.user.count();
+        const sessionCount = await this.prisma.session.count();
+        const apiKeyCount = await this.prisma.apiKey.count({ where: { isActive: true } });
+        
+        return {
+            status: 'healthy',
+            database: 'postgresql',
+            users: userCount,
+            sessions: sessionCount,
+            apiKeys: apiKeyCount
+        };
     }
 }
 
@@ -468,18 +702,13 @@ class PostgreSQLDatabase {
 // ========================================
 let database;
 
+// Use PostgreSQL when DATABASE_URL is available (staging/production)
 if (usePostgreSQL) {
-    try {
-        database = new PostgreSQLDatabase();
-        console.log('🚀 PostgreSQL database selected for staging/production');
-    } catch (error) {
-        console.warn('⚠️ PostgreSQL failed, falling back to in-memory database');
-        console.warn('⚠️ Error:', error.message);
-        database = new InMemoryDatabase();
-    }
+    console.log('🐘 Using PostgreSQL database for persistent storage');
+    database = new PostgreSQLDatabase();
 } else {
+    console.log('💾 Using in-memory database for local development');
     database = new InMemoryDatabase();
-    console.log('🚀 In-memory database selected for local development');
 }
 
 module.exports = database; 

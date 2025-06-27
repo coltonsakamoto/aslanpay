@@ -6,6 +6,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![Railway Deploy](https://img.shields.io/badge/Deploy-Railway-purple.svg)](https://railway.app)
 [![API Status](https://img.shields.io/badge/API-Production%20Ready-green.svg)](https://aslanpay.xyz/health)
+[![Run on Replit](https://replit.com/badge/github/coltonsakamoto/aslanpay)](https://replit.com/@coltonsakamoto/aslanpay?v=1)
 
 **Aslan** is the universal payment infrastructure that enables AI agents to make autonomous purchases with enterprise-grade security, real-time spending controls, and sub-400ms authorization.
 
