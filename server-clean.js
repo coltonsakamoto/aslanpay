@@ -828,6 +828,46 @@ app.post('/api/authorize', validateApiKey, (req, res) => {
     }
 });
 
+// V2 Authorization Endpoint 
+app.post('/api/v2/authorize', validateApiKey, (req, res) => {
+    try {
+        const { amount, currency = 'USD', description, metadata } = req.body;
+        
+        if (!amount || amount <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Amount must be greater than 0',
+                code: 'INVALID_AMOUNT'
+            });
+        }
+        
+        const authorizationId = 'auth_v2_' + crypto.randomBytes(8).toString('hex');
+        
+        console.log(`💳 V2 Payment authorized: ${authorizationId} for $${amount} by ${req.apiKey.name}`);
+        
+        res.json({
+            success: true,
+            authorizationId,
+            amount,
+            currency,
+            description: description || 'Payment authorization',
+            status: 'authorized',
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+            metadata: metadata || {},
+            authorizedBy: req.apiKey.name,
+            version: '2.0'
+        });
+        
+    } catch (error) {
+        console.error('V2 Authorization error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Payment authorization failed',
+            code: 'AUTHORIZATION_ERROR'
+        });
+    }
+});
+
 // AI Agent Purchase Endpoint
 app.post('/v1/purchase-direct', (req, res) => {
     try {
@@ -1124,8 +1164,13 @@ app.get('/', (req, res) => {
 // ERROR HANDLING
 // ====================================
 
+// Serve the API documentation page
+app.get('/api', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/public/api.html'));
+});
+
 app.use((req, res) => {
-    if (req.path.startsWith('/api/') || req.path.startsWith('/v1/')) {
+    if (req.path.startsWith('/api/') || req.path.startsWith('/v1/') || req.path.startsWith('/v2/')) {
         res.status(404).json({
             error: 'API endpoint not found',
             code: 'NOT_FOUND',
@@ -1139,7 +1184,7 @@ app.use((req, res) => {
 app.use((error, req, res, next) => {
     console.error('Server error:', error.message);
     
-    if (req.path.startsWith('/api/') || req.path.startsWith('/v1/')) {
+    if (req.path.startsWith('/api/') || req.path.startsWith('/v1/') || req.path.startsWith('/v2/')) {
         res.status(500).json({
             error: 'Internal server error',
             code: 'INTERNAL_ERROR',
