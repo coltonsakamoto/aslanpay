@@ -6,7 +6,7 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "node api/server.js",
+    "startCommand": "node server-clean.js",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 30,
     "restartPolicyType": "on-failure",
@@ -14,6 +14,7 @@
   },
   "variables": {
     "NODE_ENV": "staging",
-    "PORT": "$PORT"
+    "PORT": "$PORT",
+    "BUILD_TIMESTAMP": "2025-06-27-19-35"
   }
 }
