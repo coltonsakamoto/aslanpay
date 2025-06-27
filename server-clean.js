@@ -370,6 +370,28 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/api/status', (req, res) => {
+    // TEMPORARY: Auto-restore user if missing and in production
+    if (users.size === 0 && process.env.NODE_ENV === 'production') {
+        try {
+            const restoredUser = {
+                "id": "e61e6584-c7e1-4242-a378-b85ed1094254",
+                "email": "coltonsak@gmail.com", 
+                "name": "Colton Sakamoto",
+                "organizationName": "Colton Sakamoto's Organization",
+                "passwordHash": "7ZZsYahRtZQsm3FCAcGkmOEGjr7yn5UVNaZs7sYP/omWgUG287tzG",
+                "passwordSalt": "bcrypt_salt_placeholder",
+                "createdAt": "2025-06-16T20:10:10.453Z",
+                "emailVerified": true,
+                "isActive": true
+            };
+            users.set(restoredUser.email, restoredUser);
+            saveUsers();
+            console.log('🔄 Auto-restored user data in production');
+        } catch (error) {
+            console.error('Failed to auto-restore users:', error);
+        }
+    }
+    
     res.json({
         status: 'online',
         service: 'CleanPay API',
