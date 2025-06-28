@@ -2,9 +2,9 @@
   "name": "aslan",
   "version": "2.0.0",
   "description": "Payment infrastructure for AI agents - Clean, secure, and functional with built-in auth",
-  "main": "server-clean.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node server-clean.js",
+    "start": "node server.js",
     "start-old": "node server.js",
     "start-rebuilt": "node api/server.js",
     "start-minimal": "node server-minimal.js",

@@ -6,15 +6,15 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "node server-clean.js",
+    "startCommand": "node server.js",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 30,
     "restartPolicyType": "on-failure",
     "restartPolicyMaxRetries": 3
   },
   "variables": {
-    "NODE_ENV": "staging",
+    "NODE_ENV": "production",
     "PORT": "$PORT",
-    "BUILD_TIMESTAMP": "2025-06-27-19-35"
+    "BUILD_TIMESTAMP": "2025-06-27-production-redeploy"
   }
 }

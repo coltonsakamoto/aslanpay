@@ -1,59 +1,44 @@
 require('dotenv').config();
 
-console.log('🚀 AslanPay Complete System Starting...');
+console.log('🚀 AslanPay Production Server Starting...');
 console.log('📍 Environment:', process.env.NODE_ENV || 'development');
 console.log('📍 Port:', process.env.PORT || 3000);
 
-// Try to load the complete working system
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Load the API server
 try {
-    console.log('🔧 Loading complete working system from agent-wallet...');
+    console.log('🔧 Loading API server from api/server.js...');
+    const apiServer = require('./api/server');
     
-    // Register ts-node to handle TypeScript files
-    require('ts-node').register({
-        project: './agent-wallet/tsconfig.json',
-        transpileOnly: true
-    });
+    // Use the API server as middleware
+    app.use('/', apiServer);
     
-    // Load the complete working server
-    const workingServer = require('./agent-wallet/src/index.ts');
-    
-    console.log('✅ Complete AgentPay system loaded successfully');
+    console.log('✅ AslanPay API server loaded successfully');
     console.log('📍 Available endpoints:');
-    console.log('   - /v1/purchase-direct (Real AI agent purchases)');
+    console.log('   - /v1/purchase-direct (AI agent purchases)');
     console.log('   - /api/demo/purchase (Demo purchases)'); 
     console.log('   - /api/keys (API key management)');
     console.log('   - /health (Health check)');
-    
-    // The agent-wallet server will handle everything
+    console.log('   - /api/auth/* (User authentication)');
     
 } catch (error) {
-    console.error('❌ Failed to load complete system:', error.message);
+    console.error('❌ Failed to load API server:', error.message);
     console.error('Stack:', error.stack);
-    
-    // Emergency fallback - load basic wrapper
-    console.log('🚨 Loading emergency fallback...');
-    
-    try {
-        const apiServer = require('./api/server');
-        const express = require('express');
-        const app = express();
-        const port = process.env.PORT || 3000;
-        
-        app.use('/', apiServer);
-        
-        app.listen(port, () => {
-            console.log(`🚨 Emergency server running on port ${port}`);
-        });
-        
-    } catch (fallbackError) {
-        console.error('❌ Even fallback failed:', fallbackError.message);
-        process.exit(1);
-    }
+    process.exit(1);
 }
+
+// Start the server
+app.listen(port, () => {
+    console.log(`🌟 AslanPay production server running on port ${port}`);
+    console.log(`🌐 Available at: ${process.env.NODE_ENV === 'production' ? 'https://aslanpay.xyz' : `http://localhost:${port}`}`);
+});
 
 // Global error handler
 app.use((error, req, res, next) => {
-    console.error('🚨 Unhandled error:', error.message);
+    console.error('🚨 Unhandled server error:', error.message);
     res.status(500).json({
         error: 'Internal server error',
         timestamp: new Date().toISOString()
