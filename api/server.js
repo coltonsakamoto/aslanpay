@@ -506,19 +506,13 @@ app.use((error, req, res, next) => {
 
 initializeApiKeys();
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-    console.log(`🚀 AslanPay API v2.0 running on port ${PORT}`);
-    console.log(`🌍 Health: http://localhost:${PORT}/health`);
-    console.log(`🌍 Status: http://localhost:${PORT}/api/status`);
-    console.log(`📖 API Docs: http://localhost:${PORT}/api`);
-    console.log(`🔑 AI Agent API Keys: ${apiKeys.size} initialized`);
-    console.log('✅ Available endpoints:');
-    console.log('   - POST /v1/purchase-direct (AI agent purchases)');
-    console.log('   - POST /api/v2/authorize (V2 authorization)');
-    console.log('   - POST /api/authorize (V1 authorization)');
-    console.log('   - POST /api/demo/purchase (Demo purchases)');
-    console.log('   - GET /api/keys (API key management)');
-});
+console.log('✅ AslanPay API v2.0 initialized');
+console.log(`🔑 AI Agent API Keys: ${apiKeys.size} initialized`);
+console.log('✅ Available endpoints:');
+console.log('   - POST /v1/purchase-direct (AI agent purchases)');
+console.log('   - POST /api/v2/authorize (V2 authorization)');
+console.log('   - POST /api/authorize (V1 authorization)');
+console.log('   - POST /api/demo/purchase (Demo purchases)');
+console.log('   - GET /api/keys (API key management)');
 
 module.exports = app; 
